@@ -12,7 +12,39 @@ Please execute all the following commands from the root directory of the reposit
 
 ### IMDB dataset
 
-We provide a setup script to download the IMDB dataset (from http://event.cwi.nl/da/job/imdb.tgz) and load the schema and data.
+Run the following script to download the IMDB dataset (from http://event.cwi.nl/da/job/imdb.tgz) and load the schema and data.
 ```
 bash src/scripts/setup-imdb.sh
 ```
+
+### Cardinality estimation
+
+#### Original join order benchmark (JOB)
+
+We include the exact cardinalities for queries in the original join order benchmark. So no action is required.
+
+#### JOBLarge
+
+For JOBLarge, since the queries are much larger and more complex, please use the following script to download the cardinality information:
+```
+bash src/main/scripts/download-job-large-cardinalities.sh
+```
+
+## Experiments
+
+### Query optimization and execution
+
+```
+sbt -mem 40000 "runMain experiments.runner.MetaDecompRunner"
+```
+(`-mem 40000` indicates a limit of 40,000 MB of memory for the JVM. This can be adjusted based on the amount of available memory in your system.)
+
+The results are stored in `experiment-results/metadecomp-runtime-{job-original-exact, job-large-{estimate, all-0}}.csv`
+
+### Join tree enumeration
+
+```
+bash src/main/scripts/enumerate-join-trees.sh
+```
+
+The results are stored in `experiment-results/metadecomp-enum-{job-original, job-large}.csv`
