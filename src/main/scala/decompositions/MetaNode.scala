@@ -1,6 +1,6 @@
 package decompositions
 
-import sql.RelationCopy
+import sql.Relation
 
 import scala.collection.mutable
 
@@ -126,7 +126,7 @@ ${innerIndent}children:${children.map(_.toString(depth + 1)).mkString("", ",", "
     val outerIndent = "  " * (depth * 2)
     val innerIndent = "  " * (depth * 2 + 1)
     s"""$outerIndent{
-$innerIndent\"relation\": \"${this.metaNode.asInstanceOf[MetaNodePhysical[V, E]].originalHyperEdge.asInstanceOf[RelationCopy].alias}\",
+$innerIndent\"relation\": \"${this.metaNode.asInstanceOf[MetaNodePhysical[V, E]].originalHyperEdge.asInstanceOf[Relation].alias}\",
 $innerIndent\"children\": [
 ${children.map(_.toJson(depth + 1)).mkString(",\n")}
 $innerIndent]
