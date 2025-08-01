@@ -1,0 +1,32 @@
+mk
+k
+t2
+ml
+t1
+lt
+mk, k
+ml, lt
+ml, t2
+mk, ml
+mk, t1
+ml, t1
+ml, lt, t2
+mk, ml, t1
+mk, ml, k
+mk, ml, lt
+mk, ml, t2
+mk, t1, k
+ml, t1, lt
+ml, t1, t2
+mk, ml, t1, k
+mk, ml, t1, lt
+mk, t1, t2, ml
+mk, ml, lt, k
+mk, k, t2, ml
+mk, lt, t2, ml
+t1, lt, t2, ml
+mk, ml, t1, lt, k
+mk, t1, k, t2, ml
+mk, t1, lt, t2, ml
+mk, lt, k, t2, ml
+mk, t1, lt, k, t2, ml

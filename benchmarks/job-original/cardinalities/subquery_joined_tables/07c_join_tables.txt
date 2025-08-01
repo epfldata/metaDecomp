@@ -1,0 +1,90 @@
+ci
+it
+ml
+t
+pi
+an
+n
+lt
+ml, lt
+pi, it
+ci, ml
+ci, t
+ci, n
+ci, an
+ci, pi
+n, an
+n, pi
+an, pi
+ml, t
+ci, ml, t
+ci, ml, lt
+ci, n, an
+ci, n, pi
+ci, an, pi
+ci, pi, it
+n, an, pi
+n, pi, it
+an, pi, it
+ml, t, lt
+n, t, ci
+t, ci, an
+pi, t, ci
+n, ml, ci
+pi, ml, ci
+ml, ci, an
+t, ml, ci, lt
+pi, n, ci, an
+pi, n, it, ci
+pi, it, ci, an
+pi, n, it, an
+n, t, ci, an
+pi, n, t, ci
+pi, t, ci, an
+pi, t, it, ci
+pi, n, ml, ci
+n, ml, ci, an
+n, ml, ci, lt
+pi, it, ml, ci
+pi, ml, ci, lt
+pi, t, ml, ci
+t, ml, ci, an
+n, t, ml, ci
+ml, ci, an, lt
+pi, ml, ci, an
+pi, n, it, ci, an
+pi, n, t, ci, an
+pi, n, t, it, ci
+pi, t, it, ci, an
+pi, n, ml, ci, lt
+pi, n, it, ml, ci
+n, ml, ci, an, lt
+pi, n, ml, ci, an
+pi, it, ml, ci, lt
+pi, t, ml, ci, lt
+pi, t, it, ml, ci
+pi, t, ml, ci, an
+t, ml, ci, an, lt
+pi, n, t, ml, ci
+n, t, ml, ci, lt
+n, t, ml, ci, an
+pi, it, ml, ci, an
+pi, ml, ci, an, lt
+pi, n, t, it, ci, an
+pi, n, it, ml, ci, lt
+pi, n, ml, ci, an, lt
+pi, n, it, ml, ci, an
+pi, t, it, ml, ci, lt
+pi, t, it, ml, ci, an
+pi, t, ml, ci, an, lt
+pi, n, t, ml, ci, lt
+pi, n, t, it, ml, ci
+pi, n, t, ml, ci, an
+n, t, ml, ci, an, lt
+pi, it, ml, ci, an, lt
+pi, n, it, ml, ci, an, lt
+pi, t, it, ml, ci, an, lt
+pi, n, t, it, ml, ci, lt
+pi, n, t, it, ml, ci, an
+pi, n, t, ml, ci, an, lt
+pi, n, t, it, ml, ci, an, lt

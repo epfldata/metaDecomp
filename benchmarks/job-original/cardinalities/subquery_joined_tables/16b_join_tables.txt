@@ -1,0 +1,94 @@
+cn
+an
+n
+t
+ci
+mc
+k
+mk
+mc, cn
+mk, k
+ci, mc
+ci, mk
+ci, t
+mc, mk
+mc, t
+mk, t
+n, an
+ci, n
+ci, an
+ci, mc, mk
+ci, mc, t
+ci, mc, cn
+ci, mk, t
+ci, mk, k
+mc, mk, t
+mc, mk, cn
+mc, mk, k
+mc, t, cn
+mk, t, k
+ci, n, an
+t, mk, ci, mc
+cn, mk, ci, mc
+mk, ci, mc, k
+t, cn, ci, mc
+n, ci, mc
+ci, an, mc
+t, mk, ci, k
+n, mk, ci
+mk, ci, an
+n, t, ci
+t, ci, an
+t, cn, mk, mc
+t, mk, mc, k
+cn, mk, mc, k
+t, cn, mk, ci, mc
+t, mk, ci, mc, k
+mk, ci, an, mc
+n, mk, ci, mc
+cn, mk, ci, mc, k
+n, t, ci, mc
+t, ci, an, mc
+n, cn, ci, mc
+cn, ci, an, mc
+n, ci, an, mc
+t, mk, ci, an
+n, t, mk, ci
+mk, ci, an, k
+n, mk, ci, k
+n, mk, ci, an
+n, t, ci, an
+t, cn, mk, mc, k
+t, cn, mk, ci, mc, k
+n, t, mk, ci, mc
+t, mk, ci, an, mc
+n, mk, ci, mc, k
+mk, ci, an, mc, k
+n, cn, mk, ci, mc
+cn, mk, ci, an, mc
+n, mk, ci, an, mc
+n, t, ci, an, mc
+n, t, cn, ci, mc
+t, cn, ci, an, mc
+n, cn, ci, an, mc
+n, t, mk, ci, k
+t, mk, ci, an, k
+n, t, mk, ci, an
+n, mk, ci, an, k
+t, mk, ci, an, mc, k
+n, t, mk, ci, mc, k
+n, t, mk, ci, an, mc
+t, cn, mk, ci, an, mc
+n, t, cn, mk, ci, mc
+n, mk, ci, an, mc, k
+n, cn, mk, ci, an, mc
+n, cn, mk, ci, mc, k
+cn, mk, ci, an, mc, k
+n, t, cn, ci, an, mc
+n, t, mk, ci, an, k
+n, t, mk, ci, an, mc, k
+n, t, cn, mk, ci, an, mc
+t, cn, mk, ci, an, mc, k
+n, t, cn, mk, ci, mc, k
+n, cn, mk, ci, an, mc, k
+n, t, cn, mk, ci, an, mc, k

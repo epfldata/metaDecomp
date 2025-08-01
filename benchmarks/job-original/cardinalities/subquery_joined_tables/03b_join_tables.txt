@@ -1,0 +1,12 @@
+t
+k
+mk
+mi
+mk, k
+mk, mi
+mk, t
+mi, t
+mk, k, mi
+mk, k, t
+mk, mi, t
+t, mk, mi, k

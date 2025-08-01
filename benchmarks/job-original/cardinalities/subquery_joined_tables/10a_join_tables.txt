@@ -1,0 +1,53 @@
+t
+ci
+ct
+rt
+mc
+chn
+cn
+ci, rt
+ci, chn
+mc, cn
+mc, ct
+ci, rt, chn
+ci, mc
+ci, t
+mc, t
+mc, cn, ct
+ci, mc, cn
+ci, mc, ct
+ci, mc, t
+ci, mc, rt
+ci, mc, chn
+ci, t, rt
+ci, t, chn
+mc, t, cn
+mc, t, ct
+ct, cn, ci, mc
+t, rt, ci, mc
+t, chn, ci, mc
+t, cn, ci, mc
+ct, t, ci, mc
+chn, rt, ci, mc
+rt, cn, ci, mc
+ct, rt, ci, mc
+chn, cn, ci, mc
+ct, chn, ci, mc
+t, chn, rt, ci
+ct, t, cn, mc
+t, rt, cn, ci, mc
+t, chn, rt, ci, mc
+ct, t, rt, ci, mc
+ct, t, chn, ci, mc
+t, chn, cn, ci, mc
+ct, t, cn, ci, mc
+ct, chn, rt, ci, mc
+chn, rt, cn, ci, mc
+ct, rt, cn, ci, mc
+ct, chn, cn, ci, mc
+ct, t, rt, cn, ci, mc
+ct, t, chn, rt, ci, mc
+t, chn, rt, cn, ci, mc
+ct, t, chn, cn, ci, mc
+ct, chn, rt, cn, ci, mc
+ct, t, chn, rt, cn, ci, mc

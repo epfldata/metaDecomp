@@ -1,0 +1,681 @@
+it2
+cct1
+ci
+chn
+cc
+cct2
+mi_idx
+t
+kt
+k
+mk
+n
+ci, chn
+ci, n
+cc, cct1
+cc, cct2
+mi_idx, it2
+t, kt
+mk, k
+ci, chn, n
+cc, cct1, cct2
+mi_idx, t
+cc, mi_idx
+cc, t
+mk, ci
+mk, mi_idx
+mk, t
+mk, cc
+ci, t
+ci, mi_idx
+ci, cc
+mi_idx, t, it2
+mi_idx, t, kt
+cc, mi_idx, t
+cc, mi_idx, cct1
+cc, mi_idx, cct2
+cc, mi_idx, it2
+cc, t, cct1
+cc, t, cct2
+cc, t, kt
+mk, ci, n
+mk, ci, t
+mk, ci, chn
+mk, ci, mi_idx
+mk, ci, cc
+mk, ci, k
+mk, mi_idx, t
+mk, mi_idx, k
+mk, mi_idx, it2
+mk, t, k
+mk, t, kt
+mk, cc, k
+mk, cc, t
+mk, cc, mi_idx
+mk, cc, cct1
+mk, cc, cct2
+ci, t, chn
+ci, t, n
+ci, t, kt
+ci, mi_idx, t
+ci, mi_idx, chn
+ci, mi_idx, n
+ci, mi_idx, it2
+ci, cc, cct2
+ci, cc, t
+ci, cc, n
+ci, cc, chn
+ci, cc, mi_idx
+ci, cc, cct1
+mi_idx, kt, t, it2
+t, cct1, mi_idx, cc
+cct2, t, mi_idx, cc
+mi_idx, cc, t, it2
+t, mi_idx, cc, kt
+cct2, cct1, mi_idx, cc
+it2, cct1, mi_idx, cc
+cct2, it2, mi_idx, cc
+cct2, t, cct1, cc
+t, cct1, cc, kt
+cct2, t, cc, kt
+t, mk, ci, k
+t, chn, mk, ci
+n, t, mk, ci
+t, mk, ci, kt
+n, chn, mk, ci
+mi_idx, mk, ci, k
+n, mi_idx, mk, ci
+it2, mi_idx, mk, ci
+chn, mi_idx, mk, ci
+t, mi_idx, mk, ci
+n, mk, ci, cc
+t, mk, ci, cc
+mk, ci, cc, k
+cct2, mk, ci, cc
+cct1, mk, ci, cc
+chn, mk, ci, cc
+mi_idx, mk, ci, cc
+chn, mk, ci, k
+n, mk, ci, k
+t, mi_idx, mk, k
+mi_idx, mk, t, it2
+t, mi_idx, mk, kt
+it2, mi_idx, mk, k
+t, mk, kt, k
+cct1, mk, cc, k
+cct2, mk, cc, k
+t, mk, cc, k
+t, cct1, mk, cc
+cct2, t, mk, cc
+t, mk, cc, kt
+mi_idx, mk, cc, k
+cct2, mi_idx, mk, cc
+t, mi_idx, mk, cc
+it2, mi_idx, mk, cc
+cct1, mi_idx, mk, cc
+cct2, cct1, mk, cc
+n, t, chn, ci
+t, chn, ci, kt
+n, t, ci, kt
+t, chn, mi_idx, ci
+n, t, mi_idx, ci
+mi_idx, ci, t, it2
+t, mi_idx, ci, kt
+n, chn, mi_idx, ci
+it2, chn, mi_idx, ci
+n, it2, mi_idx, ci
+cct2, t, ci, cc
+n, t, ci, cc
+t, ci, cc, kt
+t, chn, ci, cc
+t, cct1, ci, cc
+n, cct1, ci, cc
+cct2, n, ci, cc
+n, chn, ci, cc
+cct1, chn, ci, cc
+cct2, chn, ci, cc
+cct1, mi_idx, ci, cc
+it2, mi_idx, ci, cc
+cct2, mi_idx, ci, cc
+t, mi_idx, ci, cc
+n, mi_idx, ci, cc
+chn, mi_idx, ci, cc
+cct2, cct1, ci, cc
+cct2, t, cct1, mi_idx, cc
+cct1, mi_idx, cc, t, it2
+t, cct1, mi_idx, cc, kt
+cct2, mi_idx, cc, t, it2
+cct2, t, mi_idx, cc, kt
+mi_idx, t, it2, cc, kt
+cct2, it2, cct1, mi_idx, cc
+cct2, t, cct1, cc, kt
+t, mk, ci, kt, k
+n, t, mk, ci, k
+t, chn, mk, ci, k
+n, t, chn, mk, ci
+t, chn, mk, ci, kt
+n, t, mk, ci, kt
+chn, mi_idx, mk, ci, k
+it2, mi_idx, mk, ci, k
+n, mi_idx, mk, ci, k
+n, it2, mi_idx, mk, ci
+it2, chn, mi_idx, mk, ci
+n, chn, mi_idx, mk, ci
+n, t, mi_idx, mk, ci
+mi_idx, mk, ci, t, it2
+t, chn, mi_idx, mk, ci
+t, mi_idx, mk, ci, k
+t, mi_idx, mk, ci, kt
+cct2, n, mk, ci, cc
+n, cct1, mk, ci, cc
+t, chn, mk, ci, cc
+t, cct1, mk, ci, cc
+t, mk, ci, cc, k
+cct2, t, mk, ci, cc
+n, t, mk, ci, cc
+t, mk, ci, cc, kt
+cct1, mk, ci, cc, k
+n, mk, ci, cc, k
+chn, mk, ci, cc, k
+cct2, mk, ci, cc, k
+cct2, cct1, mk, ci, cc
+cct2, chn, mk, ci, cc
+n, chn, mk, ci, cc
+cct1, chn, mk, ci, cc
+n, mi_idx, mk, ci, cc
+mi_idx, mk, ci, cc, k
+cct2, mi_idx, mk, ci, cc
+t, mi_idx, mk, ci, cc
+it2, mi_idx, mk, ci, cc
+cct1, mi_idx, mk, ci, cc
+chn, mi_idx, mk, ci, cc
+n, chn, mk, ci, k
+mi_idx, mk, k, t, it2
+t, mi_idx, mk, kt, k
+mi_idx, mk, kt, t, it2
+cct2, cct1, mk, cc, k
+t, mk, k, cc, kt
+t, cct1, mk, cc, k
+cct2, t, mk, cc, k
+t, cct1, mk, cc, kt
+cct2, t, cct1, mk, cc
+cct2, t, mk, cc, kt
+cct1, mi_idx, mk, cc, k
+cct2, mi_idx, mk, cc, k
+it2, mi_idx, mk, cc, k
+cct2, it2, mi_idx, mk, cc
+t, mi_idx, mk, cc, kt
+mi_idx, mk, cc, t, it2
+t, mi_idx, mk, cc, k
+t, cct1, mi_idx, mk, cc
+cct2, t, mi_idx, mk, cc
+it2, cct1, mi_idx, mk, cc
+cct2, cct1, mi_idx, mk, cc
+n, t, chn, ci, kt
+t, chn, mi_idx, ci, kt
+n, t, chn, mi_idx, ci
+chn, mi_idx, ci, t, it2
+n, t, mi_idx, ci, kt
+n, mi_idx, ci, t, it2
+mi_idx, ci, kt, t, it2
+n, it2, chn, mi_idx, ci
+cct2, t, ci, cc, kt
+n, t, cct1, ci, cc
+cct2, n, t, ci, cc
+n, t, ci, cc, kt
+t, chn, ci, cc, kt
+cct2, t, chn, ci, cc
+t, cct1, chn, ci, cc
+n, t, chn, ci, cc
+cct2, t, cct1, ci, cc
+t, cct1, ci, cc, kt
+cct2, n, cct1, ci, cc
+cct2, n, chn, ci, cc
+n, cct1, chn, ci, cc
+cct2, cct1, chn, ci, cc
+cct2, cct1, mi_idx, ci, cc
+it2, cct1, mi_idx, ci, cc
+cct2, it2, mi_idx, ci, cc
+n, t, mi_idx, ci, cc
+t, cct1, mi_idx, ci, cc
+t, mi_idx, ci, cc, kt
+t, chn, mi_idx, ci, cc
+cct2, t, mi_idx, ci, cc
+mi_idx, ci, cc, t, it2
+cct2, n, mi_idx, ci, cc
+n, cct1, mi_idx, ci, cc
+n, it2, mi_idx, ci, cc
+cct1, chn, mi_idx, ci, cc
+it2, chn, mi_idx, ci, cc
+cct2, chn, mi_idx, ci, cc
+n, chn, mi_idx, ci, cc
+cct2, cct1, mi_idx, cc, t, it2
+cct2, t, cct1, mi_idx, cc, kt
+cct1, mi_idx, t, it2, cc, kt
+cct2, mi_idx, t, it2, cc, kt
+n, t, mk, ci, kt, k
+n, t, chn, mk, ci, k
+t, chn, mk, ci, kt, k
+n, t, chn, mk, ci, kt
+n, chn, mi_idx, mk, ci, k
+it2, chn, mi_idx, mk, ci, k
+n, it2, mi_idx, mk, ci, k
+n, it2, chn, mi_idx, mk, ci
+n, t, mi_idx, mk, ci, kt
+n, mi_idx, mk, ci, t, it2
+mi_idx, mk, ci, kt, t, it2
+t, chn, mi_idx, mk, ci, kt
+n, t, chn, mi_idx, mk, ci
+chn, mi_idx, mk, ci, t, it2
+n, t, mi_idx, mk, ci, k
+t, chn, mi_idx, mk, ci, k
+mi_idx, mk, ci, k, t, it2
+t, mi_idx, mk, ci, kt, k
+cct2, n, cct1, mk, ci, cc
+t, chn, mk, ci, cc, kt
+t, cct1, chn, mk, ci, cc
+n, t, chn, mk, ci, cc
+cct2, t, chn, mk, ci, cc
+cct2, t, cct1, mk, ci, cc
+t, cct1, mk, ci, cc, kt
+n, t, mk, ci, cc, k
+t, cct1, mk, ci, cc, k
+t, mk, ci, k, cc, kt
+t, chn, mk, ci, cc, k
+cct2, t, mk, ci, cc, k
+cct2, t, mk, ci, cc, kt
+cct2, n, t, mk, ci, cc
+n, t, cct1, mk, ci, cc
+n, t, mk, ci, cc, kt
+cct2, cct1, mk, ci, cc, k
+cct2, n, mk, ci, cc, k
+n, cct1, mk, ci, cc, k
+cct1, chn, mk, ci, cc, k
+cct2, chn, mk, ci, cc, k
+n, chn, mk, ci, cc, k
+cct2, n, chn, mk, ci, cc
+n, cct1, chn, mk, ci, cc
+cct2, cct1, chn, mk, ci, cc
+n, it2, mi_idx, mk, ci, cc
+n, cct1, mi_idx, mk, ci, cc
+cct2, n, mi_idx, mk, ci, cc
+n, mi_idx, mk, ci, cc, k
+cct2, mi_idx, mk, ci, cc, k
+chn, mi_idx, mk, ci, cc, k
+it2, mi_idx, mk, ci, cc, k
+cct1, mi_idx, mk, ci, cc, k
+cct2, it2, mi_idx, mk, ci, cc
+t, mi_idx, mk, ci, cc, kt
+t, chn, mi_idx, mk, ci, cc
+n, t, mi_idx, mk, ci, cc
+t, cct1, mi_idx, mk, ci, cc
+mi_idx, mk, ci, cc, t, it2
+cct2, t, mi_idx, mk, ci, cc
+t, mi_idx, mk, ci, cc, k
+it2, cct1, mi_idx, mk, ci, cc
+cct2, cct1, mi_idx, mk, ci, cc
+cct1, chn, mi_idx, mk, ci, cc
+cct2, chn, mi_idx, mk, ci, cc
+it2, chn, mi_idx, mk, ci, cc
+n, chn, mi_idx, mk, ci, cc
+mi_idx, mk, kt, k, t, it2
+cct2, t, cct1, mk, cc, k
+t, cct1, mk, k, cc, kt
+cct2, t, mk, k, cc, kt
+cct2, t, cct1, mk, cc, kt
+cct2, cct1, mi_idx, mk, cc, k
+it2, cct1, mi_idx, mk, cc, k
+cct2, it2, mi_idx, mk, cc, k
+mi_idx, mk, t, it2, cc, kt
+mi_idx, mk, cc, k, t, it2
+cct2, t, mi_idx, mk, cc, k
+t, cct1, mi_idx, mk, cc, k
+t, mi_idx, mk, k, cc, kt
+cct2, t, cct1, mi_idx, mk, cc
+cct1, mi_idx, mk, cc, t, it2
+t, cct1, mi_idx, mk, cc, kt
+cct2, t, mi_idx, mk, cc, kt
+cct2, mi_idx, mk, cc, t, it2
+cct2, it2, cct1, mi_idx, mk, cc
+n, chn, mi_idx, ci, t, it2
+n, t, chn, mi_idx, ci, kt
+chn, mi_idx, ci, kt, t, it2
+n, mi_idx, ci, kt, t, it2
+cct2, n, t, cct1, ci, cc
+n, t, cct1, ci, cc, kt
+cct2, n, t, ci, cc, kt
+cct2, t, chn, ci, cc, kt
+t, cct1, chn, ci, cc, kt
+cct2, t, cct1, chn, ci, cc
+n, t, cct1, chn, ci, cc
+cct2, n, t, chn, ci, cc
+n, t, chn, ci, cc, kt
+cct2, t, cct1, ci, cc, kt
+cct2, n, cct1, chn, ci, cc
+cct2, it2, cct1, mi_idx, ci, cc
+n, t, mi_idx, ci, cc, kt
+n, mi_idx, ci, cc, t, it2
+n, t, cct1, mi_idx, ci, cc
+cct2, n, t, mi_idx, ci, cc
+cct2, t, cct1, mi_idx, ci, cc
+cct1, mi_idx, ci, cc, t, it2
+t, cct1, mi_idx, ci, cc, kt
+chn, mi_idx, ci, cc, t, it2
+cct2, t, chn, mi_idx, ci, cc
+t, cct1, chn, mi_idx, ci, cc
+t, chn, mi_idx, ci, cc, kt
+n, t, chn, mi_idx, ci, cc
+cct2, mi_idx, ci, cc, t, it2
+cct2, t, mi_idx, ci, cc, kt
+mi_idx, ci, t, it2, cc, kt
+cct2, n, it2, mi_idx, ci, cc
+cct2, n, cct1, mi_idx, ci, cc
+n, it2, cct1, mi_idx, ci, cc
+it2, cct1, chn, mi_idx, ci, cc
+cct2, cct1, chn, mi_idx, ci, cc
+cct2, it2, chn, mi_idx, ci, cc
+cct2, n, chn, mi_idx, ci, cc
+n, cct1, chn, mi_idx, ci, cc
+n, it2, chn, mi_idx, ci, cc
+cct2, cct1, mi_idx, t, it2, cc, kt
+n, t, chn, mk, ci, kt, k
+n, it2, chn, mi_idx, mk, ci, k
+n, mi_idx, mk, ci, kt, t, it2
+n, t, chn, mi_idx, mk, ci, kt
+n, chn, mi_idx, mk, ci, t, it2
+chn, mi_idx, mk, ci, kt, t, it2
+n, mi_idx, mk, ci, k, t, it2
+n, t, mi_idx, mk, ci, kt, k
+t, chn, mi_idx, mk, ci, kt, k
+chn, mi_idx, mk, ci, k, t, it2
+n, t, chn, mi_idx, mk, ci, k
+mi_idx, mk, ci, kt, k, t, it2
+cct2, t, cct1, chn, mk, ci, cc
+t, cct1, chn, mk, ci, cc, kt
+n, t, chn, mk, ci, cc, kt
+n, t, cct1, chn, mk, ci, cc
+cct2, n, t, chn, mk, ci, cc
+cct2, t, chn, mk, ci, cc, kt
+cct2, t, cct1, mk, ci, cc, kt
+cct2, n, t, mk, ci, cc, k
+n, t, cct1, mk, ci, cc, k
+n, t, mk, ci, k, cc, kt
+t, cct1, mk, ci, k, cc, kt
+cct2, t, cct1, mk, ci, cc, k
+cct2, t, chn, mk, ci, cc, k
+t, cct1, chn, mk, ci, cc, k
+t, chn, mk, ci, k, cc, kt
+n, t, chn, mk, ci, cc, k
+cct2, t, mk, ci, k, cc, kt
+cct2, n, t, mk, ci, cc, kt
+n, t, cct1, mk, ci, cc, kt
+cct2, n, t, cct1, mk, ci, cc
+cct2, n, cct1, mk, ci, cc, k
+cct2, cct1, chn, mk, ci, cc, k
+n, cct1, chn, mk, ci, cc, k
+cct2, n, chn, mk, ci, cc, k
+cct2, n, cct1, chn, mk, ci, cc
+cct2, n, cct1, mi_idx, mk, ci, cc
+n, it2, cct1, mi_idx, mk, ci, cc
+cct2, n, it2, mi_idx, mk, ci, cc
+cct2, n, mi_idx, mk, ci, cc, k
+n, cct1, mi_idx, mk, ci, cc, k
+n, it2, mi_idx, mk, ci, cc, k
+cct2, it2, mi_idx, mk, ci, cc, k
+cct2, chn, mi_idx, mk, ci, cc, k
+n, chn, mi_idx, mk, ci, cc, k
+it2, chn, mi_idx, mk, ci, cc, k
+cct1, chn, mi_idx, mk, ci, cc, k
+cct2, cct1, mi_idx, mk, ci, cc, k
+it2, cct1, mi_idx, mk, ci, cc, k
+cct2, t, chn, mi_idx, mk, ci, cc
+chn, mi_idx, mk, ci, cc, t, it2
+n, t, chn, mi_idx, mk, ci, cc
+t, cct1, chn, mi_idx, mk, ci, cc
+t, chn, mi_idx, mk, ci, cc, kt
+n, t, mi_idx, mk, ci, cc, kt
+n, t, cct1, mi_idx, mk, ci, cc
+cct2, n, t, mi_idx, mk, ci, cc
+n, mi_idx, mk, ci, cc, t, it2
+cct1, mi_idx, mk, ci, cc, t, it2
+t, cct1, mi_idx, mk, ci, cc, kt
+cct2, t, cct1, mi_idx, mk, ci, cc
+mi_idx, mk, ci, t, it2, cc, kt
+cct2, mi_idx, mk, ci, cc, t, it2
+cct2, t, mi_idx, mk, ci, cc, kt
+t, mi_idx, mk, ci, k, cc, kt
+n, t, mi_idx, mk, ci, cc, k
+t, chn, mi_idx, mk, ci, cc, k
+t, cct1, mi_idx, mk, ci, cc, k
+mi_idx, mk, ci, cc, k, t, it2
+cct2, t, mi_idx, mk, ci, cc, k
+cct2, it2, cct1, mi_idx, mk, ci, cc
+it2, cct1, chn, mi_idx, mk, ci, cc
+cct2, cct1, chn, mi_idx, mk, ci, cc
+cct2, it2, chn, mi_idx, mk, ci, cc
+cct2, n, chn, mi_idx, mk, ci, cc
+n, cct1, chn, mi_idx, mk, ci, cc
+n, it2, chn, mi_idx, mk, ci, cc
+cct2, t, cct1, mk, k, cc, kt
+cct2, it2, cct1, mi_idx, mk, cc, k
+mi_idx, mk, k, t, it2, cc, kt
+cct2, t, mi_idx, mk, k, cc, kt
+cct2, mi_idx, mk, cc, k, t, it2
+t, cct1, mi_idx, mk, k, cc, kt
+cct2, t, cct1, mi_idx, mk, cc, k
+cct1, mi_idx, mk, cc, k, t, it2
+cct2, cct1, mi_idx, mk, cc, t, it2
+cct2, t, cct1, mi_idx, mk, cc, kt
+cct1, mi_idx, mk, t, it2, cc, kt
+cct2, mi_idx, mk, t, it2, cc, kt
+n, chn, mi_idx, ci, kt, t, it2
+cct2, n, t, cct1, ci, cc, kt
+cct2, t, cct1, chn, ci, cc, kt
+cct2, n, t, cct1, chn, ci, cc
+n, t, cct1, chn, ci, cc, kt
+cct2, n, t, chn, ci, cc, kt
+n, mi_idx, ci, t, it2, cc, kt
+cct2, n, t, cct1, mi_idx, ci, cc
+n, t, cct1, mi_idx, ci, cc, kt
+n, cct1, mi_idx, ci, cc, t, it2
+cct2, n, t, mi_idx, ci, cc, kt
+cct2, n, mi_idx, ci, cc, t, it2
+cct2, cct1, mi_idx, ci, cc, t, it2
+cct2, t, cct1, mi_idx, ci, cc, kt
+cct1, mi_idx, ci, t, it2, cc, kt
+chn, mi_idx, ci, t, it2, cc, kt
+cct2, chn, mi_idx, ci, cc, t, it2
+cct2, t, chn, mi_idx, ci, cc, kt
+t, cct1, chn, mi_idx, ci, cc, kt
+cct2, t, cct1, chn, mi_idx, ci, cc
+cct1, chn, mi_idx, ci, cc, t, it2
+n, chn, mi_idx, ci, cc, t, it2
+n, t, chn, mi_idx, ci, cc, kt
+n, t, cct1, chn, mi_idx, ci, cc
+cct2, n, t, chn, mi_idx, ci, cc
+cct2, mi_idx, ci, t, it2, cc, kt
+cct2, n, it2, cct1, mi_idx, ci, cc
+cct2, it2, cct1, chn, mi_idx, ci, cc
+cct2, n, it2, chn, mi_idx, ci, cc
+n, it2, cct1, chn, mi_idx, ci, cc
+cct2, n, cct1, chn, mi_idx, ci, cc
+n, chn, mi_idx, mk, ci, kt, t, it2
+n, mi_idx, mk, ci, kt, k, t, it2
+chn, mi_idx, mk, ci, kt, k, t, it2
+n, chn, mi_idx, mk, ci, k, t, it2
+n, t, chn, mi_idx, mk, ci, kt, k
+cct2, t, cct1, chn, mk, ci, cc, kt
+cct2, n, t, cct1, chn, mk, ci, cc
+n, t, cct1, chn, mk, ci, cc, kt
+cct2, n, t, chn, mk, ci, cc, kt
+cct2, n, t, mk, ci, k, cc, kt
+n, t, cct1, mk, ci, k, cc, kt
+cct2, n, t, cct1, mk, ci, cc, k
+cct2, t, cct1, mk, ci, k, cc, kt
+cct2, t, chn, mk, ci, k, cc, kt
+cct2, t, cct1, chn, mk, ci, cc, k
+t, cct1, chn, mk, ci, k, cc, kt
+n, t, chn, mk, ci, k, cc, kt
+n, t, cct1, chn, mk, ci, cc, k
+cct2, n, t, chn, mk, ci, cc, k
+cct2, n, t, cct1, mk, ci, cc, kt
+cct2, n, cct1, chn, mk, ci, cc, k
+cct2, n, it2, cct1, mi_idx, mk, ci, cc
+cct2, n, it2, mi_idx, mk, ci, cc, k
+cct2, n, cct1, mi_idx, mk, ci, cc, k
+n, it2, cct1, mi_idx, mk, ci, cc, k
+cct2, it2, chn, mi_idx, mk, ci, cc, k
+n, cct1, chn, mi_idx, mk, ci, cc, k
+cct2, n, chn, mi_idx, mk, ci, cc, k
+n, it2, chn, mi_idx, mk, ci, cc, k
+cct2, cct1, chn, mi_idx, mk, ci, cc, k
+it2, cct1, chn, mi_idx, mk, ci, cc, k
+cct2, it2, cct1, mi_idx, mk, ci, cc, k
+cct2, t, chn, mi_idx, mk, ci, cc, kt
+cct2, chn, mi_idx, mk, ci, cc, t, it2
+chn, mi_idx, mk, ci, t, it2, cc, kt
+n, t, cct1, chn, mi_idx, mk, ci, cc
+cct2, n, t, chn, mi_idx, mk, ci, cc
+n, chn, mi_idx, mk, ci, cc, t, it2
+n, t, chn, mi_idx, mk, ci, cc, kt
+t, cct1, chn, mi_idx, mk, ci, cc, kt
+cct1, chn, mi_idx, mk, ci, cc, t, it2
+cct2, t, cct1, chn, mi_idx, mk, ci, cc
+n, cct1, mi_idx, mk, ci, cc, t, it2
+n, t, cct1, mi_idx, mk, ci, cc, kt
+cct2, n, t, cct1, mi_idx, mk, ci, cc
+cct2, n, mi_idx, mk, ci, cc, t, it2
+cct2, n, t, mi_idx, mk, ci, cc, kt
+n, mi_idx, mk, ci, t, it2, cc, kt
+cct1, mi_idx, mk, ci, t, it2, cc, kt
+cct2, cct1, mi_idx, mk, ci, cc, t, it2
+cct2, t, cct1, mi_idx, mk, ci, cc, kt
+cct2, mi_idx, mk, ci, t, it2, cc, kt
+n, t, mi_idx, mk, ci, k, cc, kt
+n, t, cct1, mi_idx, mk, ci, cc, k
+n, mi_idx, mk, ci, cc, k, t, it2
+cct2, n, t, mi_idx, mk, ci, cc, k
+t, chn, mi_idx, mk, ci, k, cc, kt
+chn, mi_idx, mk, ci, cc, k, t, it2
+cct2, t, chn, mi_idx, mk, ci, cc, k
+t, cct1, chn, mi_idx, mk, ci, cc, k
+n, t, chn, mi_idx, mk, ci, cc, k
+cct1, mi_idx, mk, ci, cc, k, t, it2
+cct2, t, cct1, mi_idx, mk, ci, cc, k
+t, cct1, mi_idx, mk, ci, k, cc, kt
+mi_idx, mk, ci, k, t, it2, cc, kt
+cct2, t, mi_idx, mk, ci, k, cc, kt
+cct2, mi_idx, mk, ci, cc, k, t, it2
+cct2, it2, cct1, chn, mi_idx, mk, ci, cc
+cct2, n, it2, chn, mi_idx, mk, ci, cc
+n, it2, cct1, chn, mi_idx, mk, ci, cc
+cct2, n, cct1, chn, mi_idx, mk, ci, cc
+cct2, mi_idx, mk, k, t, it2, cc, kt
+cct2, cct1, mi_idx, mk, cc, k, t, it2
+cct2, t, cct1, mi_idx, mk, k, cc, kt
+cct1, mi_idx, mk, k, t, it2, cc, kt
+cct2, cct1, mi_idx, mk, t, it2, cc, kt
+cct2, n, t, cct1, chn, ci, cc, kt
+cct2, n, cct1, mi_idx, ci, cc, t, it2
+cct2, n, t, cct1, mi_idx, ci, cc, kt
+n, cct1, mi_idx, ci, t, it2, cc, kt
+cct2, n, mi_idx, ci, t, it2, cc, kt
+cct2, cct1, mi_idx, ci, t, it2, cc, kt
+cct2, chn, mi_idx, ci, t, it2, cc, kt
+cct2, t, cct1, chn, mi_idx, ci, cc, kt
+cct2, cct1, chn, mi_idx, ci, cc, t, it2
+cct1, chn, mi_idx, ci, t, it2, cc, kt
+n, chn, mi_idx, ci, t, it2, cc, kt
+n, t, cct1, chn, mi_idx, ci, cc, kt
+n, cct1, chn, mi_idx, ci, cc, t, it2
+cct2, n, t, cct1, chn, mi_idx, ci, cc
+cct2, n, t, chn, mi_idx, ci, cc, kt
+cct2, n, chn, mi_idx, ci, cc, t, it2
+cct2, n, it2, cct1, chn, mi_idx, ci, cc
+n, chn, mi_idx, mk, ci, kt, k, t, it2
+cct2, n, t, cct1, chn, mk, ci, cc, kt
+cct2, n, t, cct1, mk, ci, k, cc, kt
+cct2, t, cct1, chn, mk, ci, k, cc, kt
+cct2, n, t, cct1, chn, mk, ci, cc, k
+n, t, cct1, chn, mk, ci, k, cc, kt
+cct2, n, t, chn, mk, ci, k, cc, kt
+cct2, n, it2, cct1, mi_idx, mk, ci, cc, k
+cct2, n, cct1, chn, mi_idx, mk, ci, cc, k
+n, it2, cct1, chn, mi_idx, mk, ci, cc, k
+cct2, n, it2, chn, mi_idx, mk, ci, cc, k
+cct2, it2, cct1, chn, mi_idx, mk, ci, cc, k
+cct2, chn, mi_idx, mk, ci, t, it2, cc, kt
+n, t, cct1, chn, mi_idx, mk, ci, cc, kt
+n, cct1, chn, mi_idx, mk, ci, cc, t, it2
+cct2, n, t, cct1, chn, mi_idx, mk, ci, cc
+cct2, n, chn, mi_idx, mk, ci, cc, t, it2
+cct2, n, t, chn, mi_idx, mk, ci, cc, kt
+n, chn, mi_idx, mk, ci, t, it2, cc, kt
+cct1, chn, mi_idx, mk, ci, t, it2, cc, kt
+cct2, cct1, chn, mi_idx, mk, ci, cc, t, it2
+cct2, t, cct1, chn, mi_idx, mk, ci, cc, kt
+n, cct1, mi_idx, mk, ci, t, it2, cc, kt
+cct2, n, cct1, mi_idx, mk, ci, cc, t, it2
+cct2, n, t, cct1, mi_idx, mk, ci, cc, kt
+cct2, n, mi_idx, mk, ci, t, it2, cc, kt
+cct2, cct1, mi_idx, mk, ci, t, it2, cc, kt
+n, cct1, mi_idx, mk, ci, cc, k, t, it2
+n, t, cct1, mi_idx, mk, ci, k, cc, kt
+cct2, n, t, cct1, mi_idx, mk, ci, cc, k
+n, mi_idx, mk, ci, k, t, it2, cc, kt
+cct2, n, mi_idx, mk, ci, cc, k, t, it2
+cct2, n, t, mi_idx, mk, ci, k, cc, kt
+chn, mi_idx, mk, ci, k, t, it2, cc, kt
+cct2, t, chn, mi_idx, mk, ci, k, cc, kt
+cct2, chn, mi_idx, mk, ci, cc, k, t, it2
+t, cct1, chn, mi_idx, mk, ci, k, cc, kt
+cct2, t, cct1, chn, mi_idx, mk, ci, cc, k
+cct1, chn, mi_idx, mk, ci, cc, k, t, it2
+n, chn, mi_idx, mk, ci, cc, k, t, it2
+cct2, n, t, chn, mi_idx, mk, ci, cc, k
+n, t, cct1, chn, mi_idx, mk, ci, cc, k
+n, t, chn, mi_idx, mk, ci, k, cc, kt
+cct1, mi_idx, mk, ci, k, t, it2, cc, kt
+cct2, t, cct1, mi_idx, mk, ci, k, cc, kt
+cct2, cct1, mi_idx, mk, ci, cc, k, t, it2
+cct2, mi_idx, mk, ci, k, t, it2, cc, kt
+cct2, n, it2, cct1, chn, mi_idx, mk, ci, cc
+cct2, cct1, mi_idx, mk, k, t, it2, cc, kt
+cct2, n, cct1, mi_idx, ci, t, it2, cc, kt
+cct2, cct1, chn, mi_idx, ci, t, it2, cc, kt
+n, cct1, chn, mi_idx, ci, t, it2, cc, kt
+cct2, n, cct1, chn, mi_idx, ci, cc, t, it2
+cct2, n, t, cct1, chn, mi_idx, ci, cc, kt
+cct2, n, chn, mi_idx, ci, t, it2, cc, kt
+cct2, n, t, cct1, chn, mk, ci, k, cc, kt
+cct2, n, it2, cct1, chn, mi_idx, mk, ci, cc, k
+n, cct1, chn, mi_idx, mk, ci, t, it2, cc, kt
+cct2, n, cct1, chn, mi_idx, mk, ci, cc, t, it2
+cct2, n, t, cct1, chn, mi_idx, mk, ci, cc, kt
+cct2, n, chn, mi_idx, mk, ci, t, it2, cc, kt
+cct2, cct1, chn, mi_idx, mk, ci, t, it2, cc, kt
+cct2, n, cct1, mi_idx, mk, ci, t, it2, cc, kt
+n, cct1, mi_idx, mk, ci, k, t, it2, cc, kt
+cct2, n, cct1, mi_idx, mk, ci, cc, k, t, it2
+cct2, n, t, cct1, mi_idx, mk, ci, k, cc, kt
+cct2, n, mi_idx, mk, ci, k, t, it2, cc, kt
+cct2, chn, mi_idx, mk, ci, k, t, it2, cc, kt
+cct2, cct1, chn, mi_idx, mk, ci, cc, k, t, it2
+cct2, t, cct1, chn, mi_idx, mk, ci, k, cc, kt
+cct1, chn, mi_idx, mk, ci, k, t, it2, cc, kt
+n, chn, mi_idx, mk, ci, k, t, it2, cc, kt
+cct2, n, chn, mi_idx, mk, ci, cc, k, t, it2
+cct2, n, t, chn, mi_idx, mk, ci, k, cc, kt
+n, t, cct1, chn, mi_idx, mk, ci, k, cc, kt
+n, cct1, chn, mi_idx, mk, ci, cc, k, t, it2
+cct2, n, t, cct1, chn, mi_idx, mk, ci, cc, k
+cct2, cct1, mi_idx, mk, ci, k, t, it2, cc, kt
+cct2, n, cct1, chn, mi_idx, ci, t, it2, cc, kt
+cct2, n, cct1, chn, mi_idx, mk, ci, t, it2, cc, kt
+cct2, n, cct1, mi_idx, mk, ci, k, t, it2, cc, kt
+cct2, cct1, chn, mi_idx, mk, ci, k, t, it2, cc, kt
+cct2, n, chn, mi_idx, mk, ci, k, t, it2, cc, kt
+n, cct1, chn, mi_idx, mk, ci, k, t, it2, cc, kt
+cct2, n, cct1, chn, mi_idx, mk, ci, cc, k, t, it2
+cct2, n, t, cct1, chn, mi_idx, mk, ci, k, cc, kt
+cct2, n, cct1, chn, mi_idx, mk, ci, k, t, it2, cc, kt

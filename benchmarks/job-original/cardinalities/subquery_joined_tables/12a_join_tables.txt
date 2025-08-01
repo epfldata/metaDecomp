@@ -1,0 +1,93 @@
+it2
+mi
+it1
+t
+cn
+mc
+ct
+mi_idx
+mi, it1
+mc, cn
+mc, ct
+mi_idx, it2
+mi, mc
+mi, mi_idx
+mi, t
+mc, mi_idx
+mc, t
+mi_idx, t
+mc, cn, ct
+mi, mc, t
+mi, mc, ct
+mi, mc, mi_idx
+mi, mc, cn
+mi, mc, it1
+mi, mi_idx, t
+mi, mi_idx, it1
+mi, mi_idx, it2
+mi, t, it1
+mc, mi_idx, t
+mc, mi_idx, cn
+mc, mi_idx, ct
+mc, mi_idx, it2
+mc, t, cn
+mc, t, ct
+mi_idx, t, it2
+t, it1, mc, mi
+t, cn, mc, mi
+ct, t, mc, mi
+it2, mi_idx, mc, mi
+mi_idx, cn, mc, mi
+it1, mi_idx, mc, mi
+ct, mi_idx, mc, mi
+t, mi_idx, mc, mi
+ct, cn, mc, mi
+it1, cn, mc, mi
+ct, it1, mc, mi
+t, it1, mi_idx, mi
+mi_idx, mi, t, it2
+it2, it1, mi_idx, mi
+t, mi_idx, cn, mc
+ct, t, mi_idx, mc
+mi_idx, mc, t, it2
+ct, mi_idx, cn, mc
+it2, mi_idx, cn, mc
+ct, it2, mi_idx, mc
+ct, t, cn, mc
+t, it1, cn, mc, mi
+ct, t, it1, mc, mi
+ct, t, cn, mc, mi
+ct, mi_idx, cn, mc, mi
+it2, mi_idx, cn, mc, mi
+ct, it1, mi_idx, mc, mi
+it2, it1, mi_idx, mc, mi
+it1, mi_idx, cn, mc, mi
+ct, it2, mi_idx, mc, mi
+ct, t, mi_idx, mc, mi
+t, it1, mi_idx, mc, mi
+mi_idx, mc, mi, t, it2
+t, mi_idx, cn, mc, mi
+ct, it1, cn, mc, mi
+it1, mi_idx, mi, t, it2
+ct, t, mi_idx, cn, mc
+mi_idx, cn, mc, t, it2
+ct, mi_idx, mc, t, it2
+ct, it2, mi_idx, cn, mc
+ct, t, it1, cn, mc, mi
+ct, it2, mi_idx, cn, mc, mi
+ct, it2, it1, mi_idx, mc, mi
+it2, it1, mi_idx, cn, mc, mi
+ct, it1, mi_idx, cn, mc, mi
+ct, mi_idx, mc, mi, t, it2
+t, it1, mi_idx, cn, mc, mi
+it1, mi_idx, mc, mi, t, it2
+ct, t, it1, mi_idx, mc, mi
+ct, t, mi_idx, cn, mc, mi
+mi_idx, cn, mc, mi, t, it2
+ct, mi_idx, cn, mc, t, it2
+ct, it2, it1, mi_idx, cn, mc, mi
+it1, mi_idx, cn, mc, mi, t, it2
+ct, t, it1, mi_idx, cn, mc, mi
+ct, it1, mi_idx, mc, mi, t, it2
+ct, mi_idx, cn, mc, mi, t, it2
+ct, it1, mi_idx, cn, mc, mi, t, it2

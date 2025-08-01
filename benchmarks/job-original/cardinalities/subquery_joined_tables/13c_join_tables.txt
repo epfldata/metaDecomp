@@ -1,0 +1,139 @@
+t
+mc
+kt
+ct
+miidx
+mi
+it2
+cn
+it
+t, kt
+mc, cn
+mc, ct
+miidx, it
+mi, it2
+mc, cn, ct
+t, mi
+t, mc
+t, miidx
+mi, mc
+mi, miidx
+mc, miidx
+t, mi, mc
+t, mi, miidx
+t, mi, kt
+t, mi, it2
+t, mc, miidx
+t, mc, kt
+t, mc, cn
+t, mc, ct
+t, miidx, kt
+t, miidx, it
+mi, mc, miidx
+mi, mc, it2
+mi, mc, cn
+mi, mc, ct
+mi, miidx, it2
+mi, miidx, it
+mc, miidx, cn
+mc, miidx, ct
+mc, miidx, it
+mc, mi, t, it2
+t, mi, mc, kt
+t, miidx, mc, mi
+t, cn, mc, mi
+ct, t, mc, mi
+t, miidx, kt, mi
+miidx, mi, t, it2
+t, it, miidx, mi
+kt, mi, t, it2
+t, miidx, mc, kt
+t, cn, miidx, mc
+ct, t, miidx, mc
+t, it, miidx, mc
+t, cn, mc, kt
+ct, t, mc, kt
+ct, t, cn, mc
+t, it, miidx, kt
+it2, miidx, mc, mi
+cn, miidx, mc, mi
+ct, miidx, mc, mi
+it, miidx, mc, mi
+it2, cn, mc, mi
+ct, it2, mc, mi
+ct, cn, mc, mi
+it2, it, miidx, mi
+ct, cn, miidx, mc
+it, cn, miidx, mc
+ct, it, miidx, mc
+ct, mc, mi, t, it2
+cn, mc, mi, t, it2
+ct, t, mi, mc, kt
+t, cn, mi, mc, kt
+mi, t, it2, mc, kt
+ct, t, miidx, mc, mi
+t, cn, miidx, mc, mi
+t, it, miidx, mc, mi
+miidx, mc, mi, t, it2
+t, miidx, mi, mc, kt
+ct, t, cn, mc, mi
+t, it, miidx, kt, mi
+miidx, kt, mi, t, it2
+it, miidx, mi, t, it2
+t, it, miidx, mc, kt
+ct, t, miidx, mc, kt
+t, cn, miidx, mc, kt
+ct, t, cn, miidx, mc
+t, it, cn, miidx, mc
+ct, t, it, miidx, mc
+ct, t, cn, mc, kt
+it2, cn, miidx, mc, mi
+it2, it, miidx, mc, mi
+ct, it2, miidx, mc, mi
+ct, cn, miidx, mc, mi
+it, cn, miidx, mc, mi
+ct, it, miidx, mc, mi
+ct, it2, cn, mc, mi
+ct, it, cn, miidx, mc
+ct, cn, mc, mi, t, it2
+ct, t, cn, mi, mc, kt
+cn, mi, t, it2, mc, kt
+ct, mi, t, it2, mc, kt
+ct, t, it, miidx, mc, mi
+t, it, cn, miidx, mc, mi
+ct, t, cn, miidx, mc, mi
+cn, miidx, mc, mi, t, it2
+it, miidx, mc, mi, t, it2
+ct, miidx, mc, mi, t, it2
+ct, t, miidx, mi, mc, kt
+t, it, miidx, mi, mc, kt
+miidx, mi, t, it2, mc, kt
+t, cn, miidx, mi, mc, kt
+it, miidx, kt, mi, t, it2
+ct, t, it, miidx, mc, kt
+t, it, cn, miidx, mc, kt
+ct, t, cn, miidx, mc, kt
+ct, t, it, cn, miidx, mc
+it2, it, cn, miidx, mc, mi
+ct, it2, cn, miidx, mc, mi
+ct, it2, it, miidx, mc, mi
+ct, it, cn, miidx, mc, mi
+ct, cn, mi, t, it2, mc, kt
+ct, t, it, cn, miidx, mc, mi
+it, cn, miidx, mc, mi, t, it2
+ct, cn, miidx, mc, mi, t, it2
+ct, it, miidx, mc, mi, t, it2
+ct, t, it, miidx, mi, mc, kt
+ct, miidx, mi, t, it2, mc, kt
+cn, miidx, mi, t, it2, mc, kt
+it, miidx, mi, t, it2, mc, kt
+ct, t, cn, miidx, mi, mc, kt
+t, it, cn, miidx, mi, mc, kt
+ct, t, it, cn, miidx, mc, kt
+ct, it2, it, cn, miidx, mc, mi
+ct, it, cn, miidx, mc, mi, t, it2
+ct, it, miidx, mi, t, it2, mc, kt
+ct, cn, miidx, mi, t, it2, mc, kt
+it, cn, miidx, mi, t, it2, mc, kt
+ct, t, it, cn, miidx, mi, mc, kt
+ct, it, cn, miidx, mi, t, it2, mc, kt

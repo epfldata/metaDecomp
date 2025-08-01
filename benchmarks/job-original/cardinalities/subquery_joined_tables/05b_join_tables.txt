@@ -1,0 +1,19 @@
+it
+mi
+t
+mc
+ct
+mi, it
+mc, ct
+mi, mc
+mi, t
+mc, t
+mi, mc, t
+mi, mc, it
+mi, mc, ct
+mi, t, it
+mc, t, ct
+t, it, mc, mi
+ct, t, mc, mi
+ct, it, mc, mi
+ct, t, it, mc, mi

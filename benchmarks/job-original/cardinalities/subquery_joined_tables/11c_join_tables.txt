@@ -1,0 +1,93 @@
+mk
+lt
+ml
+cn
+k
+mc
+ct
+t
+mk, k
+ml, lt
+mc, ct
+mc, cn
+mc, t
+mc, mk
+mc, ml
+ml, mk
+ml, t
+mk, t
+mc, ct, cn
+mc, t, ct
+mc, t, cn
+mc, mk, t
+mc, mk, ct
+mc, mk, cn
+mc, mk, k
+mc, ml, ct
+mc, ml, mk
+mc, ml, cn
+mc, ml, lt
+mc, ml, t
+ml, mk, t
+ml, mk, lt
+ml, mk, k
+ml, t, lt
+mk, t, k
+ct, t, cn, mc
+ct, t, mk, mc
+t, cn, mk, mc
+t, mk, mc, k
+ct, cn, mk, mc
+ct, mk, mc, k
+cn, mk, mc, k
+ct, cn, ml, mc
+ct, ml, mc, lt
+ct, mk, ml, mc
+mk, ml, mc, lt
+cn, mk, ml, mc
+mk, ml, mc, k
+t, mk, ml, mc
+cn, ml, mc, lt
+ct, t, ml, mc
+t, cn, ml, mc
+t, ml, mc, lt
+t, mk, ml, lt
+t, mk, ml, k
+mk, ml, lt, k
+ct, t, cn, mk, mc
+ct, t, mk, mc, k
+t, cn, mk, mc, k
+ct, cn, mk, mc, k
+ct, cn, ml, mc, lt
+ct, cn, mk, ml, mc
+ct, mk, ml, mc, lt
+ct, mk, ml, mc, k
+mk, ml, mc, lt, k
+cn, mk, ml, mc, k
+cn, mk, ml, mc, lt
+t, mk, ml, mc, k
+ct, t, mk, ml, mc
+t, mk, ml, mc, lt
+t, cn, mk, ml, mc
+ct, t, cn, ml, mc
+ct, t, ml, mc, lt
+t, cn, ml, mc, lt
+t, mk, ml, lt, k
+ct, t, cn, mk, mc, k
+ct, cn, mk, ml, mc, k
+ct, cn, mk, ml, mc, lt
+ct, mk, ml, mc, lt, k
+cn, mk, ml, mc, lt, k
+ct, t, mk, ml, mc, k
+ct, t, mk, ml, mc, lt
+ct, t, cn, mk, ml, mc
+t, mk, ml, mc, lt, k
+t, cn, mk, ml, mc, lt
+t, cn, mk, ml, mc, k
+ct, t, cn, ml, mc, lt
+ct, cn, mk, ml, mc, lt, k
+ct, t, mk, ml, mc, lt, k
+ct, t, cn, mk, ml, mc, k
+ct, t, cn, mk, ml, mc, lt
+t, cn, mk, ml, mc, lt, k
+ct, t, cn, mk, ml, mc, lt, k

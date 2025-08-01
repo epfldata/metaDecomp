@@ -1,0 +1,19 @@
+k
+cn
+t
+mk
+mc
+mk, k
+mc, cn
+mc, mk
+mc, t
+mk, t
+mc, mk, t
+mc, mk, cn
+mc, mk, k
+mc, t, cn
+mk, t, k
+t, cn, mk, mc
+t, mk, mc, k
+cn, mk, mc, k
+t, cn, mk, mc, k

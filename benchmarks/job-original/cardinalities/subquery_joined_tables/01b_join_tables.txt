@@ -1,0 +1,19 @@
+ct
+it
+mi_idx
+mc
+t
+mi_idx, it
+mc, ct
+mc, mi_idx
+mc, t
+mi_idx, t
+mc, mi_idx, t
+mc, mi_idx, ct
+mc, mi_idx, it
+mc, t, ct
+mi_idx, t, it
+ct, t, mi_idx, mc
+t, it, mi_idx, mc
+ct, it, mi_idx, mc
+ct, t, it, mi_idx, mc

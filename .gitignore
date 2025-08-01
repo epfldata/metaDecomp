@@ -10,6 +10,6 @@ target
 project/target/*
 project/project/target/*
 datasets
-benchmarks/*/cardinalities
+benchmarks/job-large/cardinalities
 experiment-results/join-trees
 src/main/scala/*/.scala-build

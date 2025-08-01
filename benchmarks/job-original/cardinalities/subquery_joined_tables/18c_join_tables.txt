@@ -1,0 +1,56 @@
+it1
+ci
+mi
+n
+t
+mi_idx
+it2
+ci, n
+mi, it1
+mi_idx, it2
+mi_idx, ci
+mi_idx, mi
+mi_idx, t
+ci, mi
+ci, t
+mi, t
+mi_idx, ci, mi
+mi_idx, ci, t
+mi_idx, ci, it2
+mi_idx, ci, n
+mi_idx, mi, t
+mi_idx, mi, it2
+mi_idx, mi, it1
+mi_idx, t, it2
+ci, mi, t
+ci, mi, n
+ci, mi, it1
+ci, t, n
+mi, t, it1
+t, mi_idx, ci, mi
+it2, mi_idx, ci, mi
+n, mi_idx, ci, mi
+it1, mi_idx, ci, mi
+mi_idx, ci, t, it2
+n, t, mi_idx, ci
+n, it2, mi_idx, ci
+mi_idx, mi, t, it2
+t, it1, mi_idx, mi
+it2, it1, mi_idx, mi
+n, t, ci, mi
+t, it1, ci, mi
+n, it1, ci, mi
+t, it1, mi_idx, ci, mi
+n, t, mi_idx, ci, mi
+mi_idx, ci, mi, t, it2
+n, it2, mi_idx, ci, mi
+it2, it1, mi_idx, ci, mi
+n, it1, mi_idx, ci, mi
+n, mi_idx, ci, t, it2
+it1, mi_idx, mi, t, it2
+n, t, it1, ci, mi
+n, t, it1, mi_idx, ci, mi
+it1, mi_idx, ci, mi, t, it2
+n, mi_idx, ci, mi, t, it2
+n, it2, it1, mi_idx, ci, mi
+n, it1, mi_idx, ci, mi, t, it2
