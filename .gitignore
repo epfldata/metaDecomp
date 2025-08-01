@@ -1,0 +1,15 @@
+.bsp
+.idea
+target
+.bloop/*
+*/.bloop/*
+.bsp/*
+.metals/*
+.vscode/*
+*/target/*
+project/target/*
+project/project/target/*
+datasets
+benchmarks/*/cardinalities
+experiment-results/join-trees
+src/main/scala/*/.scala-build
