@@ -5,7 +5,6 @@ import experiments.Config.{benchmarks, benchmarksPath, cardinalityEstimationVari
 import sql.{Attribute, IR, Relation, SQLParser}
 
 import java.nio.file.{Files, Paths, StandardOpenOption}
-import scala.collection.mutable
 import scala.io.Source
 import scala.jdk.CollectionConverters.*
 
@@ -51,17 +50,27 @@ object MetaDecompRunner extends BaseRunner {
 				val maxFanout = metaRunResults.head._1.collectDescendents.toList.map(p => (p.childrenPlusOrigin ++ p.parent).size - 1).max
 
 				val joinedTablesFileSource = Source.fromFile(Paths.get(benchmarkPath, "cardinalities", "subquery_joined_tables", s"${queryName}_join_tables.txt").toFile)
-				val cardinalitiesFileSource = Source.fromFile(Paths.get(benchmarkPath, "cardinalities", estimation, "results", s"${queryName}_cardinalities.txt").toFile)
+				val joinedTables = joinedTablesFileSource.getLines
 
-				sqlIR.cardinalities = joinedTablesFileSource.getLines.zip(cardinalitiesFileSource.getLines).map((tablesLine, cardinalitiesLine) =>
-					val hyperedgeAliasesOnLine = tablesLine.split(",").map(_.trim)
-					val hyperedgesOnLine = hyperedgeAliasesOnLine.map(alias => sqlIR.hyperedges.find(_.alias == alias).get)
-					val cardinality = cardinalitiesLine.split(" ").takeRight(1).head.toLong
-					hyperedgesOnLine.toSet -> cardinality
-				).toMap
+				if (estimation == "all-0") {
+					sqlIR.cardinalities = joinedTables.map(tablesLine => {
+						val hyperedgeAliasesOnLine = tablesLine.split(",").map(_.trim)
+						val hyperedgesOnLine = hyperedgeAliasesOnLine.map(alias => sqlIR.hyperedges.find(_.alias == alias).get)
+						hyperedgesOnLine.toSet -> 0L
+					}).toMap
+				} else {
+					val cardinalitiesFileSource = Source.fromFile(Paths.get(benchmarkPath, "cardinalities", estimation, "results", s"${queryName}_cardinalities.txt").toFile)
+					val cardinalities = cardinalitiesFileSource.getLines
+					sqlIR.cardinalities = joinedTables.zip(cardinalities).map((tablesLine, cardinalitiesLine) =>
+						val hyperedgeAliasesOnLine = tablesLine.split(",").map(_.trim)
+						val hyperedgesOnLine = hyperedgeAliasesOnLine.map(alias => sqlIR.hyperedges.find(_.alias == alias).get)
+						val cardinality = cardinalitiesLine.split(" ").takeRight(1).head.toLong
+						hyperedgesOnLine.toSet -> cardinality
+					).toMap
+					cardinalitiesFileSource.close()
+				}
 
 				joinedTablesFileSource.close()
-				cardinalitiesFileSource.close()
 
 				val (plan, planningTime) = (for (i <- 0 until repeatTimes) yield {
 					val planningStartTime = System.nanoTime()
