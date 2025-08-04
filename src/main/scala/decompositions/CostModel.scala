@@ -7,7 +7,7 @@ object CostModel {
 		lhs.cardinality + rhs.cardinality + cardinalities(lhs.allJoinedRelations ++ rhs.allJoinedRelations)
 	}
 
-	def getCumulativeCost(lhs: PlanNode, rhs: PlanNode): Double = {
+	def getCumulativeCost(lhs: PlanNode, rhs: PlanNode): Long = {
 		lhs.cumulativeCost + rhs.cumulativeCost + lhs.cardinality + rhs.cardinality
 	}
 }

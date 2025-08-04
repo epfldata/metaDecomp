@@ -11,9 +11,10 @@ case class FilterCondition(conditionText: String, referencedCols: Set[QualifiedC
 
 trait PlanNode()(implicit sqlIR: sql.IR) {
 	var projectTo: Set[OutputItem] = Set.empty
-	var allJoinedRelations: Set[Relation]
-	var cumulativeCost: Double
-	var cardinality: Long
+	val allJoinedRelations: Set[Relation]
+	val cumulativeCost: Long
+	val cardinality: Long
+	val coutCost: Long
 
 	var joinTree: TreeNode[Attribute, Relation] = null
 
@@ -37,9 +38,10 @@ trait PlanNode()(implicit sqlIR: sql.IR) {
 
 case class JoinNode(lhs: PlanNode, rhs: PlanNode)(implicit sqlIR: sql.IR) extends PlanNode {
 
-	var allJoinedRelations: Set[Relation] = lhs.allJoinedRelations ++ rhs.allJoinedRelations
-	var cardinality: Long = if sqlIR.cardinalities == null then 0 else sqlIR.cardinalities(allJoinedRelations)
-	var cumulativeCost: Double = getCumulativeCost(lhs, rhs)
+	val allJoinedRelations: Set[Relation] = lhs.allJoinedRelations ++ rhs.allJoinedRelations
+	val cardinality: Long = if sqlIR.cardinalities == null then 0 else sqlIR.cardinalities(allJoinedRelations)
+	val cumulativeCost: Long = getCumulativeCost(lhs, rhs)
+	val coutCost: Long = lhs.coutCost + rhs.coutCost + this.cardinality
 
 	override def generateSqlWithViews()(implicit sqlIR: sql.IR): (String, String, String) = {
 		val joinConditionColumnPairs =
@@ -113,9 +115,10 @@ $outerIndent}"""
 
 case class ScanNode(hyperedge: Relation)(implicit sqlIR: sql.IR) extends PlanNode {
 
-	var allJoinedRelations: Set[Relation] = Set(hyperedge)
-	var cardinality: Long = if sqlIR.cardinalities == null then 1 else sqlIR.cardinalities(allJoinedRelations)
-	var cumulativeCost: Double = 0
+	val allJoinedRelations: Set[Relation] = Set(hyperedge)
+	val cardinality: Long = if sqlIR.cardinalities == null then 1 else sqlIR.cardinalities(allJoinedRelations)
+	val cumulativeCost: Long = 0
+	val coutCost: Long = 0
 
 	override def generateSqlWithViews()(implicit sqlIR: sql.IR): (String, String, String) = {
 		val filterConditions = sqlIR.filterConditions.keySet.filter(_ == Set(hyperedge)).flatMap(sqlIR.filterConditions)

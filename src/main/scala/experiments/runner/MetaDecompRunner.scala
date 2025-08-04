@@ -16,7 +16,7 @@ object MetaDecompRunner extends BaseRunner {
 			val resultsPath = Paths.get(resultsDir, s"metadecomp-$benchmark-$estimation.csv")
 			Files.write(
 				resultsPath,
-				"query, num_rels, max_fanout, metagyo_time, planning_time, total_opt_time, exec_time, total_time\n".getBytes,
+				"query, num_rels, max_fanout, metagyo_time, planning_time, total_opt_time, exec_time, total_time, cout_cost\n".getBytes,
 				StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING
 			)
 
@@ -88,7 +88,11 @@ object MetaDecompRunner extends BaseRunner {
 
 
 				val jsonFilePath = Paths.get(resultsDir, "join-trees", s"${queryName}_join_tree.json")
-				Files.write(jsonFilePath, plan.joinTree.toJson.getBytes, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING)
+				Files.write(
+					jsonFilePath,
+					plan.joinTree.toJson.getBytes,
+					StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING
+				)
 
 				val executionTime = runPlan(plan)
 
@@ -98,7 +102,12 @@ object MetaDecompRunner extends BaseRunner {
 				val totalTime = totalOptTime + executionTime
 				println(s"Total time: ${totalOptTime + executionTime} us")
 
-				Files.write(resultsPath, s"$queryName, ${sqlIR.hyperedges.size}, $maxFanout, $metaGYOTime, $planningTime, $totalOptTime, $executionTime, $totalTime\n".getBytes, StandardOpenOption.APPEND)
+				Files.write(
+					resultsPath,
+					s"$queryName, ${sqlIR.hyperedges.size}, $maxFanout, $metaGYOTime, $planningTime, $totalOptTime, $executionTime, $totalTime, ${plan.coutCost - plan.cardinality}\n"
+						.getBytes,
+					StandardOpenOption.APPEND
+				)
 			)
 		}
 
