@@ -4,7 +4,8 @@
 
 ## Prerequisites
 
-* DuckDB
+* Scala 3.3.1 with sbt 1.6.2
+* DuckDB 1.2.2 — Please make the executable available in `$PATH`
 
 Please execute all the following commands from the root directory of the repository.
 
@@ -21,7 +22,7 @@ bash src/scripts/setup-imdb.sh
 
 #### Original join order benchmark (JOB)
 
-We include the exact cardinalities for queries in the original join order benchmark. So no action is required.
+We include the exact cardinalities for queries in the subdirectory for the original join order benchmark. So no action is required.
 
 #### JOBLarge
 
@@ -31,6 +32,11 @@ bash src/main/scripts/download-job-large-cardinalities.sh
 ```
 
 ## Experiments
+
+First create a subdirectory `experiment-results` under the root directory of the repository:
+```
+mkdir experiment-results
+```
 
 ### Query optimization and execution
 
