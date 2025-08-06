@@ -13,7 +13,7 @@ object MetaDecompRunner extends BaseRunner {
 		for (benchmark <- benchmarks ; estimation <- cardinalityEstimationVariants(benchmark)) {
 
 			val benchmarkPath = s"$benchmarksPath/$benchmark"
-			val resultsPath = Paths.get(resultsDir, s"metadecomp-$benchmark-$estimation.csv")
+			val resultsPath = Paths.get(resultsDir, s"metadecomp-opt-$benchmark-$estimation.csv")
 			Files.write(
 				resultsPath,
 				"query, num_rels, max_fanout, metagyo_time, planning_time, total_opt_time, exec_time, total_time, cout_cost\n".getBytes,

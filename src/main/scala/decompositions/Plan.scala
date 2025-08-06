@@ -39,7 +39,7 @@ trait PlanNode()(implicit sqlIR: sql.IR) {
 case class JoinNode(lhs: PlanNode, rhs: PlanNode)(implicit sqlIR: sql.IR) extends PlanNode {
 
 	val allJoinedRelations: Set[Relation] = lhs.allJoinedRelations ++ rhs.allJoinedRelations
-	val cardinality: Long = if sqlIR.cardinalities == null then 0 else sqlIR.cardinalities(allJoinedRelations)
+	val cardinality: Long = if sqlIR.cardinalities.isEmpty then 0 else sqlIR.cardinalities(allJoinedRelations)
 	val cumulativeCost: Long = getCumulativeCost(lhs, rhs)
 	val coutCost: Long = lhs.coutCost + rhs.coutCost + this.cardinality
 
@@ -116,7 +116,7 @@ $outerIndent}"""
 case class ScanNode(hyperedge: Relation)(implicit sqlIR: sql.IR) extends PlanNode {
 
 	val allJoinedRelations: Set[Relation] = Set(hyperedge)
-	val cardinality: Long = if sqlIR.cardinalities == null then 1 else sqlIR.cardinalities(allJoinedRelations)
+	val cardinality: Long = if sqlIR.cardinalities.isEmpty then 0 else sqlIR.cardinalities(allJoinedRelations)
 	val cumulativeCost: Long = 0
 	val coutCost: Long = 0
 

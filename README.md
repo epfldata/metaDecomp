@@ -31,23 +31,54 @@ For JOBLarge, since the queries are much larger and more complex, please use the
 bash src/main/scripts/download-job-large-cardinalities.sh
 ```
 
+### DPconv
+
+```
+git clone https://github.com/utndatasystems/DPconv.git
+cd DPconv
+git checkout dc56bdc
+```
+
+Then, replace the file `DPconv/src/util/BenchmarkRunner.hpp` by `replacement-files/DPconv/BenchmarkRunner.hpp` in this repository.
+
+Finally, build DPconv, as per the instructions in the DPConv repository:
+```
+cd src
+mkdir -p build
+cd build
+cmake ..
+make
+```
+
 ## Experiments
 
-First create a subdirectory `experiment-results` under the root directory of the repository:
+First create a subdirectory `experiment-results` under the root directory of the repository, as well as subdirectories:
 ```
-mkdir experiment-results
+mkdir -p experiment-results/join-trees experiment-results/metadecomp-plans experiment-results/dpconv-plans
 ```
 
 ### Query optimization and execution
+
+#### metaDecomp
 
 ```
 sbt -mem 40000 "runMain experiments.runner.MetaDecompRunner"
 ```
 (`-mem 40000` indicates a limit of 40,000 MB of memory for the JVM. This can be adjusted based on the amount of available memory in your system.)
 
-The results are stored in `experiment-results/metadecomp-runtime-{job-original-exact, job-large-{estimate, all-0}}.csv`
+The results are stored in `experiment-results/metadecomp-opt-{job-original-exact, job-large-{estimate, all-0}}.csv`
+
+#### DPConv
+
+```
+sbt "runMain experiments.runner.DPconvRunner"
+```
+
+The results are stored in `experiment-results/dpconv-opt-{job-original-exact, job-large-{estimate, all-0}}.csv`
 
 ### Join tree enumeration
+
+#### metaDecomp
 
 ```
 bash src/main/scripts/enumerate-join-trees.sh
