@@ -13,4 +13,4 @@ datasets
 benchmarks/job-large/cardinalities
 experiment-results/join-trees
 src/main/scala/*/.scala-build
-DPConv
+/DPConv
