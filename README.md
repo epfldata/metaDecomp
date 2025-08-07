@@ -6,6 +6,8 @@
 
 * Scala 3.3.1 with sbt 1.6.2
 * DuckDB 1.2.2 — Please make the executable available in `$PATH`
+* For [DPconv](https://github.com/utndatasystems/DPconv/tree/dc56bdc52c452bf86b3ac5c224b0176148c38757): CMake 4.0.3, GNU Make 3.81, clang 20.1.3
+* For join tree enumeration with traditional GYO algorithms (implemented by [SparkSQL+](https://github.com/hkustDB/SparkSQLPlus/tree/f22188bba4e971da6defb97c983e06e18e66fd7a)): Maven 3.8.6
 
 Please execute all the following commands from the root directory of the repository.
 
@@ -33,6 +35,7 @@ bash src/main/scripts/download-job-large-cardinalities.sh
 
 ### DPconv
 
+First clone the DPconv repository and checkout the commit we use in our experiments:
 ```
 git clone https://github.com/utndatasystems/DPconv.git
 cd DPconv
@@ -48,6 +51,16 @@ mkdir -p build
 cd build
 cmake ..
 make
+```
+
+### SparkSQL+ (join tree enumeration by the traditional GYO algorithm)
+
+Clone the SparkSQLPlus repository, checkout the commit we use in our experiments, and build the project:
+```
+git clone https://github.com/hkustDB/SparkSQLPlus.git
+cd SparkSQLPlus
+git checkout f22188bba4e971da6defb97c983e06e18e66fd7a
+mvn clean package -DskipTests=true
 ```
 
 ## Experiments
@@ -81,7 +94,15 @@ The results are stored in `experiment-results/dpconv-opt-{job-original-exact, jo
 #### metaDecomp
 
 ```
-bash src/main/scripts/enumerate-join-trees.sh
+bash src/main/scripts/enumerate-join-trees-metadecomp.sh
 ```
 
 The results are stored in `experiment-results/metadecomp-enum-{job-original, job-large}.csv`
+
+#### Traditional GYO algorithm (implemented by SparkSQL+)
+
+```
+bash src/main/scripts/enumerate-join-trees-sparksqlplus.sh
+```
+
+The results are stored in `experiment-results/sparksqlplus-enum-{job-original, job-large}.csv`

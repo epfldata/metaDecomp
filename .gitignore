@@ -14,3 +14,5 @@ benchmarks/job-large/cardinalities
 experiment-results/join-trees
 src/main/scala/*/.scala-build
 /DPConv
+/SparkSQLPlus
+experiment-results

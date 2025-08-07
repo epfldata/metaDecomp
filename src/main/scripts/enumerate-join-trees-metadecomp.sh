@@ -17,8 +17,6 @@ sbt clean stage
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 
-echo "$PROJECT_ROOT"
-
 for BENCHMARK in "job-original" "job-large"; do
 
   QUERIES_PATH="$PROJECT_ROOT/benchmarks/$BENCHMARK/queries"
