@@ -6,6 +6,7 @@ PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 DDL_FILE="$PROJECT_ROOT/replacement-files/SparkSQLPlus/scheme.sql"
 API_URL="http://localhost:8848/api/v1/parse"
 TIMEOUT_SECONDS=3600 # 1 hour
+REPEAT_TIMES=10
 
 # --- Pre-flight Checks ---
 
@@ -88,7 +89,7 @@ ddl_content=$(cat "$DDL_FILE" | sed 's/"/\\"/g' | sed -e ':a' -e 'N' -e '$!ba' -
 for BENCHMARK in "job-original" "job-large"; do
 
     output_csv_file="$PROJECT_ROOT/experiment-results/sparksqlplus-enum-$BENCHMARK.csv"
-    echo "query,time" > $output_csv_file
+    echo "query,time_ms" > $output_csv_file
 
     # Loop through all .sql files in the current directory
     for query_name in $(find "$PROJECT_ROOT/benchmarks/$BENCHMARK/queries" -maxdepth 1 -type f \( -name "*.sql" \) -exec basename {} \; | sort); do
@@ -120,14 +121,50 @@ for BENCHMARK in "job-original" "job-large"; do
         # NOTE: The jq filter `(.[0] | keys_unsorted), (.[] | to_entries | .[] | .value) | @csv`
         # assumes the JSON response is an array of objects. If your API returns a different
         # structure, you may need to adjust this filter.
-        response=$(curl -sS -m "$TIMEOUT_SECONDS" -X POST -H "Content-Type: application/json" --data "$json_payload" "$API_URL")
-        return_code=$?
-        if [ $return_code -eq 28 ]; then
+        times=()
+        first_time_timeout=0
+        unsupported_query=0
+        for ((i=1; i<=REPEAT_TIMES; i++)); do
+            response=$(curl -sS -m "$TIMEOUT_SECONDS" -X POST -H "Content-Type: application/json" --data "$json_payload" "$API_URL")
+            return_code=$?
+            if [ $return_code -eq 28 ]; then
+                echo "Error: The request timed out after $TIMEOUT_SECONDS seconds."
+                times+=("${TIMEOUT_SECONDS}000")
+                restart_app
+                if [ $i -eq 1 ]; then
+                    first_time_timeout=1
+                    break
+                fi
+            elif [ $return_code -eq 0 ]; then
+                # Extract the time value from the response
+                time_val=$(echo "$response" | grep "time.*size.*" | sed -e "s/^.*\"time\":\(.*\),.*/\1/g")
+                if [ -n "$time_val" ]; then
+                    echo "Query: $query_name, Attempt: $i, Time: $time_val ms"
+                    times+=("$time_val")
+                else
+                    unsupported_query=1
+                    break
+                fi
+            else
+                unsupported_query=1
+                break
+            fi
+        done
+        if [ $first_time_timeout -eq 1 ] ; then
             echo "$query_name,${TIMEOUT_SECONDS}000" >> "$output_csv_file"
-            echo "Error: The request timed out after $TIMEOUT_SECONDS seconds."
-            restart_app
-        elif [ $return_code -eq 0 ]; then
-            echo "$response" | grep "time.*size*" | sed -e "s/^.*time\":\(.*\),.*size\":\(.*\)\}\}$/$query_name,\1/g" >> "$output_csv_file"
+        elif [ $unsupported_query -eq 0 ] ; then
+            # Sort times and get the median
+            sorted=($(printf '%s\n' "${times[@]}" | sort -n))
+            len=${#sorted[@]}
+            if (( $len % 2 == 1 )); then
+                median=${sorted[$((len/2))]}
+            else
+                lo=${sorted[$((len/2-1))]}
+                hi=${sorted[$((len/2))]}
+                median=$(awk "BEGIN {print ($lo+$hi)/2}")
+            fi
+            echo "Median time for $query_name: $median ms"
+            echo "$query_name,$median" >> "$output_csv_file"
         fi
 
       # printf "$sql_file," >> "$output_csv_file"
