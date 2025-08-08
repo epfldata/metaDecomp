@@ -17,7 +17,7 @@ Please execute all the following commands from the root directory of the reposit
 
 Run the following script to download the IMDB dataset (from http://event.cwi.nl/da/job/imdb.tgz) and load the schema and data.
 ```
-bash src/scripts/setup-imdb.sh
+bash src/main/scripts/setup-imdb.sh
 ```
 
 ### Cardinality estimation
