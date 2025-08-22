@@ -14,7 +14,8 @@ trait PlanNode()(implicit sqlIR: sql.IR) {
 	val allJoinedRelations: Set[Relation]
 	val cumulativeCost: Long
 	val cardinality: Long
-	val coutCost: Long
+	val inputCost: Long
+	val intermediateCost: Long
 
 	var joinTree: TreeNode[Attribute, Relation] = null
 
@@ -41,7 +42,8 @@ case class JoinNode(lhs: PlanNode, rhs: PlanNode)(implicit sqlIR: sql.IR) extend
 	val allJoinedRelations: Set[Relation] = lhs.allJoinedRelations ++ rhs.allJoinedRelations
 	val cardinality: Long = if sqlIR.cardinalities.isEmpty then 0 else sqlIR.cardinalities(allJoinedRelations)
 	val cumulativeCost: Long = getCumulativeCost(lhs, rhs)
-	val coutCost: Long = lhs.coutCost + rhs.coutCost + this.cardinality
+	val inputCost: Long = lhs.inputCost + rhs.inputCost
+	val intermediateCost: Long = lhs.intermediateCost + rhs.intermediateCost + this.cardinality
 
 	override def generateSqlWithViews()(implicit sqlIR: sql.IR): (String, String, String) = {
 		val joinConditionColumnPairs =
@@ -118,7 +120,8 @@ case class ScanNode(hyperedge: Relation)(implicit sqlIR: sql.IR) extends PlanNod
 	val allJoinedRelations: Set[Relation] = Set(hyperedge)
 	val cardinality: Long = if sqlIR.cardinalities.isEmpty then 0 else sqlIR.cardinalities(allJoinedRelations)
 	val cumulativeCost: Long = 0
-	val coutCost: Long = 0
+	val inputCost = cardinality
+	val intermediateCost: Long = 0
 
 	override def generateSqlWithViews()(implicit sqlIR: sql.IR): (String, String, String) = {
 		val filterConditions = sqlIR.filterConditions.keySet.filter(_ == Set(hyperedge)).flatMap(sqlIR.filterConditions)

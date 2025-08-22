@@ -24,7 +24,7 @@ object DPconvRunner extends BaseRunner {
 
 			Files.write(
 				resultsCsvPath,
-				s"query, num_rels, opt_time, exec_time, total_time${if benchmark == "job-original" then ", cout_opt" else ""}\n".getBytes,
+				s"query,num_rels,opt_time,exec_time,total_time${if benchmark == "job-original" then ",cout_opt_intm" else ""}\n".getBytes,
 				StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING
 			)
 
@@ -60,7 +60,7 @@ object DPconvRunner extends BaseRunner {
 
 				Files.write(
 					resultsCsvPath,
-					s"${sqlFile.getName.stripSuffix(".sql")}, ${sqlIR.hyperedges.size}, $optTime, $executionTime, $totalTime${if benchmark == "job-original" then s", $optCout" else ""}\n".getBytes,
+					s"${sqlFile.getName.stripSuffix(".sql")},${sqlIR.hyperedges.size},$optTime,$executionTime,$totalTime${if benchmark == "job-original" then s",$optCout" else ""}\n".getBytes,
 					StandardOpenOption.APPEND
 				)
 

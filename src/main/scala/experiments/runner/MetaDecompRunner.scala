@@ -16,7 +16,7 @@ object MetaDecompRunner extends BaseRunner {
 			val resultsPath = Paths.get(resultsDir, s"metadecomp-opt-$benchmark-$estimation.csv")
 			Files.write(
 				resultsPath,
-				"query, num_rels, max_fanout, metagyo_time, planning_time, total_opt_time, exec_time, total_time, cout_cost\n".getBytes,
+				"query,num_rels,max_fanout,metagyo_time,planning_time,total_opt_time,exec_time,total_time,cost_intm,cost_inout,cout_cost\n".getBytes,
 				StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING
 			)
 
@@ -102,9 +102,13 @@ object MetaDecompRunner extends BaseRunner {
 				val totalTime = totalOptTime + executionTime
 				println(s"Total time: ${totalOptTime + executionTime} us")
 
+				val intermediateCost = plan.intermediateCost - plan.cardinality
+				val inOutCost = plan.inputCost + plan.cardinality
+				val totalCost = intermediateCost + inOutCost
+
 				Files.write(
 					resultsPath,
-					s"$queryName, ${sqlIR.hyperedges.size}, $maxFanout, $metaGYOTime, $planningTime, $totalOptTime, $executionTime, $totalTime, ${plan.coutCost - plan.cardinality}\n"
+					s"$queryName,${sqlIR.hyperedges.size},$maxFanout,$metaGYOTime,$planningTime,$totalOptTime,$executionTime,$totalTime,$intermediateCost,$inOutCost,$totalCost\n"
 						.getBytes,
 					StandardOpenOption.APPEND
 				)
