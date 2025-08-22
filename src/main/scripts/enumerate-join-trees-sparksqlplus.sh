@@ -92,8 +92,8 @@ for BENCHMARK in "job-original" "job-large"; do
     echo "query,time_ms" > $output_csv_file
 
     # Loop through all .sql files in the current directory
-    for query_name in $(find "$PROJECT_ROOT/benchmarks/$BENCHMARK/queries" -maxdepth 1 -type f \( -name "*.sql" \) -exec basename {} \; | sort); do
-        sql_file="$PROJECT_ROOT/benchmarks/$BENCHMARK/queries/$query_name"
+    for query_name in $(find "$PROJECT_ROOT/benchmarks/$BENCHMARK/queries" -maxdepth 1 -type f \( -name "*.sql" \) -exec basename {} .sql \; | sort); do
+        sql_file="$PROJECT_ROOT/benchmarks/$BENCHMARK/queries/$query_name.sql"
         # Skip the DDL file itself
         if [ "$sql_file" == "$DDL_FILE" ]; then
             continue
