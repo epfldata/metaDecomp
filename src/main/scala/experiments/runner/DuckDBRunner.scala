@@ -13,7 +13,7 @@ object DuckDBRunner extends BaseRunner {
 
 		Files.write(
 			resultsPath,
-			"query, total_time\n".getBytes,
+			"query,total_time\n".getBytes,
 			StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING
 		)
 
@@ -28,7 +28,7 @@ object DuckDBRunner extends BaseRunner {
 
 			println(s"Total time: $time us")
 
-			Files.write(resultsPath, s"${sqlFile.getName.stripSuffix(".sql")}, $time\n".getBytes, StandardOpenOption.APPEND)
+			Files.write(resultsPath, s"${sqlFile.getName.stripSuffix(".sql")},$time\n".getBytes, StandardOpenOption.APPEND)
 		)
 
 		conn.close()
