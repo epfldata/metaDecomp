@@ -69,7 +69,10 @@ trait BaseRunner {
 					} else {
 						timeout.toMicros // Indicating failure
 					}
-				case _ =>
+				case e: Throwable =>
+					e.printStackTrace()
+					println(viewSqls)
+					println(finalSql)
 					println("Query exceeded memory limit or crashed and was terminated.")
 					if (i == 0) {
 						return timeout.toMicros // Indicating failure on the first run

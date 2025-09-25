@@ -109,7 +109,13 @@ class MetaDecompBasedOptimizer()(implicit sqlIR: sql.IR) {
 					val next = neighboursPlans
 						.map(neighbourPlan => (
 							neighbourPlan,
-							if sqlIR.cardinalities != null then sqlIR.cardinalities(plan.allJoinedRelations ++ neighbourPlan.allJoinedRelations) else 1,
+							if sqlIR.cardinalities != null then {
+								val rels = plan.allJoinedRelations ++ neighbourPlan.allJoinedRelations
+								if (!sqlIR.cardinalities.contains(rels)) {
+									println(s"Missing cardinality for ${rels.map(_.alias).mkString(", ")}")
+								}
+								sqlIR.cardinalities(plan.allJoinedRelations ++ neighbourPlan.allJoinedRelations)
+							} else 1,
 							if sqlIR.cardinalities != null then sqlIR.cardinalities(neighbourPlan.allJoinedRelations) else 1)
 						)
 						.toList
