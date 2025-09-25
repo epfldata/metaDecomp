@@ -25,7 +25,7 @@ object JoinTreeEnumerationRunner {
 		print(s"${sqlIR.hyperedges.size},")
 
 		val startTime = System.nanoTime()
-		val meta = metaGYO(sqlIR.hyperedges)
+		val meta = metaGYO(sqlIR.hyperedges).get
 		val joinTrees = JoinTreeEnumerator.enumerate(meta).flatMap(JoinTreeEnumerator.allRotations)
 		val endTime = System.nanoTime()
 

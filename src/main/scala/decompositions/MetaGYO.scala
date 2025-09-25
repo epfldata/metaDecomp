@@ -32,7 +32,7 @@ def constructEdges[VT, ET <: HyperEdge[VT]](set: collection.mutable.Set[MetaNode
   }
 }
 
-def metaGYO[VT, ET <: HyperEdge[VT]](E: Iterable[ET]) : MetaNode[VT, ET] = {
+def metaGYO[VT, ET <: HyperEdge[VT]](E: Iterable[ET]) : Option[MetaNode[VT, ET]] = {
 
   val V = E.nodes
   val metaGYOGraph = collection.mutable.Set[MetaNode[VT, ET]]()
@@ -122,6 +122,10 @@ def metaGYO[VT, ET <: HyperEdge[VT]](E: Iterable[ET]) : MetaNode[VT, ET] = {
       }
     }
 
+    if (tempEars.isEmpty) {
+      return None // Cyclic
+    }
+
     // remove the ears from the list of hyperedges
     for e <- tempEars do {
       val shared_e = e.nodes.filter(Vcnt(_) > 1)
@@ -165,5 +169,5 @@ def metaGYO[VT, ET <: HyperEdge[VT]](E: Iterable[ET]) : MetaNode[VT, ET] = {
     }
   }
   constructEdges(metaGYOGraph)
-  metaGYOGraph.find(_.parent.isEmpty).get
+  Some(metaGYOGraph.find(_.parent.isEmpty).get)
 }
