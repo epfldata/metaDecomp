@@ -49,7 +49,7 @@ def metaGYO[VT, ET <: HyperEdge[VT]](E: Iterable[ET]) : Option[MetaNode[VT, ET]]
   while (E2.nonEmpty) {
     // First generate all the minor nodes
     val E3 = collection.mutable.Set[MetaNode[VT, ET]]() ++ E2
-    val newMinor = collection.mutable.Set[MetaNode[VT, ET]]()
+    val newMinor = collection.mutable.Set[MetaNodeMinor[VT, ET]]()
 
     // Line 6-14
     while E3.nonEmpty do {
@@ -76,7 +76,13 @@ def metaGYO[VT, ET <: HyperEdge[VT]](E: Iterable[ET]) : Option[MetaNode[VT, ET]]
                 findResult.get
               } else {
                 // Line 8
-                MetaNodeMinor[VT, ET](shared_e, Set(e, e3))
+                newMinor.find(_.nodes.equals(shared_e)) match {
+                  case Some(m) =>
+                    m.origin = m.origin + e + e3
+                    m.keys = Set()
+                    m
+                  case None => MetaNodeMinor[VT, ET](shared_e, Set(e, e3))
+                }
               }
               isMinor = true
             } else {
@@ -122,7 +128,7 @@ def metaGYO[VT, ET <: HyperEdge[VT]](E: Iterable[ET]) : Option[MetaNode[VT, ET]]
       }
     }
 
-    if (tempEars.isEmpty) {
+    if (tempEars.isEmpty && E2.size > 1) {
       return None // Cyclic
     }
 
@@ -144,7 +150,7 @@ def metaGYO[VT, ET <: HyperEdge[VT]](E: Iterable[ET]) : Option[MetaNode[VT, ET]]
               case (x : MetaNode[VT, ET], y : MetaNodeMinor[VT, ET]) if y.nodes.equals(y.keys) =>
                 y.origin = y.origin + x
               case _ =>
-                findMinor(metaGYOGraph, shared_e) match {
+                findMinor(metaGYOGraph ++ tempEars, shared_e) match {
                   case Some(minor) =>
                     minor.keys = shared_e
                     minor.origin ++= List(e, e1)
