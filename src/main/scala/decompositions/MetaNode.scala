@@ -3,6 +3,7 @@ package decompositions
 import sql.Relation
 
 import scala.collection.mutable
+import sql.Attribute
 
 trait MetaNode[V, E <: HyperEdge[V]](val nodes : Set[V]) {
   var keys : Set[V] = Set()
@@ -30,6 +31,8 @@ trait MetaNode[V, E <: HyperEdge[V]](val nodes : Set[V]) {
   var planFromNeighbour : mutable.Map[MetaNode[V, E], PlanNode] = mutable.Map() // Optimal plan for neighbour -> this
   var planWithCurrentAsRoot: PlanNode = null // Optimal plan assuming this is the root
 
+  def toDot(implicit sqlIR: sql.IR): String
+  def toDotNonRoot(parentName: String)(implicit sqlIR: sql.IR): String
 }
 
 
@@ -49,6 +52,24 @@ $outerIndent}"""
   }
 
   override def toString: String = toString(0)
+
+  def toDot(implicit sqlIR: sql.IR): String = {
+    val name = originalHyperEdge.asInstanceOf[Relation].alias
+    s"""graph\"\" {
+  $name ;
+	$name [label = \"$name\"] ;
+"""
+      + children.map(_.toDotNonRoot(name)).mkString("")
+      + "}"
+  }
+
+  def toDotNonRoot(parentName: String)(implicit sqlIR: sql.IR): String = {
+    val name = originalHyperEdge.asInstanceOf[Relation].alias
+    s"""  $parentName -- $name ;
+  $name [label = \"$name\"] ;
+"""
+      + children.map(_.toDotNonRoot(name)).mkString("")
+  }
 }
 
 class MetaNodeMinor[V, E <: HyperEdge[V]](override val nodes: Set[V],var origin : Set[MetaNode[V, E]]) extends MetaNode[V, E](nodes) {
@@ -70,6 +91,24 @@ $outerIndent}"""
   override def toString: String = toString(0)
 
   def rotation(tree: TreeNode[V, E], parent: TreeNode[V, E], keys: Set[V]): List[TreeNode[V, E]] = List()
+
+  def toDot(implicit sqlIR: sql.IR): String = {
+    val name = nodes.map(_.asInstanceOf[Attribute].name).mkString("minor_", "_", "")
+    s"""graph \"\" {
+	$name ;
+	$name [label = \"$name\"] ;
+"""
+      + childrenPlusOrigin.map(_.toDotNonRoot(name)).mkString("")
+      + "}"
+  }
+
+  def toDotNonRoot(parentName: String)(implicit sqlIR: sql.IR): String = {
+    val name = nodes.map(_.asInstanceOf[Attribute].name).mkString("minor_", "_", "")
+    s"""  $parentName -- $name ;
+	$name [label = \"$name\"] ;
+"""
+      + childrenPlusOrigin.map(_.toDotNonRoot(name)).mkString("")
+  }
 }
 
 class TreeNode[V, E <: HyperEdge[V]](val metaNode: MetaNode[V, E], var children: Set[TreeNode[V, E]]) {

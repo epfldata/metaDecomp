@@ -7,6 +7,7 @@ import sql.{Attribute, IR, Relation, SQLParser}
 import java.nio.file.{Files, Paths, StandardOpenOption}
 import scala.io.Source
 import scala.jdk.CollectionConverters.*
+import scala.sys.process._
 
 object MetaDecompRunner extends BaseRunner {
 	def main(args: Array[String]): Unit = {
@@ -47,7 +48,20 @@ object MetaDecompRunner extends BaseRunner {
 				val (meta, metaGYOTime) = metaRunResults.sortBy(_._2).apply(repeatTimes / 2) // Take the median of 5 runs
 
 
-				val maxFanout = metaRunResults.head._1.collectDescendents.toList.map(p => (p.childrenPlusOrigin ++ p.parent).size - 1).max
+				val maxFanout = meta.collectDescendents.toList.map(p => (p.childrenPlusOrigin ++ p.parent).size - 1).max
+
+
+				val metaTreeDotFilePath = Paths.get(resultsDir, "meta-trees", s"${queryName}-meta-tree.dot")
+				Files.write(metaTreeDotFilePath, meta.toDot(sqlIR).getBytes, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING)
+
+				val metaTreeFigPath = Paths.get(resultsDir, "meta-trees", s"${queryName}-meta-tree.svg")
+				val metaTreeDotCommand = Seq("dot", "-Tsvg", metaTreeDotFilePath.toString, "-o", metaTreeFigPath.toString)
+				try {
+					metaTreeDotCommand.!
+				} catch {
+					case e: Throwable => println(s"Error generating meta tree: ${e.getMessage}")
+				}
+
 
 				val joinedTablesFileSource = Source.fromFile(Paths.get(benchmarkPath, "cardinalities", "subquery_joined_tables", s"${queryName}_join_tables.txt").toFile)
 				val joinedTables = joinedTablesFileSource.getLines
