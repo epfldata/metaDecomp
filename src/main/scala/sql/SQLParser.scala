@@ -24,17 +24,18 @@ object SQLParser {
 		nextToken()
 	}
 
-	private def nextToken(): Unit = {
+	private def nextToken(): Option[String] = {
 		currentToken = if (tokens.nonEmpty) Some(tokens.dequeue()) else None
+		currentToken
 	}
 
-	private def expect(expected: String*): Unit = {
-		if (expected.contains(currentToken.get)) nextToken()
+	private def expectIgnoreCase(expected: String*): Unit = {
+		if (expected.exists(_.equalsIgnoreCase(currentToken.get))) nextToken()
 		else throw new IllegalArgumentException(s"Expected '$expected' but found '$currentToken'")
 	}
 
-	private def accept(expected: String*): Boolean = {
-		expected.contains(currentToken.get)
+	private def acceptIgnoreCase(expected: String*): Boolean = {
+		expected.exists(_.equalsIgnoreCase(currentToken.get))
 	}
 
 	private def lookahead(i: Int): Option[String] = {
@@ -42,11 +43,11 @@ object SQLParser {
 	}
 
 	private def parseQuery() = {
-		expect("SELECT")
+		expectIgnoreCase("SELECT")
 		val outputAttributes = parseOutputAttributes()
-		expect("FROM")
+		expectIgnoreCase("FROM")
 		val tableAliases = parseTableAliases()
-		val (joinConditions, filterConditions) = if (currentToken.contains("WHERE")) {
+		val (joinConditions, filterConditions) = if (acceptIgnoreCase("WHERE")) {
 			nextToken()
 			parseConditions()
 		} else (List.empty[Condition], List.empty[Condition])
@@ -120,11 +121,11 @@ object SQLParser {
 
 	private def parseOutputAttributes(): List[OutputAttribute] = {
 		val attributes = mutable.ListBuffer[OutputAttribute]()
-		while (!accept("FROM")) {
+		while (!acceptIgnoreCase("FROM")) {
 			val agg = if (lookahead(1).nonEmpty && lookahead(1).get == "(") {
 				val func = currentToken.get
 				nextToken()
-				expect("(")
+				expectIgnoreCase("(")
 				Some(func)
 			} else None
 			val tableColumn = currentToken.get.split("\\.")
@@ -132,7 +133,7 @@ object SQLParser {
 			if (currentToken.nonEmpty && currentToken.get == ")" && agg.isDefined) {
 				nextToken()
 			}
-			val alias = if (currentToken.contains("AS")) {
+			val alias = if (acceptIgnoreCase("AS")) {
 				nextToken()
 				val aliasName = currentToken.get
 				nextToken()
@@ -146,10 +147,10 @@ object SQLParser {
 
 	private def parseTableAliases(): List[TableAlias] = {
 		val aliases = mutable.ListBuffer[TableAlias]()
-		while (currentToken.isDefined && !currentToken.contains("WHERE")) {
+		while (currentToken.isDefined && !acceptIgnoreCase("WHERE")) {
 			val table = currentToken.get
 			nextToken()
-			val alias = if (currentToken.contains("AS")) {
+			val alias = if (acceptIgnoreCase("AS")) {
 				nextToken()
 				val aliasName = currentToken.get
 				nextToken()
@@ -164,7 +165,7 @@ object SQLParser {
 	private def parseConditions(): (List[Condition], List[Condition]) = {
 		val joinConditions = mutable.ListBuffer[Condition]()
 		val filterConditions = mutable.ListBuffer[Condition]()
-		while (currentToken.isDefined && !currentToken.contains(";") && !currentToken.contains("GROUP")) {
+		while (currentToken.isDefined && !acceptIgnoreCase(";") && !acceptIgnoreCase("GROUP")) {
 			val condition = parseCondition()
 			val tables = condition.referencedTablesAndColumns.map((table, column) => table)
 			// Here if we see a condition in the form "table1.column1 = table2.column2" with exactly two tables, we treat it as a join condition.
@@ -173,7 +174,7 @@ object SQLParser {
 			} else {
 				filterConditions += condition // (if condition.referencedTablesAndColumns.size == 1 then condition else Condition(condition.expression.replaceAll("""\.""", "_"), condition.referencedTablesAndColumns))
 			}
-			if (currentToken.contains("AND")) nextToken()
+			if (acceptIgnoreCase("AND")) nextToken()
 		}
 		(joinConditions.toList, filterConditions.toList)
 	}
@@ -183,16 +184,16 @@ object SQLParser {
 		val referencedColumns = mutable.Set[(String, String)]()
 		var depth = 0
 		var hasBetween = false
-		while (currentToken.isDefined && currentToken.get != ";" && currentToken.get != "GROUP" && (currentToken.get != "AND" || depth > 0 || hasBetween)) {
+		while (currentToken.isDefined && !acceptIgnoreCase(";") && !acceptIgnoreCase("GROUP") && (!acceptIgnoreCase("AND") || depth > 0 || hasBetween)) {
 			val token = currentToken.get
 			if (token == "(") {
 				depth += 1
 			} else if (token == ")") {
 				depth -= 1
 				if (depth < 0) throw new IllegalArgumentException("Unmatched closing parenthesis")
-			} else if (token == "BETWEEN") {
+			} else if (acceptIgnoreCase("BETWEEN")) {
 				hasBetween = true
-			} else if (hasBetween && token == "AND") {
+			} else if (hasBetween && acceptIgnoreCase("AND")) {
 				hasBetween = false
 			}
 			expression.append(token)
