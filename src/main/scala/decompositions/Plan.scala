@@ -12,10 +12,10 @@ case class FilterCondition(conditionText: String, referencedCols: Set[QualifiedC
 trait PlanNode()(implicit sqlIR: sql.IR) {
 	var projectTo: Set[OutputItem] = Set.empty
 	val allJoinedRelations: Set[Relation]
-	val cumulativeCost: Long
-	val cardinality: Long
-	val inputCost: Long
-	val intermediateCost: Long
+	val cumulativeCost: Double
+	val cardinality: Double
+	val inputCost: Double
+	val intermediateCost: Double
 
 	var joinTree: TreeNode[Attribute, Relation] = null
 
@@ -40,10 +40,10 @@ trait PlanNode()(implicit sqlIR: sql.IR) {
 case class JoinNode(lhs: PlanNode, rhs: PlanNode)(implicit sqlIR: sql.IR) extends PlanNode {
 
 	val allJoinedRelations: Set[Relation] = lhs.allJoinedRelations ++ rhs.allJoinedRelations
-	val cardinality: Long = if sqlIR.cardinalities.isEmpty then 0 else sqlIR.cardinalities(allJoinedRelations)
-	val cumulativeCost: Long = getCumulativeCost(lhs, rhs)
-	val inputCost: Long = lhs.inputCost + rhs.inputCost
-	val intermediateCost: Long = lhs.intermediateCost + rhs.intermediateCost + this.cardinality
+	val cardinality: Double = if sqlIR.cardinalities.isEmpty then 0 else sqlIR.cardinalities(allJoinedRelations)
+	val cumulativeCost: Double = getCumulativeCost(lhs, rhs)
+	val inputCost: Double = lhs.inputCost + rhs.inputCost
+	val intermediateCost: Double = lhs.intermediateCost + rhs.intermediateCost + this.cardinality
 
 	override def generateSqlWithViews()(implicit sqlIR: sql.IR): (String, String, String) = {
 		val joinConditionColumnPairs =
@@ -97,7 +97,9 @@ case class JoinNode(lhs: PlanNode, rhs: PlanNode)(implicit sqlIR: sql.IR) extend
 				case None => s"${outputColumn.qualifiedCol.hyperedge.alias}_${outputColumn.qualifiedCol.column}"
 			}).mkString(", ")
 				+ "\nFROM " + lhsViewName + " JOIN " + rhsViewName + " ON " + joinConditions
-				+ (if filterConditions.isEmpty then "" else "\nWHERE " + filterConditions.map(_.conditionText).mkString(" AND "))
+				+ (if filterConditions.isEmpty then "" else "\nWHERE " + filterConditions.map(_.conditionText).map(c => {
+					if (allJoinedRelations.size > 1) then c.replaceAll("""([a-zA-Z]\w*)\.([a-zA-Z]\w*)""", "$1_$2") else c
+				}).mkString(" AND "))
 
 		val groupBy = "GROUP BY " + projectTo.map(outputColumn => s"${outputColumn.qualifiedCol.hyperedge.alias}_${outputColumn.qualifiedCol.column}").mkString(", ")
 
@@ -118,10 +120,10 @@ $outerIndent}"""
 case class ScanNode(hyperedge: Relation)(implicit sqlIR: sql.IR) extends PlanNode {
 
 	val allJoinedRelations: Set[Relation] = Set(hyperedge)
-	val cardinality: Long = if sqlIR.cardinalities.isEmpty then 0 else sqlIR.cardinalities(allJoinedRelations)
-	val cumulativeCost: Long = 0
-	val inputCost = cardinality
-	val intermediateCost: Long = 0
+	val cardinality: Double = if sqlIR.cardinalities.isEmpty then 0.0 else sqlIR.cardinalities(allJoinedRelations)
+	val cumulativeCost: Double = 0.0
+	val inputCost: Double = cardinality
+	val intermediateCost: Double = 0.0
 
 	override def generateSqlWithViews()(implicit sqlIR: sql.IR): (String, String, String) = {
 		val filterConditions = sqlIR.filterConditions.keySet.filter(_ == Set(hyperedge)).flatMap(sqlIR.filterConditions)

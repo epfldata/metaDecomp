@@ -6,6 +6,8 @@ import scala.collection.mutable
 import sql.Attribute
 
 trait MetaNode[V, E <: HyperEdge[V]](val nodes : Set[V]) {
+  val id: String
+
   var keys : Set[V] = Set()
   var children: Set[MetaNode[V, E]] = Set()
   var parent: Option[MetaNode[V, E]] = None
@@ -35,15 +37,16 @@ trait MetaNode[V, E <: HyperEdge[V]](val nodes : Set[V]) {
   def toDotNonRoot(parentName: String)(implicit sqlIR: sql.IR): String
 }
 
-
 class MetaNodePhysical[V, E <: HyperEdge[V]](override val nodes : Set[V], val originalHyperEdge: E) extends MetaNode[V, E](nodes) {
+  override val id: String = originalHyperEdge.toString
+
   override def childrenPlusOrigin: Set[MetaNode[V, E]] = children
 
   def toString(depth: Int): String = {
     val outerIndent = "| " * (2 * depth)
     val innerIndent = "| " * (2 * depth + 1)
     s"""
-${outerIndent}MetaNodePhysical {
+${outerIndent}MetaNodePhysical ${id} {
 ${innerIndent}nodes: ${nodes.mkString(", ")}
 ${innerIndent}keys: ${keys.mkString(", ")}
 ${innerIndent}parent nodes: ${if (parent.isEmpty) "null" else parent.get.nodes.mkString(", ")}
@@ -73,13 +76,15 @@ $outerIndent}"""
 }
 
 class MetaNodeMinor[V, E <: HyperEdge[V]](override val nodes: Set[V],var origin : Set[MetaNode[V, E]]) extends MetaNode[V, E](nodes) {
+  override val id: String = nodes.mkString("minor_", "_", "")
+
   override def childrenPlusOrigin: Set[MetaNode[V, E]] = children ++ origin
 
   def toString(depth: Int): String = {
     val outerIndent = "| " * (2 * depth)
     val innerIndent = "| " * (2 * depth + 1)
     s"""
-${outerIndent}MetaNodeMinor {
+${outerIndent}MetaNodeMinor ${id} {
 ${innerIndent}nodes: ${nodes.mkString(", ")}
 ${innerIndent}keys: ${keys.mkString(", ")}
 ${innerIndent}parent nodes: ${if (parent.isEmpty) "null" else parent.get.nodes.mkString(", ")}

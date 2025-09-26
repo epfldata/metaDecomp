@@ -8,5 +8,5 @@ case class IR(hyperedges: Set[Relation],
 							vertexIdToColumnName: Map[String, Map[Relation, String]],
 							// hypergraph vertex ID -> (hyperedge -> column name)
 							outputAttributes: Set[OutputItem]) {
-	var cardinalities: Map[Set[Relation], Long] = Map.empty
+	var cardinalities: Map[Set[Relation], Double] = Map.empty
 }
