@@ -81,7 +81,7 @@ def metaGYO[VT, ET <: HyperEdge[VT]](E: Iterable[ET]) : Option[MetaNode[VT, ET]]
                     m.origin = m.origin + e + e3
                     m.keys = Set()
                     m
-                  case None => new MetaNodeMinor[VT, ET](shared_e, Set(e, e3)) { keys = shared_e }
+                  case None => MetaNodeMinor[VT, ET](shared_e, Set(e, e3))
                 }
               }
               isMinor = true
@@ -135,7 +135,7 @@ def metaGYO[VT, ET <: HyperEdge[VT]](E: Iterable[ET]) : Option[MetaNode[VT, ET]]
     // remove the ears from the list of hyperedges
     for e <- tempEars do {
       val shared_e = e.nodes.filter(Vcnt(_) > 1)
-      e.keys = if e.parent.nonEmpty then e.parent.get.keys else shared_e
+      e.keys = shared_e
       // If a minor node can be constructed between the ear and an existing node, do so
       boundary {
         for e1 <- metaGYOGraph do {
