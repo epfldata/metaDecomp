@@ -62,7 +62,7 @@ class MetaDecompBasedOptimizer()(implicit sqlIR: sql.IR) {
 				metaNode.planFromNeighbour(child) = planBottomUp(child)
 			}
 		}
-		getHeuristicOptPlanToJoinNeighbours(metaNode, None, children.map(c => c -> metaNode.planFromNeighbour(c)).toMap, true)
+		getHeuristicOptPlanToJoinNeighbours(metaNode, metaNode.parent, children.map(c => c -> metaNode.planFromNeighbour(c)).toMap, true)
 	}
 
 	def planTopDown(metaNode: MetaNode[Attribute, Relation], planAbove: PlanNode): Unit = {
@@ -77,7 +77,7 @@ class MetaDecompBasedOptimizer()(implicit sqlIR: sql.IR) {
 				else metaNode.planFromNeighbour(parent) = planAbove
 		}
 		for (child <- children) {
-			planTopDown(child, getHeuristicOptPlanToJoinNeighbours(metaNode, None, (children - child ++ metaNode.parent).map(n => n -> metaNode.planFromNeighbour(n)).toMap))
+			planTopDown(child, getHeuristicOptPlanToJoinNeighbours(metaNode, metaNode.parent, (children - child ++ metaNode.parent).map(n => n -> metaNode.planFromNeighbour(n)).toMap))
 		}
 	}
 
@@ -91,16 +91,13 @@ class MetaDecompBasedOptimizer()(implicit sqlIR: sql.IR) {
 	 * @return The plan
 	 */
 	@tailrec
-	private def getHeuristicOptPlanToJoinNeighbours(metaNode: MetaNode[Attribute, Relation], parent: Option[MetaNode[Attribute, Relation]], neighbours: Map[MetaNode[Attribute, Relation], PlanNode], isBottomUp: Boolean = false): PlanNode = {
+	private def getHeuristicOptPlanToJoinNeighbours(metaNode: MetaNode[Attribute, Relation], parent: Option[MetaNode[Attribute, Relation]], neighbours: Map[MetaNode[Attribute, Relation], PlanNode], isBottomUp: Boolean = false, removedNodes: Set[MetaNode[Attribute, Relation]] = Set.empty): PlanNode = {
 		metaNode match {
 			case _: MetaNodeMinor[Attribute, Relation] =>
 				val (minNeighbour, planFromMinNeighbour) = neighbours.minBy((neighbour, plan) => plan.cardinality)
-				val minNeighboursNeighbours = (minNeighbour match {
-					case _: MetaNodePhysical[Attribute, Relation] => minNeighbour.children
-					case minorNode: MetaNodeMinor[Attribute, Relation] => minorNode.children ++ minorNode.origin
-				}) ++ (if isBottomUp then None else parent)
-				val minNeighboursNeighboursAfterPromotion = ((minNeighboursNeighbours - metaNode) ++ neighbours.map((n, _) => n)) - minNeighbour
-				getHeuristicOptPlanToJoinNeighbours(minNeighbour, parent, minNeighboursNeighboursAfterPromotion.map(n => n -> minNeighbour.planFromNeighbour.getOrElse(n, neighbours(n))).toMap, isBottomUp)
+				val minNeighboursNeighbours = minNeighbour.childrenPlusOrigin ++ (if isBottomUp then None else if parent == Some(minNeighbour) then minNeighbour.parent else parent)
+				val minNeighboursNeighboursAfterPromotion = minNeighboursNeighbours ++ neighbours.map((n, _) => n) - minNeighbour - metaNode -- removedNodes
+				getHeuristicOptPlanToJoinNeighbours(minNeighbour, if parent == Some(minNeighbour) then minNeighbour.parent else parent, minNeighboursNeighboursAfterPromotion.map(n => n -> minNeighbour.planFromNeighbour.getOrElse(n, neighbours(n))).toMap, isBottomUp, removedNodes + metaNode)
 
 			case physicalNode: MetaNodePhysical[Attribute, Relation] =>
 				val neighboursPlans = mutable.Set.from(neighbours.values)
