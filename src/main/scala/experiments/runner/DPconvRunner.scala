@@ -9,6 +9,7 @@ import java.nio.file.{Files, Paths, StandardOpenOption}
 import scala.collection.mutable
 import scala.concurrent.duration.*
 import scala.sys.process.*
+import experiments.getTimestamp
 
 object DPconvRunner extends BaseRunner {
 	private val dpConvBasePath = s"$projectRootPath/DPConv"
@@ -16,11 +17,12 @@ object DPconvRunner extends BaseRunner {
 	private val optTimeout = 1.hour
 
 	def main(args: Array[String]): Unit = {
-		for (benchmark <- List("job-original", "job-large"); estimation <- cardinalityEstimationVariants(benchmark)) {
+		for (benchmark <- List("musicbrainz" /*, "job-original", "job-large"*/ ); estimation <- cardinalityEstimationVariants(benchmark)) {
+			connect(benchmark)
 
 			implicit val benchmarkPath: String = s"$benchmarksPath/$benchmark"
 
-			val resultsCsvPath = Paths.get(resultsDir, s"dpconv-opt-$benchmark-$estimation.csv")
+			val resultsCsvPath = Paths.get(resultsDir, s"dpconv-opt-$benchmark-$estimation-$getTimestamp.csv")
 
 			Files.write(
 				resultsCsvPath,
@@ -29,45 +31,47 @@ object DPconvRunner extends BaseRunner {
 			)
 
 			sqlFilesInBenchmark(benchmark).foreach(sqlFile => {
-				println("\n-----------------------------------")
-				println(s"${sqlFile.getName}")
-
 				val queryName = sqlFile.getName.stripSuffix(".sql")
-
-				val query = readInOneLine(sqlFile)
-
-				implicit val sqlIR: sql.IR = SQLParser.parse(query)
-
 				val queryCsvPath = s"$benchmarkPath/cardinalities/$estimation/dpconv_input/$queryName.csv"
 
-				val (planInString, optTime, optCout) = runDPConv(queryCsvPath)
+				if (Files.exists(Paths.get(queryCsvPath))) {
 
-				println(s"Optimization time: $optTime us")
+					println("\n-----------------------------------")
+					println(s"${sqlFile.getName}")
 
-				val executionTime = if (planInString.nonEmpty) {
-					val plan = parsePlan(planInString)
-					plan.projectTo = sqlIR.outputAttributes
+					val query = readInOneLine(sqlFile)
 
-					val (viewSqls, finalSql, groupBy) = plan.generateSqlWithViews()
+					implicit val sqlIR: sql.IR = SQLParser.parse(query)
 
-					runPlan(plan)
-				} else 0
 
-				println(s"Execution time: $executionTime us")
+					val (planInString, optTime, optCout) = runDPConv(queryCsvPath)
 
-				val totalTime = optTime + executionTime
-				println(s"Total time: ${optTime + executionTime} us")
+					println(s"Optimization time: $optTime us")
 
-				Files.write(
-					resultsCsvPath,
-					s"${sqlFile.getName.stripSuffix(".sql")},${sqlIR.hyperedges.size},$optTime,$executionTime,$totalTime${if benchmark == "job-original" then s",$optCout" else ""}\n".getBytes,
-					StandardOpenOption.APPEND
-				)
+					val executionTime = if (planInString.nonEmpty) {
+						val plan = parsePlan(planInString)
+						plan.projectTo = sqlIR.outputAttributes
+
+						val (viewSqls, finalSql, groupBy) = plan.generateSqlWithViews()
+
+						runPlan(plan)
+					} else 0
+
+					println(s"Execution time: $executionTime us")
+
+					val totalTime = optTime + executionTime
+					println(s"Total time: ${optTime + executionTime} us")
+
+					Files.write(
+						resultsCsvPath,
+						s"${sqlFile.getName.stripSuffix(".sql")},${sqlIR.hyperedges.size},$optTime,$executionTime,$totalTime${if benchmark == "job-original" then s",$optCout" else ""}\n".getBytes,
+						StandardOpenOption.APPEND
+					)
+				}
 
 			})
+			conn.close()
 		}
-
-		conn.close()
 	}
 
 	private def runDPConv(queryCsvPath: String): (String, Long, Long) = {
@@ -85,7 +89,7 @@ object DPconvRunner extends BaseRunner {
 			println(stderrLines.mkString("\n"))
 
 			if (exitCode != 0) {
-				println("DPConv timed out or crashed.")
+				println("DPconv timed out or crashed.")
 				if (i == 0) {
 					return ("", optTimeout.toMicros, 0L)
 				}

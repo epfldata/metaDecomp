@@ -19,3 +19,5 @@ def parseSubqueryTables(lines: Iterator[String]): Iterator[Set[String]] = {
 	lines.next()
 	lines.map(_.toLong).map(bitMask => tables.indices.filter(i => ((bitMask >> i) & 1) == 1).map(tables).toSet)
 }
+
+def getTimestamp: String = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME).replace(":", "-")

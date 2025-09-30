@@ -8,13 +8,16 @@ import java.nio.file.{Files, Paths, StandardOpenOption}
 import scala.io.Source
 import scala.jdk.CollectionConverters.*
 import scala.sys.process._
+import experiments.parseSubqueryTables
+import experiments.getTimestamp
 
 object MetaDecompRunner extends BaseRunner {
 	def main(args: Array[String]): Unit = {
-		for (benchmark <- benchmarks ; estimation <- cardinalityEstimationVariants(benchmark)) {
+		for (benchmark <- List("musicbrainz" /*, "job-original", "job-large"*/) ; estimation <- cardinalityEstimationVariants(benchmark)) {
+			connect(benchmark)
 
 			val benchmarkPath = s"$benchmarksPath/$benchmark"
-			val resultsPath = Paths.get(resultsDir, s"metadecomp-opt-$benchmark-$estimation.csv")
+			val resultsPath = Paths.get(resultsDir, s"metadecomp-opt-$benchmark-$estimation-$getTimestamp.csv")
 			Files.write(
 				resultsPath,
 				"query,num_rels,max_fanout,metagyo_time,planning_time,total_opt_time,exec_time,total_time,cost_intm,cost_inout,cout_cost\n".getBytes,
@@ -23,116 +26,134 @@ object MetaDecompRunner extends BaseRunner {
 
 
 			sqlFilesInBenchmark(benchmark).foreach(sqlFile =>
-				println("\n-----------------------------------")
-				println(s"${sqlFile.getName}")
-
 				val queryName = sqlFile.getName.stripSuffix(".sql")
 
+				if (Files.exists(Paths.get(benchmarkPath, "cardinalities", estimation, "results", s"${queryName}_cardinalities.txt"))) {
 
-				val source = Source.fromFile(sqlFile)
-				val query = source.getLines().mkString(" ")
-				source.close()
-
-				implicit val sqlIR: sql.IR = SQLParser.parse(query)
+					println("\n-----------------------------------")
+					println(s"${sqlFile.getName}")
 
 
-				val metaRunResults = for (i <- 0 until repeatTimes) yield {
-					val metaGYOStartTime = System.nanoTime()
-					val meta = metaGYO(sqlIR.hyperedges)
-					val metaGYOEndTime = System.nanoTime()
-					val metaGYOTime = (metaGYOEndTime - metaGYOStartTime) / 1000 // microseconds
-					println(s"MetaGYO run $i: $metaGYOTime us")
-					(meta, metaGYOTime)
-				}
+					val source = Source.fromFile(sqlFile)
+					val query = source.getLines().mkString(" ")
+					source.close()
 
-				val (metaOption, metaGYOTime) = metaRunResults.sortBy(_._2).apply(repeatTimes / 2) // Take the median of 5 runs
-				if (metaOption.isEmpty) {
-					println("Cyclic query. Skipping.")
-				} else {
-					val meta = metaOption.get
-
-					val maxFanout = meta.collectDescendents.toList.map(p => (p.childrenPlusOrigin ++ p.parent).size - 1).max
+					implicit val sqlIR: sql.IR = SQLParser.parse(query)
 
 
-					val metaTreeDotFilePath = Paths.get(resultsDir, "meta-trees", s"${queryName}-meta-tree.dot")
-					Files.write(metaTreeDotFilePath, meta.toDot(sqlIR).getBytes, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING)
-
-					val metaTreeFigPath = Paths.get(resultsDir, "meta-trees", s"${queryName}-meta-tree.svg")
-					val metaTreeDotCommand = Seq("dot", "-Tsvg", metaTreeDotFilePath.toString, "-o", metaTreeFigPath.toString)
-					try {
-						metaTreeDotCommand.!
-					} catch {
-						case e: Throwable => println(s"Error generating meta tree: ${e.getMessage}")
+					val metaRunResults = for (i <- 0 until repeatTimes) yield {
+						val metaGYOStartTime = System.nanoTime()
+						val meta = metaGYO(sqlIR.hyperedges)
+						val metaGYOEndTime = System.nanoTime()
+						val metaGYOTime = (metaGYOEndTime - metaGYOStartTime) / 1000 // microseconds
+						println(s"MetaGYO run $i: $metaGYOTime us")
+						(meta, metaGYOTime)
 					}
 
-
-					val joinedTablesFileSource = Source.fromFile(Paths.get(benchmarkPath, "cardinalities", "subquery_joined_tables", s"${queryName}_join_tables.txt").toFile)
-					val joinedTables = joinedTablesFileSource.getLines
-
-					if (estimation == "all-0") {
-						sqlIR.cardinalities = joinedTables.map(tablesLine => {
-							val hyperedgeAliasesOnLine = tablesLine.split(",").map(_.trim)
-							val hyperedgesOnLine = hyperedgeAliasesOnLine.map(alias => sqlIR.hyperedges.find(_.alias == alias).get)
-							hyperedgesOnLine.toSet -> 0L
-						}).toMap
+					val (metaOption, metaGYOTime) = metaRunResults.sortBy(_._2).apply(repeatTimes / 2) // Take the median of 5 runs
+					if (metaOption.isEmpty) {
+						println("Cyclic query. Skipping.")
 					} else {
-						val cardinalitiesFileSource = Source.fromFile(Paths.get(benchmarkPath, "cardinalities", estimation, "results", s"${queryName}_cardinalities.txt").toFile)
-						val cardinalities = cardinalitiesFileSource.getLines
-						sqlIR.cardinalities = joinedTables.zip(cardinalities).map((tablesLine, cardinalitiesLine) =>
-							val hyperedgeAliasesOnLine = tablesLine.split(",").map(_.trim)
-							val hyperedgesOnLine = hyperedgeAliasesOnLine.map(alias => sqlIR.hyperedges.find(_.alias == alias).get)
-							val cardinality = cardinalitiesLine.split(" ").takeRight(1).head.toLong
-							hyperedgesOnLine.toSet -> cardinality
-						).toMap
-						cardinalitiesFileSource.close()
+						val meta = metaOption.get
+
+						val maxFanout = meta.collectDescendents.toList.map(p => (p.childrenPlusOrigin ++ p.parent).size - 1).max
+
+
+						val metaTreeDotFilePath = Paths.get(resultsDir, "meta-trees", s"${queryName}-meta-tree.dot")
+						Files.write(metaTreeDotFilePath, meta.toDot(sqlIR).getBytes, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING)
+
+						val metaTreeFigPath = Paths.get(resultsDir, "meta-trees", s"${queryName}-meta-tree.svg")
+						val metaTreeDotCommand = Seq("dot", "-Tsvg", metaTreeDotFilePath.toString, "-o", metaTreeFigPath.toString)
+						try {
+							metaTreeDotCommand.!
+						} catch {
+							case e: Throwable => println(s"Error drawing meta decomposition using dot: ${e.getMessage}")
+						}
+
+
+
+						val joinedTablesFileSource = Source.fromFile(Paths.get(benchmarkPath, "cardinalities", "subqueries_tables", s"${queryName}_subqueries_tables.csv").toFile)
+						val joinedTables = parseSubqueryTables(joinedTablesFileSource.getLines)
+
+						if (estimation == "all-0") {
+							sqlIR.cardinalities = joinedTables.map(tablesLine => {
+								val hyperedgeAliasesOnLine = tablesLine
+								val hyperedgesOnLine = hyperedgeAliasesOnLine.map(alias => sqlIR.hyperedges.find(_.alias == alias).get)
+								hyperedgesOnLine.toSet -> 0.0
+							}).toMap
+						} else {
+							val cardinalitiesFileSource = Source.fromFile(Paths.get(benchmarkPath, "cardinalities", estimation, "results", s"${queryName}_cardinalities.txt").toFile)
+							val cardinalities = cardinalitiesFileSource.getLines
+							sqlIR.cardinalities = joinedTables.zip(cardinalities).map((tablesLine, cardinalitiesLine) =>
+								val hyperedgeAliasesOnLine = tablesLine
+								val hyperedgesOnLine = hyperedgeAliasesOnLine.map(alias => sqlIR.hyperedges.find(_.alias == alias).get)
+								val cardinality = cardinalitiesLine.split(" ").takeRight(1).head.toDouble
+								hyperedgesOnLine.toSet -> cardinality
+							).toMap
+							cardinalitiesFileSource.close()
+						}
+
+						joinedTablesFileSource.close()
+
+						val (plan, planningTime) = (for (i <- 0 until repeatTimes) yield {
+							val planningStartTime = System.nanoTime()
+							val plan = MetaDecompBasedOptimizer().run(metaRunResults(i)._1.get)
+							val planningEndTime = System.nanoTime()
+							val planningTime = (planningEndTime - planningStartTime) / 1000 // microseconds
+							println(s"Planning run $i: $planningTime us")
+							(plan, planningTime)
+						}).sortBy(_._2).apply(repeatTimes / 2) // Take the median of 5 runs
+
+
+						val totalOptTime = metaGYOTime + planningTime // microseconds
+
+						println(s"Optimization time: $metaGYOTime us + $planningTime us = $totalOptTime us")
+
+
+						val jsonFilePath = Paths.get(resultsDir, "join-trees", s"${queryName}_join_tree.json")
+						Files.write(
+							jsonFilePath,
+							plan.joinTree.toJson.getBytes,
+							StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING
+						)
+
+						val metaPlanDotFilePath = Paths.get(resultsDir, "meta_plans", s"${queryName}_meta_plan.dot")
+						Files.write(metaPlanDotFilePath, plan.toDot.getBytes, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING)
+
+						val metaPlanFigPath = Paths.get(resultsDir, "meta_plans", s"${queryName}_meta_plan.svg")
+						val metaPlanDotCommand = Seq("dot", "-Tsvg", metaPlanDotFilePath.toString, "-o", metaPlanFigPath.toString)
+						try {
+							metaPlanDotCommand.!
+						} catch {
+							case e: Throwable => println(s"Error drawing the query plan using dot: ${e.getMessage}")
+						}
+
+						val metaPlanSqlPath = Paths.get(resultsDir, "meta_plans", s"${queryName}_meta_plan.sql")
+						val (viewSqls, finalSql, groupBy) = plan.generateSqlWithViews()
+						Files.write(metaPlanSqlPath, (viewSqls + "\n" + finalSql + "\n" + groupBy + ";").getBytes, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING)
+
+						val executionTime = runPlan(plan)
+
+						println(s"Execution time: $executionTime us")
+
+
+						val totalTime = totalOptTime + executionTime
+						println(s"Total time: ${totalOptTime + executionTime} us")
+
+						val intermediateCost = plan.intermediateCost - plan.cardinality
+						val inOutCost = plan.inputCost + plan.cardinality
+						val totalCost = intermediateCost + inOutCost
+
+						Files.write(
+							resultsPath,
+							s"$queryName,${sqlIR.hyperedges.size},$maxFanout,$metaGYOTime,$planningTime,$totalOptTime,$executionTime,$totalTime,$intermediateCost,$inOutCost,$totalCost\n"
+								.getBytes,
+							StandardOpenOption.APPEND
+						)
 					}
-
-					joinedTablesFileSource.close()
-
-					val (plan, planningTime) = (for (i <- 0 until repeatTimes) yield {
-						val planningStartTime = System.nanoTime()
-						val plan = MetaDecompBasedOptimizer().run(metaRunResults(i)._1.get)
-						val planningEndTime = System.nanoTime()
-						val planningTime = (planningEndTime - planningStartTime) / 1000 // microseconds
-						println(s"Planning run $i: $planningTime us")
-						(plan, planningTime)
-					}).sortBy(_._2).apply(repeatTimes / 2) // Take the median of 5 runs
-
-
-					val totalOptTime = metaGYOTime + planningTime // microseconds
-
-					println(s"Optimization time: $metaGYOTime us + $planningTime us = $totalOptTime us")
-
-
-					val jsonFilePath = Paths.get(resultsDir, "join-trees", s"${queryName}_join_tree.json")
-					Files.write(
-						jsonFilePath,
-						plan.joinTree.toJson.getBytes,
-						StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING
-					)
-
-					val executionTime = runPlan(plan)
-
-					println(s"Execution time: $executionTime us")
-
-
-					val totalTime = totalOptTime + executionTime
-					println(s"Total time: ${totalOptTime + executionTime} us")
-
-					val intermediateCost = plan.intermediateCost - plan.cardinality
-					val inOutCost = plan.inputCost + plan.cardinality
-					val totalCost = intermediateCost + inOutCost
-
-					Files.write(
-						resultsPath,
-						s"$queryName,${sqlIR.hyperedges.size},$maxFanout,$metaGYOTime,$planningTime,$totalOptTime,$executionTime,$totalTime,$intermediateCost,$inOutCost,$totalCost\n"
-							.getBytes,
-						StandardOpenOption.APPEND
-					)
 				}
 			)
+			conn.close()
 		}
-
-		conn.close()
 	}
 }

@@ -12,16 +12,21 @@ import scala.concurrent.duration.*
 import scala.concurrent.{Await, Future, TimeoutException}
 import scala.io.Source
 import scala.sys.process.*
+import java.util.Properties
 
 trait BaseRunner {
-	val conn: Connection = DriverManager.getConnection(dataSource)
+	var conn: Connection = null
 
-//	private val setMemoryStmt: Statement = conn.createStatement()
-//	setMemoryStmt.execute("SET memory_limit = '40GB';")
-//	setMemoryStmt.execute("SET temp_directory = '';") // Disable spilling to disk, just let it crash
-//	setMemoryStmt.close()
-
-	deleteTmpFiles()
+	def connect(benchmark: String): Unit = {
+		val readOnlyProperty = new Properties();
+		readOnlyProperty.setProperty("duckdb.read_only", "true");
+		conn = DriverManager.getConnection(dataSource(benchmark), readOnlyProperty)
+		// val setMemoryStmt: Statement = conn.createStatement()
+		// setMemoryStmt.execute("SET memory_limit = '40GB';")
+		// setMemoryStmt.execute("SET temp_directory = '';") // Disable spilling to disk, just let it crash
+		// setMemoryStmt.close()
+		deleteTmpFiles()
+	}
 
 	def deleteTmpFiles(): Unit = {
 		try {
@@ -81,6 +86,8 @@ trait BaseRunner {
 					}
 			}
 		}).sorted.apply(repeatTimes / 2) // Take the median of 5 runs
+
+		System.gc()
 
 		executionTime
 	}

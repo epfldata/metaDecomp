@@ -35,6 +35,9 @@ trait PlanNode()(implicit sqlIR: sql.IR) {
 			.flatMap(_.referencedCols)
 			.filter(qualifiedCol => this.allJoinedRelations.contains(qualifiedCol.hyperedge))
 			.map(OutputItem(_, None))
+	
+	def toDot(implicit metadata: sql.IR): String
+	def toDotNonRoot(parentName: String)(implicit metadata: sql.IR): String
 }
 
 case class JoinNode(lhs: PlanNode, rhs: PlanNode)(implicit sqlIR: sql.IR) extends PlanNode {
@@ -115,6 +118,23 @@ ${innerIndent}lhs: ${lhs.toString(depth + 1)}
 ${innerIndent}rhs: ${rhs.toString(depth + 1)}
 $outerIndent}"""
 	}
+
+	def toDot(implicit metadata: sql.IR): String = {
+		val id = allJoinedRelations.map(_.alias).mkString("_")
+		s"""graph\"\" {
+	$id ;
+	$id [label = \"⋈ ${if metadata.cardinalities != null then metadata.cardinalities(allJoinedRelations) else ""}\"] ;
+${lhs.toDotNonRoot(id)}${rhs.toDotNonRoot(id)}}
+"""
+	}
+
+	def toDotNonRoot(parentId: String)(implicit metadata: sql.IR): String = {
+		val id = allJoinedRelations.map(_.alias).mkString("_")
+		s"""  $parentId -- $id ;
+	$id [label = \"⋈ ${if metadata.cardinalities != null then metadata.cardinalities(allJoinedRelations) else ""}\"] ;
+${lhs.toDotNonRoot(id)}${rhs.toDotNonRoot(id)}
+"""
+	}
 }
 
 case class ScanNode(hyperedge: Relation)(implicit sqlIR: sql.IR) extends PlanNode {
@@ -145,4 +165,21 @@ case class ScanNode(hyperedge: Relation)(implicit sqlIR: sql.IR) extends PlanNod
 	}
 
 	override def toString(depth: Int): String = f"Scan ${hyperedge.nodes.mkString(", ")}"
+
+
+	def toDot(implicit metadata: sql.IR): String = {
+		val id = hyperedge.alias
+		s"""graph\"\" {
+	$id ;
+	$id [label = \"$id\"] ;
+}
+"""
+	}
+
+	def toDotNonRoot(parentId: String)(implicit metadata: sql.IR): String = {
+		val id = hyperedge.alias
+		s"""  $parentId -- $id ;
+	$id [label = \"$id\"] ;
+"""
+	}
 }
