@@ -86,11 +86,17 @@ case class JoinNode(lhs: PlanNode, rhs: PlanNode)(implicit sqlIR: sql.IR) extend
 				rightViewSqls +
 				"CREATE OR REPLACE TEMP VIEW " + lhsViewName + " AS \n" +
 				leftFinalSql +
-				(if lhs.projectTo.size == 1 && lhs.allJoinedRelations.size != 1 then "\n" + lhsGroupBy else "") +
+				(if lhs.projectTo.size <= 3 && lhs.cardinality > 1e6 then
+				"\n" + lhsGroupBy 
+				else "") 
+				+
 				";\n" +
 				"CREATE OR REPLACE TEMP VIEW " + rhsViewName + " AS \n" +
 				rightFinalSql +
-				(if rhs.projectTo.size == 1 && lhs.allJoinedRelations.size != 1 then "\n" + rhsGroupBy else "") +
+				(if rhs.projectTo.size <= 3 && rhs.cardinality > 1e6 then
+				"\n" + rhsGroupBy 
+				else "") 
+				+
 				";\n"
 
 		val finalSql =
@@ -123,7 +129,7 @@ $outerIndent}"""
 		val id = allJoinedRelations.map(_.alias).mkString("_")
 		s"""graph\"\" {
 	$id ;
-	$id [label = \"⋈ ${if metadata.cardinalities != null then metadata.cardinalities(allJoinedRelations) else ""}\"] ;
+	$id [label = \"⋈ ${if metadata.cardinalities != null then metadata.cardinalities.getOrElse(allJoinedRelations, "") else ""}\"] ;
 ${lhs.toDotNonRoot(id)}${rhs.toDotNonRoot(id)}}
 """
 	}
@@ -131,7 +137,7 @@ ${lhs.toDotNonRoot(id)}${rhs.toDotNonRoot(id)}}
 	def toDotNonRoot(parentId: String)(implicit metadata: sql.IR): String = {
 		val id = allJoinedRelations.map(_.alias).mkString("_")
 		s"""  $parentId -- $id ;
-	$id [label = \"⋈ ${if metadata.cardinalities != null then metadata.cardinalities(allJoinedRelations) else ""}\"] ;
+	$id [label = \"⋈ ${if metadata.cardinalities != null then metadata.cardinalities.getOrElse(allJoinedRelations, "") else ""}\"] ;
 ${lhs.toDotNonRoot(id)}${rhs.toDotNonRoot(id)}
 """
 	}
@@ -152,15 +158,10 @@ case class ScanNode(hyperedge: Relation)(implicit sqlIR: sql.IR) extends PlanNod
 
 		(
 			"",
-			"SELECT "
-				+ projectTo.map(outputColumn => outputColumn.aggregation match {
-				case Some(aggregation) => s"${outputColumn.qualifiedCol.hyperedge.alias}.${outputColumn.qualifiedCol.column}"
-				case None => s"${outputColumn.qualifiedCol.hyperedge.alias}.${outputColumn.qualifiedCol.column} AS ${outputColumn.qualifiedCol.hyperedge.alias}_${outputColumn.qualifiedCol.column}"
-			}).mkString(", ")
-				+ "\n"
+			"SELECT " + projectTo.map(outputColumn => s"${outputColumn.qualifiedCol.hyperedge.alias}.${outputColumn.qualifiedCol.column} AS ${outputColumn.qualifiedCol.hyperedge.alias}_${outputColumn.qualifiedCol.column}").mkString(", ") + "\n"
 				+ "FROM " + hyperedge.name + " AS " + hyperedge.alias
 				+ (if filterConditions.isEmpty then "" else "\n" + "WHERE " + filterConditions.map(_.conditionText).mkString(" AND ")),
-			""
+			"GROUP BY " + projectTo.map(outputColumn => s"${outputColumn.qualifiedCol.hyperedge.alias}.${outputColumn.qualifiedCol.column}").mkString(", ")
 		)
 	}
 

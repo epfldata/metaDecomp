@@ -8,7 +8,7 @@ import experiments.getTimestamp
 
 object DuckDBRunner extends BaseRunner {
 	def main(args: Array[String]): Unit = {
-		for (benchmark <- List("musicbrainz" /*, "job-original", "job-large" */)) {
+		for (benchmark <- benchmarks) {
 			connect(benchmark)
 
 			val resultsPath = Paths.get(resultsDir, s"duckdb-$benchmark-$getTimestamp.csv")
@@ -20,7 +20,11 @@ object DuckDBRunner extends BaseRunner {
 			)
 
 
-			sqlFilesInBenchmark(benchmark).foreach(sqlFile =>
+			sqlFilesInBenchmark(benchmark).filter(f => {
+				cardinalityEstimationVariants(benchmark).exists(variant =>
+					Files.exists(Paths.get(s"$benchmarksPath/$benchmark/cardinalities/$variant/${f.getName.stripSuffix(".sql")}.csv"))
+				)
+			}).foreach(sqlFile =>
 				println("\n-----------------------------------")
 				println(s"${sqlFile.getName}")
 

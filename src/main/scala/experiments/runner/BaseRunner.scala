@@ -13,6 +13,8 @@ import scala.concurrent.{Await, Future, TimeoutException}
 import scala.io.Source
 import scala.sys.process.*
 import java.util.Properties
+import experiments.getTimestamp
+import java.sql.SQLTimeoutException
 
 trait BaseRunner {
 	var conn: Connection = null
@@ -21,18 +23,25 @@ trait BaseRunner {
 		val readOnlyProperty = new Properties();
 		readOnlyProperty.setProperty("duckdb.read_only", "true");
 		conn = DriverManager.getConnection(dataSource(benchmark), readOnlyProperty)
-		// val setMemoryStmt: Statement = conn.createStatement()
-		// setMemoryStmt.execute("SET memory_limit = '40GB';")
-		// setMemoryStmt.execute("SET temp_directory = '';") // Disable spilling to disk, just let it crash
-		// setMemoryStmt.close()
+		val stmt: Statement = conn.createStatement()
+		stmt.execute("SET memory_limit = '40GB';")
+		stmt.execute("SET temp_directory = '';") // Disable spilling to disk, just let it crash
+		// stmt.execute("SET max_temp_directory_size = '400GB';")
+		stmt.close()
 		deleteTmpFiles()
+	}
+
+	def disableDuckDBOptimizers(): Unit = {
+		val stmt: Statement = conn.createStatement()
+		stmt.execute("SET disabled_optimizers = 'join_order,statistics_propagation';") // statistics_propagation gets us in bugs sometimes
+		stmt.close()
 	}
 
 	def deleteTmpFiles(): Unit = {
 		try {
-			Seq("bash", "-c", s"rm -rf $dbFilePath.tmp/*").!
+			benchmarks.foreach(benchmark => Seq("bash", "-c", s"rm -rf ${dbFilePath(benchmark)}.tmp/*").!)
 		} catch {
-			case _: Throwable => ()
+			case e: Throwable => e.printStackTrace()
 		}
 	}
 
@@ -59,6 +68,7 @@ trait BaseRunner {
 				val queryFuture = Future { stmt.execute(finalSql) }
 
 				val executionStartTime = System.nanoTime()
+				println(s"Execution run $i started $getTimestamp:")
 				Await.result(queryFuture, timeout)
 				val executionEndTime = System.nanoTime()
 				val executionTime = (executionEndTime - executionStartTime) / 1000 // microseconds
@@ -66,8 +76,10 @@ trait BaseRunner {
 				stmt.close()
 				executionTime
 			} catch {
-				case e: TimeoutException =>
+				case _: TimeoutException | _: SQLTimeoutException =>
+					println("Query timed out, terminating...")
 					stmt.cancel()
+					deleteTmpFiles()
 					println("Query timed out and was terminated.")
 					if (i == 0) {
 						return timeout.toMicros // Indicating failure on the first run
@@ -76,8 +88,7 @@ trait BaseRunner {
 					}
 				case e: Throwable =>
 					e.printStackTrace()
-					println(viewSqls)
-					println(finalSql)
+					deleteTmpFiles()
 					println("Query exceeded memory limit or crashed and was terminated.")
 					if (i == 0) {
 						return timeout.toMicros // Indicating failure on the first run
@@ -86,8 +97,6 @@ trait BaseRunner {
 					}
 			}
 		}).sorted.apply(repeatTimes / 2) // Take the median of 5 runs
-
-		System.gc()
 
 		executionTime
 	}

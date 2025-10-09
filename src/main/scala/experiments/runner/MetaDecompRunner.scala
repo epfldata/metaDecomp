@@ -13,8 +13,9 @@ import experiments.getTimestamp
 
 object MetaDecompRunner extends BaseRunner {
 	def main(args: Array[String]): Unit = {
-		for (benchmark <- List("musicbrainz" /*, "job-original", "job-large"*/) ; estimation <- cardinalityEstimationVariants(benchmark)) {
+		for (benchmark <- benchmarks; estimation <- cardinalityEstimationVariants(benchmark)) {
 			connect(benchmark)
+			disableDuckDBOptimizers()
 
 			val benchmarkPath = s"$benchmarksPath/$benchmark"
 			val resultsPath = Paths.get(resultsDir, s"metadecomp-opt-$benchmark-$estimation-$getTimestamp.csv")
@@ -28,7 +29,8 @@ object MetaDecompRunner extends BaseRunner {
 			sqlFilesInBenchmark(benchmark).foreach(sqlFile =>
 				val queryName = sqlFile.getName.stripSuffix(".sql")
 
-				if (Files.exists(Paths.get(benchmarkPath, "cardinalities", estimation, "results", s"${queryName}_cardinalities.txt"))) {
+				if (Files.exists(Paths.get(benchmarkPath, "cardinalities", estimation, s"${queryName}.csv"))) {
+					System.gc()
 
 					println("\n-----------------------------------")
 					println(s"${sqlFile.getName}")
@@ -72,7 +74,7 @@ object MetaDecompRunner extends BaseRunner {
 
 
 
-						val joinedTablesFileSource = Source.fromFile(Paths.get(benchmarkPath, "cardinalities", "subqueries_tables", s"${queryName}_subqueries_tables.csv").toFile)
+						val joinedTablesFileSource = Source.fromFile(Paths.get(benchmarkPath, "cardinalities", estimation, s"${queryName}.csv").toFile)
 						val joinedTables = parseSubqueryTables(joinedTablesFileSource.getLines)
 
 						if (estimation == "all-0") {
@@ -82,8 +84,8 @@ object MetaDecompRunner extends BaseRunner {
 								hyperedgesOnLine.toSet -> 0.0
 							}).toMap
 						} else {
-							val cardinalitiesFileSource = Source.fromFile(Paths.get(benchmarkPath, "cardinalities", estimation, "results", s"${queryName}_cardinalities.txt").toFile)
-							val cardinalities = cardinalitiesFileSource.getLines
+							val cardinalitiesFileSource = Source.fromFile(Paths.get(benchmarkPath, "cardinalities", estimation, s"${queryName}.csv").toFile)
+							val cardinalities = cardinalitiesFileSource.getLines.drop(3)
 							sqlIR.cardinalities = joinedTables.zip(cardinalities).map((tablesLine, cardinalitiesLine) =>
 								val hyperedgeAliasesOnLine = tablesLine
 								val hyperedgesOnLine = hyperedgeAliasesOnLine.map(alias => sqlIR.hyperedges.find(_.alias == alias).get)

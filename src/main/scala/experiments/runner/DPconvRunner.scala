@@ -10,6 +10,8 @@ import scala.collection.mutable
 import scala.concurrent.duration.*
 import scala.sys.process.*
 import experiments.getTimestamp
+import scala.io.Source
+import experiments.parseSubqueryTables
 
 object DPconvRunner extends BaseRunner {
 	private val dpConvBasePath = s"$projectRootPath/DPConv"
@@ -17,8 +19,9 @@ object DPconvRunner extends BaseRunner {
 	private val optTimeout = 1.hour
 
 	def main(args: Array[String]): Unit = {
-		for (benchmark <- List("musicbrainz" /*, "job-original", "job-large"*/ ); estimation <- cardinalityEstimationVariants(benchmark)) {
+		for (benchmark <- benchmarks; estimation <- cardinalityEstimationVariants(benchmark)) {
 			connect(benchmark)
+			disableDuckDBOptimizers()
 
 			implicit val benchmarkPath: String = s"$benchmarksPath/$benchmark"
 
@@ -32,9 +35,10 @@ object DPconvRunner extends BaseRunner {
 
 			sqlFilesInBenchmark(benchmark).foreach(sqlFile => {
 				val queryName = sqlFile.getName.stripSuffix(".sql")
-				val queryCsvPath = s"$benchmarkPath/cardinalities/$estimation/dpconv_input/$queryName.csv"
+				val queryCsvPath = s"$benchmarkPath/cardinalities/$estimation/$queryName.csv"
 
 				if (Files.exists(Paths.get(queryCsvPath))) {
+					System.gc()
 
 					println("\n-----------------------------------")
 					println(s"${sqlFile.getName}")
@@ -42,6 +46,30 @@ object DPconvRunner extends BaseRunner {
 					val query = readInOneLine(sqlFile)
 
 					implicit val sqlIR: sql.IR = SQLParser.parse(query)
+					
+
+					val joinedTablesFileSource = Source.fromFile(Paths.get(benchmarkPath, "cardinalities", estimation, s"${queryName}.csv" /* "subqueries_tables", s"${queryName}_subqueries_tables.csv" */).toFile)
+						val joinedTables = parseSubqueryTables(joinedTablesFileSource.getLines)
+
+						if (estimation == "all-0") {
+							sqlIR.cardinalities = joinedTables.map(tablesLine => {
+								val hyperedgeAliasesOnLine = tablesLine
+								val hyperedgesOnLine = hyperedgeAliasesOnLine.map(alias => sqlIR.hyperedges.find(_.alias == alias).get)
+								hyperedgesOnLine.toSet -> 0.0
+							}).toMap
+						} else {
+							val cardinalitiesFileSource = Source.fromFile(Paths.get(benchmarkPath, "cardinalities", estimation, /* "dpconv_input", */ s"${queryName}.csv").toFile)
+							val cardinalities = cardinalitiesFileSource.getLines.drop(3)
+							sqlIR.cardinalities = joinedTables.zip(cardinalities).map((tablesLine, cardinalitiesLine) =>
+								val hyperedgeAliasesOnLine = tablesLine
+								val hyperedgesOnLine = hyperedgeAliasesOnLine.map(alias => sqlIR.hyperedges.find(_.alias == alias).get)
+								val cardinality = cardinalitiesLine.split(" ").takeRight(1).head.toDouble
+								hyperedgesOnLine.toSet -> cardinality
+							).toMap
+							cardinalitiesFileSource.close()
+						}
+
+						joinedTablesFileSource.close()
 
 
 					val (planInString, optTime, optCout) = runDPConv(queryCsvPath)
@@ -53,6 +81,20 @@ object DPconvRunner extends BaseRunner {
 						plan.projectTo = sqlIR.outputAttributes
 
 						val (viewSqls, finalSql, groupBy) = plan.generateSqlWithViews()
+
+						val dpConvPlanSqlPath = Paths.get(resultsDir, "dpconv_plans", s"${queryName}_dpconv_plan.sql")
+						Files.write(dpConvPlanSqlPath, (viewSqls + "\n" + finalSql + "\n" + groupBy + ";").getBytes, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING)
+
+						val dpConvPlanDotFilePath = Paths.get(resultsDir, "dpconv_plans", s"${queryName}_dpconv_plan.dot")
+						Files.write(dpConvPlanDotFilePath, plan.toDot.getBytes, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING)
+
+						val dpConvPlanFigPath = Paths.get(resultsDir, "dpconv_plans", s"${queryName}_dpconv_plan.svg")
+						val dpConvPlanDotCommand = Seq("dot", "-Tsvg", dpConvPlanDotFilePath.toString, "-o", dpConvPlanFigPath.toString)
+						try {
+							dpConvPlanDotCommand.!
+						} catch {
+							case e: Throwable => System.err.println(s"Error generating query plan for $queryName: ${e.getMessage}")
+						}
 
 						runPlan(plan)
 					} else 0
@@ -74,12 +116,14 @@ object DPconvRunner extends BaseRunner {
 		}
 	}
 
-	private def runDPConv(queryCsvPath: String): (String, Long, Long) = {
+	private def runDPConv(queryCsvPath: String): (String, Long, Double) = {
 		val command = Seq(
 			"gtimeout", s"${optTimeout.toSeconds}s", "bash", "-c", s"$dpConvBasePath/src/build/bench $queryCsvPath"
 		)
 
 		val results = (for (i <- 0 until repeatTimes) yield {
+			println(s"Started DPconv run $i at $getTimestamp")
+
 			val stdoutLines = mutable.ListBuffer[String]()
 			val stderrLines = mutable.ListBuffer[String]()
 
@@ -96,9 +140,9 @@ object DPconvRunner extends BaseRunner {
 			}
 
 			val timeLinePattern = """CCAP_DPCONV \(time\): (\d+)""".r
-			val coutLinePattern = """.*optimal_cout_cost=(\d+)""".r
+			val coutLinePattern = """.*optimal_cout_cost=(.*)""".r
 			val optTime = stderrLines.collectFirst { case timeLinePattern(time) => time.toLong }.get
-			val optCout = stderrLines.collectFirst { case coutLinePattern(cout) => cout.toLong }.getOrElse(0L)
+			val optCout = stderrLines.collectFirst { case coutLinePattern(cout) => cout.toDouble }.getOrElse(0.0)
 			println(s"Optimization time (run $i): $optTime us")
 			(stderrLines.findLast(_.startsWith("(")).get, optTime, optCout)
 		}).sortBy(_._2)

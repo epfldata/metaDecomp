@@ -6,8 +6,9 @@
 
 addSbtPlugin("org.scalameta" % "sbt-metals" % "1.6.2")
 
-// This plugin adds the BSP debug capability to sbt server.
+// This plugin makes sure that the JDI tools are in the sbt classpath.
+// JDI tools are used by the debug adapter server.
 
-addSbtPlugin("ch.epfl.scala" % "sbt-debug-adapter" % "4.2.8")
+addSbtPlugin("com.github.sbt" % "sbt-jdi-tools" % "1.2.0")
 
 // format: on
