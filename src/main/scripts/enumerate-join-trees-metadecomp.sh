@@ -19,7 +19,7 @@ PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 REPEAT_TIMES=10
 TIMEOUT_SECONDS=3600 # Timeout in seconds
 
-for BENCHMARK in "job-original" "job-large"; do
+for BENCHMARK in "dsb" "job-original" "musicbrainz" "job-large"; do
 
   QUERIES_PATH="$PROJECT_ROOT/benchmarks/$BENCHMARK/queries"
   SQL_FILES=$(find "$QUERIES_PATH" -type f -maxdepth 1 -name "*.sql" | sort)

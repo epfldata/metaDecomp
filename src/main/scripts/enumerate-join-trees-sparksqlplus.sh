@@ -3,18 +3,11 @@
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 
 # --- Configuration ---
-DDL_FILE="$PROJECT_ROOT/replacement-files/SparkSQLPlus/scheme.sql"
 API_URL="http://localhost:8848/api/v1/parse"
 TIMEOUT_SECONDS=3600 # 1 hour
 REPEAT_TIMES=10
 
 # --- Pre-flight Checks ---
-
-# Check if the DDL file exists
-if [ ! -f "$DDL_FILE" ]; then
-    echo "Error: DDL file '$DDL_FILE' not found in the current directory."
-    exit 1
-fi
 
 # Check if jq is installed, as it's required for processing the JSON response
 if ! command -v jq &> /dev/null; then
@@ -23,7 +16,6 @@ if ! command -v jq &> /dev/null; then
     exit 1
 fi
 
-echo "Found DDL file: $DDL_FILE. Processing other .sql files..."
 
 # --- Start Spring Boot Application ---
 APP_JAR="$PROJECT_ROOT/SparkSQLPlus/sqlplus-web/target/sparksql-plus-web-jar-with-dependencies.jar"
@@ -84,9 +76,28 @@ trap cleanup SIGINT
 
 # Read the content of the DDL file once
 # Escapes newlines and double quotes for JSON compatibility
-ddl_content=$(cat "$DDL_FILE" | sed 's/"/\\"/g' | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n/\\n/g')
 
-for BENCHMARK in "job-original" "job-large"; do
+for BENCHMARK in "dsb" "job-original" "musicbrainz" "job-large"; do
+
+    if [ "$BENCHMARK" == "job-original" ] || [ "$BENCHMARK" == "job-large" ]; then
+        DDL_FILE="$PROJECT_ROOT/supplementary-files/SparkSQLPlus/imdb-scheme.sql"
+    elif [ "$BENCHMARK" == "musicbrainz" ]; then
+        DDL_FILE="$PROJECT_ROOT/supplementary-files/SparkSQLPlus/musicbrainz-scheme.sql"
+    elif [ "$BENCHMARK" == "dsb" ]; then
+        DDL_FILE="$PROJECT_ROOT/supplementary-files/SparkSQLPlus/dsb-scheme.sql"
+    else
+        echo "Error: Unknown benchmark '$BENCHMARK'. Skipping..."
+        continue
+    fi
+
+    # Check if the DDL file exists
+    if [ ! -f "$DDL_FILE" ]; then
+        echo "Error: DDL file '$DDL_FILE' not found in the current directory."
+        exit 1
+    fi
+    echo "Found DDL file: $DDL_FILE. Processing other .sql files..."
+    
+    ddl_content=$(cat "$DDL_FILE" | sed 's/"/\\"/g' | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n/\\n/g')
 
     output_csv_file="$PROJECT_ROOT/experiment-results/sparksqlplus-enum-$BENCHMARK.csv"
     echo "query,time_ms" > $output_csv_file
@@ -127,6 +138,7 @@ for BENCHMARK in "job-original" "job-large"; do
         for ((i=1; i<=REPEAT_TIMES; i++)); do
             response=$(curl -sS -m "$TIMEOUT_SECONDS" -X POST -H "Content-Type: application/json" --data "$json_payload" "$API_URL")
             return_code=$?
+            echo "$response"
             if [ $return_code -eq 28 ]; then
                 echo "Error: The request timed out after $TIMEOUT_SECONDS seconds."
                 times+=("${TIMEOUT_SECONDS}000")
