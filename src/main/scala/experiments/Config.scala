@@ -15,7 +15,7 @@ case object Config {
 	val projectRootPath: String = findProjectRoot().map(_.getPath).get
 
 	val benchmarksPath = s"$projectRootPath/benchmarks"
-	val benchmarks: List[String] = List("job-original", "job-large", "dsb", "musicbrainz")
+	val benchmarks: List[String] = List("dsb", "job-original", "job-large", "musicbrainz")
 
 	def dbFilePath(benchmark: String): String = benchmark match {
 		case "job-original" | "job-large" => s"$projectRootPath/datasets/imdb/imdb.db"
@@ -35,9 +35,9 @@ case object Config {
 			.sortBy(_.getName)
 
 	def cardinalityEstimationVariants(benchmark: String): List[String] = benchmark match {
-		case "job-original" => List("exact")
-		case "job-large"    => List("estimate", "all-0")
 		case "dsb"          => List("exact")
+		case "job-original" => List("exact")
 		case "musicbrainz"  => List("estimate")
+		case "job-large"    => List("estimate")
 	}
 }

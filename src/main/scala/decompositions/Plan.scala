@@ -86,14 +86,14 @@ case class JoinNode(lhs: PlanNode, rhs: PlanNode)(implicit sqlIR: sql.IR) extend
 				rightViewSqls +
 				"CREATE OR REPLACE TEMP VIEW " + lhsViewName + " AS \n" +
 				leftFinalSql +
-				(if lhs.projectTo.size <= 3 && lhs.cardinality > 1e6 then
+				(if lhs.projectTo.size <= 3 && lhs.cardinality > 1e6 && sqlIR.outputAttributes.size >= 5 then
 				"\n" + lhsGroupBy 
 				else "") 
 				+
 				";\n" +
 				"CREATE OR REPLACE TEMP VIEW " + rhsViewName + " AS \n" +
 				rightFinalSql +
-				(if rhs.projectTo.size <= 3 && rhs.cardinality > 1e6 then
+				(if rhs.projectTo.size <= 3 && rhs.cardinality > 1e6 && sqlIR.outputAttributes.size >= 5 then
 				"\n" + rhsGroupBy 
 				else "") 
 				+

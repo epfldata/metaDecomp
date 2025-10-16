@@ -26,14 +26,19 @@ trait BaseRunner {
 		val stmt: Statement = conn.createStatement()
 		stmt.execute("SET memory_limit = '40GB';")
 		stmt.execute("SET temp_directory = '';") // Disable spilling to disk, just let it crash
-		// stmt.execute("SET max_temp_directory_size = '400GB';")
+		// stmt.execute("SET max_temp_directory_size = '10GB';")
 		stmt.close()
 		deleteTmpFiles()
 	}
 
-	def disableDuckDBOptimizers(): Unit = {
+	// For metaDecomp and DPconv, the join order optimizer will not affect the order of join operations, since we use a sequence of temporary views.
+	// If does however decide, e.g., the inner and outer relations (left/right-hand side) of each join step in the physical plan.
+	// So it is not unfair to enable it when measuring the performance for the two non-DuckDB optimizers.
+	// But we notice it is very problematic for large queries, so we use a simple heuristic to decide whether to disable it.
+	// This is consistent between metaDecomp and DPconv. For DuckDB, we always keep all optimizers enabled.
+	def toggleOptimizers(condition: Boolean): Unit = {
 		val stmt: Statement = conn.createStatement()
-		stmt.execute("SET disabled_optimizers = 'join_order,statistics_propagation';") // statistics_propagation gets us in bugs sometimes
+		stmt.execute(s"SET disabled_optimizers = '${if (condition) "" else "join_order,statistics_propagation"}';")
 		stmt.close()
 	}
 

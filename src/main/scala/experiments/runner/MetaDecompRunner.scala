@@ -15,7 +15,6 @@ object MetaDecompRunner extends BaseRunner {
 	def main(args: Array[String]): Unit = {
 		for (benchmark <- benchmarks; estimation <- cardinalityEstimationVariants(benchmark)) {
 			connect(benchmark)
-			disableDuckDBOptimizers()
 
 			val benchmarkPath = s"$benchmarksPath/$benchmark"
 			val resultsPath = Paths.get(resultsDir, s"metadecomp-opt-$benchmark-$estimation-$getTimestamp.csv")
@@ -42,6 +41,7 @@ object MetaDecompRunner extends BaseRunner {
 
 					implicit val sqlIR: sql.IR = SQLParser.parse(query)
 
+					toggleOptimizers(sqlIR.outputAttributes.size <= 3)
 
 					val metaRunResults = for (i <- 0 until repeatTimes) yield {
 						val metaGYOStartTime = System.nanoTime()
