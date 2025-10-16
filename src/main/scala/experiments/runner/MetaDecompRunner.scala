@@ -61,18 +61,6 @@ object MetaDecompRunner extends BaseRunner {
 						val maxFanout = meta.collectDescendents.toList.map(p => (p.childrenPlusOrigin ++ p.parent).size - 1).max
 
 
-						val metaTreeDotFilePath = Paths.get(resultsDir, "meta-trees", s"${queryName}-meta-tree.dot")
-						Files.write(metaTreeDotFilePath, meta.toDot(sqlIR).getBytes, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING)
-
-						val metaTreeFigPath = Paths.get(resultsDir, "meta-trees", s"${queryName}-meta-tree.svg")
-						val metaTreeDotCommand = Seq("dot", "-Tsvg", metaTreeDotFilePath.toString, "-o", metaTreeFigPath.toString)
-						try {
-							metaTreeDotCommand.!
-						} catch {
-							case e: Throwable => println(s"Error drawing meta decomposition using dot: ${e.getMessage}")
-						}
-
-
 
 						val joinedTablesFileSource = Source.fromFile(Paths.get(benchmarkPath, "cardinalities", s"${queryName}.csv").toFile)
 						val joinedTables = parseSubqueryTables(joinedTablesFileSource.getLines)
