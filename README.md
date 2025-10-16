@@ -3,47 +3,72 @@
 ## Prerequisites
 
 * Scala 3.3.1 with sbt 1.6.2
-* DuckDB 1.2.2 — Please make the executable available in `$PATH`
+* DuckDB 1.2.2
 * For [DPconv](https://github.com/utndatasystems/DPconv/tree/dc56bdc52c452bf86b3ac5c224b0176148c38757): CMake 4.0.3, GNU Make 3.81, clang 20.1.3
 * For join tree enumeration with traditional GYO algorithms (implemented by [SparkSQL+](https://github.com/hkustDB/SparkSQLPlus/tree/f22188bba4e971da6defb97c983e06e18e66fd7a)): Maven 3.8.6
 * For reproducing the figures: Python 3.10.1
 
-Please execute all the following commands from the root directory of the repository.
+Please execute all the following commands from the root directory of the repository. The commands and scripts are written on macOS Tahoe 26.0.1 with zsh 5.9 / GNU bash 3.2.57(1). For other operating systems or shells, you may need to adapt the commands accordingly.
 
 ## Setup
 
-### IMDB dataset
+### Setup: Folder structures, datasets, benchmark queries, cardinality estimation
 
-Run the following script to download the IMDB dataset (from http://event.cwi.nl/da/job/imdb.tgz) and load the schema and data.
+Given the need to convert datasets to DuckDB and the large sizes of required files, we provide them all in a setup script. Please run the following script to set up the folder structures and download the files.
 ```
-bash src/main/scripts/setup-imdb.sh
+bash src/main/scripts/setup.sh
 ```
 
-### Cardinality estimation
-
-#### Original join order benchmark (JOB)
-
-We include the exact cardinalities for queries in the subdirectory for the original join order benchmark. So no action is required.
-
-#### JOBLarge
-
-For JOBLarge, since the queries are much larger and more complex, please use the following script to download the cardinality information:
+This script will download and unzip the files for the benchmarks, and create folders to be used to store experiment results. After running this script, the folder structure should look like the following:
 ```
-bash src/main/scripts/download-job-large-cardinalities.sh
+metaDecomp (root)
+|- benchmarks
+   |- dsb
+   |- job-large
+   |- job-original
+   |- musicbrainz
+|- datasets
+   |- dsb
+   |- imdb
+   |- musicbrainz
+|- experiment-results
+   |- figures
+   |- join-trees
+...
 ```
+
+If this is not the case (e.g., some new folder is created as the zip file is unzipped), please move the folders accordingly.
+
+The DSB dataset and queries are generated using the code in https://github.com/microsoft/dsb.
+The IMDB dataset (for JOB and JOBLarge) comes directly from http://event.cwi.nl/da/job/imdb.tgz.
+The Musicbrainz dataset was downloaded from https://data.metabrainz.org/pub/musicbrainz/data/fullexport/ on September 19, 2025 and converted to the format of DuckDB.
+The queries are generated using the code in https://github.com/Manciukic/postgres-gpuqo/tree/master/scripts/databases/musicbrainz.
+All cardinality information is formatted in the same way as in https://github.com/utndatasystems/DPconv.
+These files that we use in the experiment can all be downloaded using the setup script. No further action is required.
 
 ### DPconv
 
-First clone the DPconv repository and checkout the commit we use in our experiments:
+We adapted the code of DPconv for us to use for our experiments. This adapted version is also given in another anonymous repository.
+
+First download the code:
 ```
-git clone https://github.com/utndatasystems/DPconv.git
-cd DPconv
-git checkout dc56bdc
+wget "https://anonymous.4open.science/api/repo/DPconv-8525/zip" -O "DPconv.zip"
+mkdir DPconv
+tar -xzf "DPconv.zip" -C DPconv
+rm DPconv.zip
 ```
 
-Then, replace the file `DPconv/src/util/BenchmarkRunner.hpp` by `replacement-files/DPconv/BenchmarkRunner.hpp` in this repository.
+There should then be a folder DPconv under the root directory of this repository:
+```
+metaDecomp (root)
+|- DPconv
+   |- queries
+   |- src
+   |- ...
+...
+```
 
-Finally, build DPconv, as per the instructions in the DPConv repository:
+Then, build DPconv, as per the instructions in the DPConv repository:
 ```
 cd src
 mkdir -p build
@@ -77,21 +102,16 @@ pip install src/main/python/requirements.txt
 
 ## Experiments
 
-First create a subdirectory `experiment-results` under the root directory of the repository, as well as subdirectories:
-```
-mkdir -p experiment-results/join-trees experiment-results/metadecomp-plans experiment-results/dpconv-plans
-```
-
 ### Query optimization and execution
 
 #### metaDecomp
 
 ```
-sbt -mem 40000 "runMain experiments.runner.MetaDecompRunner"
+sbt -mem 32000 "runMain experiments.runner.MetaDecompRunner"
 ```
-(`-mem 40000` indicates a limit of 40,000 MB of memory for the JVM. This can be adjusted based on the amount of available memory in your system.)
+(`-mem 32000` indicates a limit of 32,000 MB of memory for the JVM. This can be adjusted based on the amount of available memory in your system. For certain queries in JOBLarge, such a large memory may be required due to need to load the cardinality estimation of a very large number of possible intermediate results.)
 
-The results are stored in `experiment-results/metadecomp-opt-{job-original-exact, job-large-{estimate, all-0}}.csv`
+The results are stored in `experiment-results/metadecomp-opt-{dsb, job-original, musicbrainz, job-large}.csv`
 
 #### DPConv
 
@@ -99,7 +119,13 @@ The results are stored in `experiment-results/metadecomp-opt-{job-original-exact
 sbt "runMain experiments.runner.DPconvRunner"
 ```
 
-The results are stored in `experiment-results/dpconv-opt-{job-original-exact, job-large-{estimate, all-0}}.csv`
+The results are stored in `experiment-results/dpconv-opt-{dsb, job-original, musicbrainz, job-large}.csv`
+
+#### DuckDB
+
+```
+sbt "runMain experiments.runner.DuckDBRunner"
+```
 
 ### Join tree enumeration
 
@@ -109,7 +135,7 @@ The results are stored in `experiment-results/dpconv-opt-{job-original-exact, jo
 bash src/main/scripts/enumerate-join-trees-metadecomp.sh
 ```
 
-The results are stored in `experiment-results/metadecomp-enum-{job-original, job-large}.csv`
+The results are stored in `experiment-results/metadecomp-enum-{dsb, job-original, musicbrainz, job-large}.csv`
 
 #### Traditional GYO algorithm (implemented by SparkSQL+)
 
@@ -117,48 +143,40 @@ The results are stored in `experiment-results/metadecomp-enum-{job-original, job
 bash src/main/scripts/enumerate-join-trees-sparksqlplus.sh
 ```
 
-The results are stored in `experiment-results/sparksqlplus-enum-{job-original, job-large}.csv`
+The results are stored in `experiment-results/sparksqlplus-enum-{dsb, job-original, musicbrainz, job-large}.csv`
 
 ## Figures
 
-After obtaining the experiment results, the figures in the paper can be reproduced as follows.
+After obtaining the experiment results, the figures in the paper can be reproduced as follows. All figures will be stored in `experiment-results/figures` as PDF files.
 
-### Figures 8a & 9a – Optimization time
+### Optimization time – Figures 8 & 13
 
 ```
 python src/main/python/plot-opt-time.py
 ```
 
-The figures are stored in `experiment-results/opt-time-{original-exact, large-estimate}.pdf`
-
-### Figure 8b – Costs
+### Comparison of the costs of optimal width-1 query plans and those of the gloally optimal plans – Figures 9a & 14
 
 ```
-python src/main/python/plot-cost-ratio.py
+python src/main/python/plot-cost-ratio-stacked.py
+python src/main/python/plot-cost-ratio-individual.py
 ```
 
-The figure is stored in `experiment-results/cost-ratios.pdf`
-
-### Figure 8c – Total run time on the original JOB
-
+### All speedups – Figures 9b, 10, 15, 16, 18
 ```
-python src/main/python/plot-original-time.py
+python src/main/python/plot-speedups-stacked.py
+python src/main/python/plot-speedups-individual.py
 ```
 
-The figure is stored in `experiment-results/runtime-job-original-exact.pdf`
-
-### Figures 9c & 9d – Total run time on JOBLarge
+### Scatter plots comparing total runtime – Figures 11, 17, 19
 
 ```
-python src/main/python/plot-large-time.py
+python src/main/python/plot-scatter-all.py
+python src/main/python/plot-scatter-individual.py
 ```
 
-The figures are stored in `experiment-results/opt-time-{large-estimate, large-all-0}.pdf`
-
-### Figure 10 – Join tree enumeration time
+### Join tree enumeration – Figure 12
 
 ```
 python src/main/python/plot-enum-time.py
 ```
-
-The figure is stored in `experiment-results/enum-time.pdf`
