@@ -1,13 +1,21 @@
 import matplotlib.pyplot as plt
 import os
 
-results_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../experiment-results"))
+root_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
+results_path = os.path.abspath(os.path.join(root_path, "experiment-results"))
+figures_path = os.path.abspath(os.path.join(results_path, "figures"))
+
+benchmarks = ['dsb', 'job-original', 'musicbrainz', 'job-large']
 
 plt.rcParams['font.sans-serif'] = ['Linux Libertine O']
 plt.rcParams['font.family'] = 'sans-serif'
+plt.rcParams['mathtext.fontset'] = 'dejavusans'
+plt.rcParams['mathtext.default'] = 'regular'
 
-epfl_leman_color = (0, 167/255, 159/255)
-epfl_canard_color = (0, 116/255, 128/255)
-orange_color = (241/255, 89/255, 42/255)
+green_color = (0, 167/255, 159/255)
+dark_green_color = (0, 116/255, 128/255)
 yellow_color = (224/255, 195/255, 0/255)
-epfl_groseille_color = (181/255, 31/255, 31/255)
+
+# https://dovydas.com/blog/colorblind-friendly-diagrams
+colors = [(86/255, 180/255, 233/255), (230/255, 159/255, 0), (0, 158/255, 115/255), (204/255, 121/255, 167/255)]
+dark_orange = (213/255, 94/255, 0)
