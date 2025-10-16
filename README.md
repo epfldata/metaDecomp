@@ -12,9 +12,9 @@ Please execute all the following commands from the root directory of the reposit
 
 ## Setup
 
-### Setup: Folder structures, datasets, benchmark queries, cardinality estimation
+### Datasets, benchmark queries, cardinality estimation, folder structures
 
-Given the need to convert datasets to DuckDB and the large sizes of required files, we provide them all in a setup script. Please run the following script to set up the folder structures and download the files.
+Given the need to convert datasets to DuckDB and the large sizes of required files, we provide them all in a setup script. Please run the following script to set up the folder structures and download the files. Note that these files take approximately 22 GB of storage space in total.
 ```
 bash src/main/scripts/setup.sh
 ```
@@ -36,7 +36,6 @@ metaDecomp (root)
    |- join-trees
 ...
 ```
-
 If this is not the case (e.g., some new folder is created as the zip file is unzipped), please move the folders accordingly.
 
 The DSB dataset and queries are generated using the code in https://github.com/microsoft/dsb.
@@ -70,7 +69,7 @@ metaDecomp (root)
 
 Then, build DPconv, as per the instructions in the DPConv repository:
 ```
-cd src
+cd DPconv/src
 mkdir -p build
 cd build
 cmake ..
@@ -81,6 +80,7 @@ make
 
 Clone the SparkSQLPlus repository, checkout the commit we use in our experiments, and build the project:
 ```
+# Remember to change back to the root of the project repository
 git clone https://github.com/hkustDB/SparkSQLPlus.git
 cd SparkSQLPlus
 git checkout f22188bba4e971da6defb97c983e06e18e66fd7a
@@ -91,13 +91,14 @@ mvn clean package -DskipTests=true
 
 Create and activate a virtual environment:
 ```
+# Remember to change back to the root of the project repository
 python -m venv src/main/python/venv
 source src/main/python/venv/bin/activate
 ```
 
 Install the required dependencies:
 ```
-pip install src/main/python/requirements.txt
+pip install -r src/main/python/requirements.txt
 ```
 
 ## Experiments
