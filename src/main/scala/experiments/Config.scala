@@ -33,11 +33,4 @@ case object Config {
 		new java.io.File(s"$benchmarksPath/$benchmark/queries").listFiles
 			.filter(_.getName.endsWith(".sql"))
 			.sortBy(_.getName)
-
-	def cardinalityEstimationVariants(benchmark: String): List[String] = benchmark match {
-		case "dsb"          => List("exact")
-		case "job-original" => List("exact")
-		case "musicbrainz"  => List("estimate")
-		case "job-large"    => List("estimate")
-	}
 }

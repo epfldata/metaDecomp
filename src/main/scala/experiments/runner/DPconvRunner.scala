@@ -16,26 +16,25 @@ import experiments.parseSubqueryTables
 object DPconvRunner extends BaseRunner {
 	private val dpConvBasePath = s"$projectRootPath/DPConv"
 
-	private val optTimeout = 1.hour
+	private val optTimeout = 5.minutes
 
 	def main(args: Array[String]): Unit = {
-		for (benchmark <- benchmarks; estimation <- cardinalityEstimationVariants(benchmark)) {
+		for (benchmark <- benchmarks) {
 			connect(benchmark)
-			disableDuckDBOptimizers()
 
 			implicit val benchmarkPath: String = s"$benchmarksPath/$benchmark"
 
-			val resultsCsvPath = Paths.get(resultsDir, s"dpconv-opt-$benchmark-$estimation-$getTimestamp.csv")
+			val resultsCsvPath = Paths.get(resultsDir, s"dpconv-opt-$benchmark-$getTimestamp.csv")
 
 			Files.write(
 				resultsCsvPath,
-				s"query,num_rels,opt_time,exec_time,total_time${if benchmark == "job-original" then ",cout_opt_intm" else ""}\n".getBytes,
+				s"query,num_rels,opt_time,exec_time,total_time,cout_opt_intm\n".getBytes,
 				StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING
 			)
 
 			sqlFilesInBenchmark(benchmark).foreach(sqlFile => {
 				val queryName = sqlFile.getName.stripSuffix(".sql")
-				val queryCsvPath = s"$benchmarkPath/cardinalities/$estimation/$queryName.csv"
+				val queryCsvPath = s"$benchmarkPath/cardinalities/$queryName.csv"
 
 				if (Files.exists(Paths.get(queryCsvPath))) {
 					System.gc()
@@ -47,29 +46,22 @@ object DPconvRunner extends BaseRunner {
 
 					implicit val sqlIR: sql.IR = SQLParser.parse(query)
 					
+					toggleOptimizers(sqlIR.outputAttributes.size <= 3)
 
-					val joinedTablesFileSource = Source.fromFile(Paths.get(benchmarkPath, "cardinalities", estimation, s"${queryName}.csv" /* "subqueries_tables", s"${queryName}_subqueries_tables.csv" */).toFile)
-						val joinedTables = parseSubqueryTables(joinedTablesFileSource.getLines)
+					val joinedTablesFileSource = Source.fromFile(Paths.get(benchmarkPath, "cardinalities", s"${queryName}.csv").toFile)
+					val joinedTables = parseSubqueryTables(joinedTablesFileSource.getLines)
 
-						if (estimation == "all-0") {
-							sqlIR.cardinalities = joinedTables.map(tablesLine => {
-								val hyperedgeAliasesOnLine = tablesLine
-								val hyperedgesOnLine = hyperedgeAliasesOnLine.map(alias => sqlIR.hyperedges.find(_.alias == alias).get)
-								hyperedgesOnLine.toSet -> 0.0
-							}).toMap
-						} else {
-							val cardinalitiesFileSource = Source.fromFile(Paths.get(benchmarkPath, "cardinalities", estimation, /* "dpconv_input", */ s"${queryName}.csv").toFile)
-							val cardinalities = cardinalitiesFileSource.getLines.drop(3)
-							sqlIR.cardinalities = joinedTables.zip(cardinalities).map((tablesLine, cardinalitiesLine) =>
-								val hyperedgeAliasesOnLine = tablesLine
-								val hyperedgesOnLine = hyperedgeAliasesOnLine.map(alias => sqlIR.hyperedges.find(_.alias == alias).get)
-								val cardinality = cardinalitiesLine.split(" ").takeRight(1).head.toDouble
-								hyperedgesOnLine.toSet -> cardinality
-							).toMap
-							cardinalitiesFileSource.close()
-						}
+					val cardinalitiesFileSource = Source.fromFile(Paths.get(benchmarkPath, "cardinalities", s"${queryName}.csv").toFile)
+					val cardinalities = cardinalitiesFileSource.getLines.drop(3)
+					sqlIR.cardinalities = joinedTables.zip(cardinalities).map((tablesLine, cardinalitiesLine) =>
+						val hyperedgeAliasesOnLine = tablesLine
+						val hyperedgesOnLine = hyperedgeAliasesOnLine.map(alias => sqlIR.hyperedges.find(_.alias == alias).get)
+						val cardinality = cardinalitiesLine.split(" ").takeRight(1).head.toDouble
+						hyperedgesOnLine.toSet -> cardinality
+					).toMap
+					cardinalitiesFileSource.close()
 
-						joinedTablesFileSource.close()
+					joinedTablesFileSource.close()
 
 
 					val (planInString, optTime, optCout) = runDPConv(queryCsvPath)
@@ -106,7 +98,7 @@ object DPconvRunner extends BaseRunner {
 
 					Files.write(
 						resultsCsvPath,
-						s"${sqlFile.getName.stripSuffix(".sql")},${sqlIR.hyperedges.size},$optTime,$executionTime,$totalTime${if benchmark == "job-original" then s",$optCout" else ""}\n".getBytes,
+						s"${sqlFile.getName.stripSuffix(".sql")},${sqlIR.hyperedges.size},$optTime,$executionTime,$totalTime,$optCout\n".getBytes,
 						StandardOpenOption.APPEND
 					)
 				}

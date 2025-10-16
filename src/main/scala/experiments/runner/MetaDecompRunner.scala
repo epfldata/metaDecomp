@@ -1,7 +1,7 @@
 package experiments.runner
 
 import decompositions.{MetaDecompBasedOptimizer, metaGYO}
-import experiments.Config.{benchmarks, benchmarksPath, cardinalityEstimationVariants, repeatTimes, resultsDir, sqlFilesInBenchmark}
+import experiments.Config.{benchmarks, benchmarksPath, repeatTimes, resultsDir, sqlFilesInBenchmark}
 import sql.{Attribute, IR, Relation, SQLParser}
 
 import java.nio.file.{Files, Paths, StandardOpenOption}
@@ -13,11 +13,11 @@ import experiments.getTimestamp
 
 object MetaDecompRunner extends BaseRunner {
 	def main(args: Array[String]): Unit = {
-		for (benchmark <- benchmarks; estimation <- cardinalityEstimationVariants(benchmark)) {
+		for (benchmark <- benchmarks) {
 			connect(benchmark)
 
 			val benchmarkPath = s"$benchmarksPath/$benchmark"
-			val resultsPath = Paths.get(resultsDir, s"metadecomp-opt-$benchmark-$estimation-$getTimestamp.csv")
+			val resultsPath = Paths.get(resultsDir, s"metadecomp-opt-$benchmark-$getTimestamp.csv")
 			Files.write(
 				resultsPath,
 				"query,num_rels,max_fanout,metagyo_time,planning_time,total_opt_time,exec_time,total_time,cost_intm,cost_in,cout_cost\n".getBytes,
@@ -28,7 +28,7 @@ object MetaDecompRunner extends BaseRunner {
 			sqlFilesInBenchmark(benchmark).foreach(sqlFile =>
 				val queryName = sqlFile.getName.stripSuffix(".sql")
 
-				if (Files.exists(Paths.get(benchmarkPath, "cardinalities", estimation, s"${queryName}.csv"))) {
+				if (Files.exists(Paths.get(benchmarkPath, "cardinalities", s"${queryName}.csv"))) {
 					System.gc()
 
 					println("\n-----------------------------------")
@@ -74,26 +74,18 @@ object MetaDecompRunner extends BaseRunner {
 
 
 
-						val joinedTablesFileSource = Source.fromFile(Paths.get(benchmarkPath, "cardinalities", estimation, s"${queryName}.csv").toFile)
+						val joinedTablesFileSource = Source.fromFile(Paths.get(benchmarkPath, "cardinalities", s"${queryName}.csv").toFile)
 						val joinedTables = parseSubqueryTables(joinedTablesFileSource.getLines)
 
-						if (estimation == "all-0") {
-							sqlIR.cardinalities = joinedTables.map(tablesLine => {
-								val hyperedgeAliasesOnLine = tablesLine
-								val hyperedgesOnLine = hyperedgeAliasesOnLine.map(alias => sqlIR.hyperedges.find(_.alias == alias).get)
-								hyperedgesOnLine.toSet -> 0.0
-							}).toMap
-						} else {
-							val cardinalitiesFileSource = Source.fromFile(Paths.get(benchmarkPath, "cardinalities", estimation, s"${queryName}.csv").toFile)
-							val cardinalities = cardinalitiesFileSource.getLines.drop(3)
-							sqlIR.cardinalities = joinedTables.zip(cardinalities).map((tablesLine, cardinalitiesLine) =>
-								val hyperedgeAliasesOnLine = tablesLine
-								val hyperedgesOnLine = hyperedgeAliasesOnLine.map(alias => sqlIR.hyperedges.find(_.alias == alias).get)
-								val cardinality = cardinalitiesLine.split(" ").takeRight(1).head.toDouble
-								hyperedgesOnLine.toSet -> cardinality
-							).toMap
-							cardinalitiesFileSource.close()
-						}
+						val cardinalitiesFileSource = Source.fromFile(Paths.get(benchmarkPath, "cardinalities", s"${queryName}.csv").toFile)
+						val cardinalities = cardinalitiesFileSource.getLines.drop(3)
+						sqlIR.cardinalities = joinedTables.zip(cardinalities).map((tablesLine, cardinalitiesLine) =>
+							val hyperedgeAliasesOnLine = tablesLine
+							val hyperedgesOnLine = hyperedgeAliasesOnLine.map(alias => sqlIR.hyperedges.find(_.alias == alias).get)
+							val cardinality = cardinalitiesLine.split(" ").takeRight(1).head.toDouble
+							hyperedgesOnLine.toSet -> cardinality
+						).toMap
+						cardinalitiesFileSource.close()
 
 						joinedTablesFileSource.close()
 

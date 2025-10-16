@@ -21,9 +21,7 @@ object DuckDBRunner extends BaseRunner {
 
 
 			sqlFilesInBenchmark(benchmark).filter(f => {
-				cardinalityEstimationVariants(benchmark).exists(variant =>
-					Files.exists(Paths.get(s"$benchmarksPath/$benchmark/cardinalities/$variant/${f.getName.stripSuffix(".sql")}.csv"))
-				)
+				Files.exists(Paths.get(s"$benchmarksPath/$benchmark/cardinalities/${f.getName.stripSuffix(".sql")}.csv"))
 			}).foreach(sqlFile =>
 				println("\n-----------------------------------")
 				println(s"${sqlFile.getName}")
