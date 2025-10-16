@@ -28,7 +28,7 @@ object DPconvRunner extends BaseRunner {
 
 			Files.write(
 				resultsCsvPath,
-				s"query,num_rels,opt_time,exec_time,total_time,cout_opt_intm\n".getBytes,
+				s"query,num_rels,opt_time,exec_time,total_time,cout_opt_intm,opt_exec_time\n".getBytes,
 				StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING
 			)
 
@@ -64,7 +64,7 @@ object DPconvRunner extends BaseRunner {
 					joinedTablesFileSource.close()
 
 
-					val (planInString, optTime, optCout) = runDPConv(queryCsvPath)
+					val (planInString, optTime, optCcap) = runDPConv(queryCsvPath)
 
 					println(s"Optimization time: $optTime us")
 
@@ -74,20 +74,6 @@ object DPconvRunner extends BaseRunner {
 
 						val (viewSqls, finalSql, groupBy) = plan.generateSqlWithViews()
 
-						val dpConvPlanSqlPath = Paths.get(resultsDir, "dpconv_plans", s"${queryName}_dpconv_plan.sql")
-						Files.write(dpConvPlanSqlPath, (viewSqls + "\n" + finalSql + "\n" + groupBy + ";").getBytes, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING)
-
-						val dpConvPlanDotFilePath = Paths.get(resultsDir, "dpconv_plans", s"${queryName}_dpconv_plan.dot")
-						Files.write(dpConvPlanDotFilePath, plan.toDot.getBytes, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING)
-
-						val dpConvPlanFigPath = Paths.get(resultsDir, "dpconv_plans", s"${queryName}_dpconv_plan.svg")
-						val dpConvPlanDotCommand = Seq("dot", "-Tsvg", dpConvPlanDotFilePath.toString, "-o", dpConvPlanFigPath.toString)
-						try {
-							dpConvPlanDotCommand.!
-						} catch {
-							case e: Throwable => System.err.println(s"Error generating query plan for $queryName: ${e.getMessage}")
-						}
-
 						runPlan(plan)
 					} else 0
 
@@ -96,9 +82,20 @@ object DPconvRunner extends BaseRunner {
 					val totalTime = optTime + executionTime
 					println(s"Total time: ${optTime + executionTime} us")
 
+					val (optPlanInString, _, optCout) = runDPConv(queryCsvPath, capped = false)
+
+					val optPlanExecutionTime = if (optPlanInString.nonEmpty) {
+						val plan = parsePlan(optPlanInString)
+						plan.projectTo = sqlIR.outputAttributes
+
+						val (viewSqls, finalSql, groupBy) = plan.generateSqlWithViews()
+
+						runPlan(plan)
+					} else 0
+
 					Files.write(
 						resultsCsvPath,
-						s"${sqlFile.getName.stripSuffix(".sql")},${sqlIR.hyperedges.size},$optTime,$executionTime,$totalTime,$optCout\n".getBytes,
+						s"${sqlFile.getName.stripSuffix(".sql")},${sqlIR.hyperedges.size},$optTime,$executionTime,$totalTime,$optCout,$optPlanExecutionTime\n".getBytes,
 						StandardOpenOption.APPEND
 					)
 				}
@@ -108,9 +105,9 @@ object DPconvRunner extends BaseRunner {
 		}
 	}
 
-	private def runDPConv(queryCsvPath: String): (String, Long, Double) = {
+	private def runDPConv(queryCsvPath: String, capped: Boolean = true): (String, Long, Double) = {
 		val command = Seq(
-			"gtimeout", s"${optTimeout.toSeconds}s", "bash", "-c", s"$dpConvBasePath/src/build/bench $queryCsvPath"
+			"gtimeout", s"${optTimeout.toSeconds}s", "bash", "-c", s"$dpConvBasePath/src/build/bench $queryCsvPath ${if capped then 1 else 0}"
 		)
 
 		val results = (for (i <- 0 until repeatTimes) yield {
@@ -132,8 +129,8 @@ object DPconvRunner extends BaseRunner {
 			}
 
 			val timeLinePattern = """CCAP_DPCONV \(time\): (\d+)""".r
-			val coutLinePattern = """.*optimal_cout_cost=(.*)""".r
-			val optTime = stderrLines.collectFirst { case timeLinePattern(time) => time.toLong }.get
+			val coutLinePattern = if capped then """.*optimal_ccap_cost=(.*)""".r else """.*optimal_cout_cost=(.*)""".r
+			val optTime = stderrLines.collectFirst { case timeLinePattern(time) => time.toLong }.getOrElse(0L)
 			val optCout = stderrLines.collectFirst { case coutLinePattern(cout) => cout.toDouble }.getOrElse(0.0)
 			println(s"Optimization time (run $i): $optTime us")
 			(stderrLines.findLast(_.startsWith("(")).get, optTime, optCout)
