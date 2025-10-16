@@ -48,21 +48,6 @@ object DPconvRunner extends BaseRunner {
 					
 					toggleOptimizers(sqlIR.outputAttributes.size <= 3)
 
-					val joinedTablesFileSource = Source.fromFile(Paths.get(benchmarkPath, "cardinalities", s"${queryName}.csv").toFile)
-					val joinedTables = parseSubqueryTables(joinedTablesFileSource.getLines)
-
-					val cardinalitiesFileSource = Source.fromFile(Paths.get(benchmarkPath, "cardinalities", s"${queryName}.csv").toFile)
-					val cardinalities = cardinalitiesFileSource.getLines.drop(3)
-					sqlIR.cardinalities = joinedTables.zip(cardinalities).map((tablesLine, cardinalitiesLine) =>
-						val hyperedgeAliasesOnLine = tablesLine
-						val hyperedgesOnLine = hyperedgeAliasesOnLine.map(alias => sqlIR.hyperedges.find(_.alias == alias).get)
-						val cardinality = cardinalitiesLine.split(" ").takeRight(1).head.toDouble
-						hyperedgesOnLine.toSet -> cardinality
-					).toMap
-					cardinalitiesFileSource.close()
-
-					joinedTablesFileSource.close()
-
 
 					val (planInString, optTime, optCcap) = runDPConv(queryCsvPath)
 

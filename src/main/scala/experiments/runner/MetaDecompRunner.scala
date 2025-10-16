@@ -111,21 +111,6 @@ object MetaDecompRunner extends BaseRunner {
 							StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING
 						)
 
-						val metaPlanDotFilePath = Paths.get(resultsDir, "meta_plans", s"${queryName}_meta_plan.dot")
-						Files.write(metaPlanDotFilePath, plan.toDot.getBytes, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING)
-
-						val metaPlanFigPath = Paths.get(resultsDir, "meta_plans", s"${queryName}_meta_plan.svg")
-						val metaPlanDotCommand = Seq("dot", "-Tsvg", metaPlanDotFilePath.toString, "-o", metaPlanFigPath.toString)
-						try {
-							metaPlanDotCommand.!
-						} catch {
-							case e: Throwable => println(s"Error drawing the query plan using dot: ${e.getMessage}")
-						}
-
-						val metaPlanSqlPath = Paths.get(resultsDir, "meta_plans", s"${queryName}_meta_plan.sql")
-						val (viewSqls, finalSql, groupBy) = plan.generateSqlWithViews()
-						Files.write(metaPlanSqlPath, (viewSqls + "\n" + finalSql + "\n" + groupBy + ";").getBytes, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING)
-
 						val executionTime = runPlan(plan)
 
 						println(s"Execution time: $executionTime us")
