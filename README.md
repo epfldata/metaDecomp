@@ -1,7 +1,5 @@
 # metaDecomp: Succinct structure representations for efficient query optimization
 
-**Full technical report:** https://github.com/epfldata/metaDecomp/blob/main/technical-report.pdf
-
 ## Prerequisites
 
 * Scala 3.3.1 with sbt 1.6.2
