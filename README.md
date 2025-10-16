@@ -112,7 +112,7 @@ sbt -mem 32000 "runMain experiments.runner.MetaDecompRunner"
 ```
 (`-mem 32000` indicates a limit of 32,000 MB of memory for the JVM. This can be adjusted based on the amount of available memory in your system. For certain queries in JOBLarge, such a large memory may be required due to need to load the cardinality estimation of a very large number of possible intermediate results.)
 
-The results are stored in `experiment-results/metadecomp-opt-{dsb, job-original, musicbrainz, job-large}.csv`
+The results are stored in `experiment-results/metadecomp-opt-{dsb, job-original, musicbrainz, job-large}-<timestamp>.csv`
 
 #### DPConv
 
@@ -120,7 +120,7 @@ The results are stored in `experiment-results/metadecomp-opt-{dsb, job-original,
 sbt "runMain experiments.runner.DPconvRunner"
 ```
 
-The results are stored in `experiment-results/dpconv-opt-{dsb, job-original, musicbrainz, job-large}.csv`
+The results are stored in `experiment-results/dpconv-opt-{dsb, job-original, musicbrainz, job-large}-<timestamp>.csv`
 
 #### DuckDB
 
@@ -149,6 +149,8 @@ The results are stored in `experiment-results/sparksqlplus-enum-{dsb, job-origin
 ## Figures
 
 After obtaining the experiment results, the figures in the paper can be reproduced as follows. All figures will be stored in `experiment-results/figures` as PDF files.
+
+Before executing the scripts below, please remove the timestamps from the generated csv files. For example, rename `experiment-results/metadecomp-opt-dsb-2025-10-16T17-24-04.csv` to `experiment-results/metadecomp-opt-dsb.csv`.
 
 ### Optimization time – Figures 8 & 13
 
