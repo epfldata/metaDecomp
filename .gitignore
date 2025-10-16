@@ -10,9 +10,10 @@ target
 project/target/*
 project/project/target/*
 datasets
-benchmarks/job-large/cardinalities
+benchmarks
 experiment-results/join-trees
 src/main/scala/*/.scala-build
 /DPConv
 /SparkSQLPlus
 experiment-results
+src/main/python/__pycache__
