@@ -99,11 +99,17 @@ for BENCHMARK in "dsb" "job-original" "musicbrainz" "job-large"; do
     
     ddl_content=$(cat "$DDL_FILE" | sed 's/"/\\"/g' | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n/\\n/g')
 
-    output_csv_file="$PROJECT_ROOT/experiment-results/sparksqlplus-enum-$BENCHMARK.csv"
+    timestamp=$(date +"%Y-%m-%dT%H-%M-%S")
+    output_csv_file="$PROJECT_ROOT/experiment-results/sparksqlplus-enum-$BENCHMARK-${timestamp}.csv"
     echo "query,time_ms" > $output_csv_file
 
     # Loop through all .sql files in the current directory
     for query_name in $(find "$PROJECT_ROOT/benchmarks/$BENCHMARK/queries" -maxdepth 1 -type f \( -name "*.sql" \) -exec basename {} .sql \; | sort); do
+        # Skip musicbrainz 01-16
+        if [ $BENCHMARK == "musicbrainz" ] && [[ "$query_name" =~ ^[0-1][0-9]|2[0-1] ]]; then
+            continue
+        fi
+
         sql_file="$PROJECT_ROOT/benchmarks/$BENCHMARK/queries/$query_name.sql"
         # Skip the DDL file itself
         if [ "$sql_file" == "$DDL_FILE" ]; then
@@ -118,7 +124,12 @@ for BENCHMARK in "dsb" "job-original" "musicbrainz" "job-large"; do
 
         # Read the content of the query file
         # Escapes newlines and double quotes for JSON compatibility
-        sql_content=$(cat "$sql_file" | sed 's/"/\\"/g' | sed 's/;//g' | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n/\\n/g')
+        sql_content=$(cat "$sql_file" | sed 's/"/\\"/g' | sed 's/;//g' |
+            sed -E 's/([a-z|0-9|_]+) AS/`\1` AS/g' | sed -E 's/AS ([a-z|0-9|_]+)/AS `\1`/g' |
+            sed -E 's/([a-z][a-z|0-9|_]*)\./`\1`\./g' | sed -E 's/\.([a-z][a-z|0-9|_]*)/\.`\1`/g' |
+                # Replace all column_name by `column_name`, and all table.column by `table`.`column`
+                # to escape reserved keywords to be compatible with SparkSQL's parser
+            sed -e ':a' -e 'N' -e '$!ba' -e 's/\n/\\n/g')
 
         # Create the JSON payload
         json_payload=$(printf '{"query": "%s", "ddl": "%s"}' "$sql_content" "$ddl_content")
@@ -148,6 +159,11 @@ for BENCHMARK in "dsb" "job-original" "musicbrainz" "job-large"; do
                     break
                 fi
             elif [ $return_code -eq 0 ]; then
+                 # Cyclic query
+                if [ $(echo "$response" | grep -c "fail") -gt 0 ]; then
+                    unsupported_query=1
+                    break
+                fi
                 # Extract the time value from the response
                 time_val=$(echo "$response" | grep "time.*size.*" | sed -e "s/^.*\"time\":\(.*\),.*/\1/g")
                 if [ -n "$time_val" ]; then

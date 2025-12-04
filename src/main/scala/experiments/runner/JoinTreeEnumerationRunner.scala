@@ -24,13 +24,20 @@ object JoinTreeEnumerationRunner {
 
 		print(s"${sqlIR.hyperedges.size},")
 
-		val startTime = System.nanoTime()
-		val meta = metaGYO(sqlIR.hyperedges).get
-		val joinTrees = JoinTreeEnumerator.enumerate(meta).flatMap(JoinTreeEnumerator.allRotations)
-		val endTime = System.nanoTime()
+		try {
+			val startTime = System.nanoTime()
+			val meta = metaGYO(sqlIR.hyperedges).get
+			val joinTrees = mutable.ListBuffer.empty[decompositions.TreeNode[sql.Attribute, sql.Relation]]
+			JoinTreeEnumerator.enumerate(meta).foreach(tree => JoinTreeEnumerator.collectAllRotations(joinTrees, tree))
+			val endTime = System.nanoTime()
 
-		// Calculate total time
-		val totalTime = (endTime - startTime) / 1000 // microseconds
-		println(totalTime)
+			// Calculate total time
+			val totalTime = (endTime - startTime) / 1000 // microseconds
+			println(s"${joinTrees.size},${totalTime}")
+		} catch {
+			case e: Throwable =>
+				println(e.getMessage)
+				sys.exit(1)
+		}
 	}
 }
