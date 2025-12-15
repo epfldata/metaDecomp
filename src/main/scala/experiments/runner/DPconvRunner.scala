@@ -19,16 +19,18 @@ object DPconvRunner extends BaseRunner {
 	private val optTimeout = 5.minutes
 
 	def main(args: Array[String]): Unit = {
+		val runUnionDP = args.contains("UnionDP")
+
 		for (benchmark <- benchmarks) {
 			connect(benchmark)
 
 			implicit val benchmarkPath: String = s"$benchmarksPath/$benchmark"
 
-			val resultsCsvPath = Paths.get(resultsDir, s"dpconv-opt-$benchmark-$getTimestamp.csv")
+			val resultsCsvPath = Paths.get(resultsDir, s"${if runUnionDP then "uniondp" else "dpconv"}-opt-$benchmark-$getTimestamp.csv")
 
 			Files.write(
 				resultsCsvPath,
-				s"query,num_rels,opt_time,exec_time,total_time,cout_opt_intm,opt_exec_time\n".getBytes,
+				s"query,num_rels,opt_time,exec_time,total_time${if !runUnionDP then ",cout_opt_intm,opt_exec_time" else ""}\n".getBytes,
 				StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING
 			)
 
@@ -49,7 +51,7 @@ object DPconvRunner extends BaseRunner {
 					toggleOptimizers(sqlIR.outputAttributes.size <= 3)
 
 
-					val (planInString, optTime, optCcap) = runDPConv(queryCsvPath)
+					val (planInString, optTime, optCcap) = runDPConv(queryCsvPath, runUnionDP = runUnionDP)
 
 					println(s"Optimization time: $optTime us")
 
@@ -67,7 +69,7 @@ object DPconvRunner extends BaseRunner {
 					val totalTime = optTime + executionTime
 					println(s"Total time: ${optTime + executionTime} us")
 
-					val (optPlanInString, _, optCout) = runDPConv(queryCsvPath, capped = false)
+					val (optPlanInString, _, optCout) = if !runUnionDP then runDPConv(queryCsvPath, capped = false) else ("", 0L, 0.0)
 
 					val optPlanExecutionTime = if (optPlanInString.nonEmpty) {
 						val plan = parsePlan(optPlanInString)
@@ -80,7 +82,8 @@ object DPconvRunner extends BaseRunner {
 
 					Files.write(
 						resultsCsvPath,
-						s"${sqlFile.getName.stripSuffix(".sql")},${sqlIR.hyperedges.size},$optTime,$executionTime,$totalTime,$optCout,$optPlanExecutionTime\n".getBytes,
+						s"${sqlFile.getName.stripSuffix(".sql")},${sqlIR.hyperedges.size},$optTime,$executionTime,$totalTime${if !runUnionDP then s",$optCout,$optPlanExecutionTime" else ""}\n"
+							.getBytes,
 						StandardOpenOption.APPEND
 					)
 				}
@@ -90,9 +93,13 @@ object DPconvRunner extends BaseRunner {
 		}
 	}
 
-	private def runDPConv(queryCsvPath: String, capped: Boolean = true): (String, Long, Double) = {
+	private def runDPConv(queryCsvPath: String, capped: Boolean = true, runUnionDP: Boolean = false): (String, Long, Double) = {
 		val command = Seq(
-			"gtimeout", s"${optTimeout.toSeconds}s", "bash", "-c", s"$dpConvBasePath/src/build/bench $queryCsvPath ${if capped then 1 else 0}"
+			"gtimeout", s"${optTimeout.toSeconds}s", "bash", "-c", 
+			if !runUnionDP then
+				s"$dpConvBasePath/src/build/bench $queryCsvPath ${if capped then 1 else 0}"
+			else
+				s"$dpConvBasePath/src/build/union_bench 12 $queryCsvPath"
 		)
 
 		val results = (for (i <- 0 until repeatTimes) yield {
@@ -113,12 +120,17 @@ object DPconvRunner extends BaseRunner {
 				}
 			}
 
-			val timeLinePattern = """CCAP_DPCONV \(time\): (\d+)""".r
+			val timeLinePattern =
+				if !runUnionDP then
+					"""CCAP_DPCONV \(time\): (\d+)""".r
+				else
+					"""UNION_DP \(time\): (\d+)""".r
 			val coutLinePattern = if capped then """.*optimal_ccap_cost=(.*)""".r else """.*optimal_cout_cost=(.*)""".r
 			val optTime = stderrLines.collectFirst { case timeLinePattern(time) => time.toLong }.getOrElse(0L)
 			val optCout = stderrLines.collectFirst { case coutLinePattern(cout) => cout.toDouble }.getOrElse(0.0)
 			println(s"Optimization time (run $i): $optTime us")
-			(stderrLines.findLast(_.startsWith("(")).get, optTime, optCout)
+			val plan = stderrLines.findLast(_.startsWith("(")).get
+			(plan, optTime, optCout)
 		}).sortBy(_._2)
 
 		if repeatTimes % 2 == 0 then {
