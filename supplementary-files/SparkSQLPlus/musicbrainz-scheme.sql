@@ -20,13 +20,13 @@ CREATE TABLE alternative_medium_track (
 CREATE TABLE alternative_release (
     id integer,
     gid varchar,
-    release integer,
+    `release` integer,
     name varchar,
     artist_credit integer,
     type integer,
-    language integer,
+    `language` integer,
     script integer,
-    comment varchar,
+    `comment` varchar,
     PRIMARY KEY (id)
 ) WITH (
         'cardinality' = '0'
@@ -91,7 +91,7 @@ CREATE TABLE area (
     end_date_month integer,
     end_date_day integer,
     ended varchar,
-    comment varchar,
+    `comment` varchar,
     PRIMARY KEY (id)
 ) WITH (
         'cardinality' = '119715'
@@ -153,7 +153,7 @@ CREATE TABLE area_attribute (
 CREATE TABLE area_attribute_type (
     id integer,
     name varchar,
-    comment varchar,
+    `comment` varchar,
     free_text varchar,
     parent integer,
     child_order integer,
@@ -167,7 +167,7 @@ CREATE TABLE area_attribute_type (
 CREATE TABLE area_attribute_type_allowed_value (
     id integer,
     area_attribute_type integer,
-    value varchar,
+    `value` varchar,
     parent integer,
     child_order integer,
     description varchar,
@@ -198,7 +198,7 @@ CREATE TABLE area_gid_redirect (
 CREATE TABLE area_tag (
     area integer,
     tag integer,
-    count integer,
+    `count` integer,
     last_updated varchar,
     PRIMARY KEY (area)
 ) WITH (
@@ -241,7 +241,7 @@ CREATE TABLE artist (
     type integer,
     area integer,
     gender integer,
-    comment varchar,
+    `comment` varchar,
     edits_pending integer,
     last_updated varchar,
     ended varchar,
@@ -308,7 +308,7 @@ CREATE TABLE artist_attribute (
 CREATE TABLE artist_attribute_type (
     id integer,
     name varchar,
-    comment varchar,
+    `comment` varchar,
     free_text varchar,
     parent integer,
     child_order integer,
@@ -322,7 +322,7 @@ CREATE TABLE artist_attribute_type (
 CREATE TABLE artist_attribute_type_allowed_value (
     id integer,
     artist_attribute_type integer,
-    value varchar,
+    `value` varchar,
     parent integer,
     child_order integer,
     description varchar,
@@ -356,7 +356,7 @@ CREATE TABLE artist_credit_gid_redirect (
 
 CREATE TABLE artist_credit_name (
     artist_credit integer,
-    position integer,
+    `position` integer,
     artist integer,
     name varchar,
     join_phrase varchar,
@@ -459,15 +459,15 @@ CREATE TABLE artist_release_nonva (
     country_code varchar,
     barcode integer,
     name varchar,
-    release integer,
+    `release` integer,
     PRIMARY KEY (is_track_artist)
 ) WITH (
         'cardinality' = '0'
 );
 
 CREATE TABLE artist_release_pending_update (
-    release integer,
-    PRIMARY KEY (release)
+    `release` integer,
+    PRIMARY KEY (`release`)
 ) WITH (
         'cardinality' = '0'
 );
@@ -480,7 +480,7 @@ CREATE TABLE artist_release_va (
     country_code varchar,
     barcode integer,
     name varchar,
-    release integer,
+    `release` integer,
     PRIMARY KEY (is_track_artist)
 ) WITH (
         'cardinality' = '0'
@@ -501,7 +501,7 @@ CREATE TABLE artist_series (
 CREATE TABLE artist_tag (
     artist integer,
     tag integer,
-    count integer,
+    `count` integer,
     last_updated varchar,
     PRIMARY KEY (artist)
 ) WITH (
@@ -573,7 +573,7 @@ CREATE TABLE cdtoc (
 
 CREATE TABLE cdtoc_raw (
     id integer,
-    release integer,
+    `release` integer,
     discid varchar,
     track_count integer,
     leadout_offset integer,
@@ -608,7 +608,7 @@ CREATE TABLE edit (
     open_time varchar,
     close_time varchar,
     expire_time varchar,
-    language integer,
+    `language` integer,
     quality integer,
     PRIMARY KEY (id)
 ) WITH (
@@ -732,7 +732,7 @@ CREATE TABLE edit_recording (
 
 CREATE TABLE edit_release (
     edit integer,
-    release integer,
+    `release` integer,
     PRIMARY KEY (edit)
 ) WITH (
         'cardinality' = '0'
@@ -809,8 +809,8 @@ CREATE TABLE editor_collection_area (
     collection integer,
     area integer,
     added varchar,
-    position integer,
-    comment varchar,
+    `position` integer,
+    `comment` varchar,
     PRIMARY KEY (collection)
 ) WITH (
         'cardinality' = '0'
@@ -820,8 +820,8 @@ CREATE TABLE editor_collection_artist (
     collection integer,
     artist integer,
     added varchar,
-    position integer,
-    comment varchar,
+    `position` integer,
+    `comment` varchar,
     PRIMARY KEY (collection)
 ) WITH (
         'cardinality' = '0'
@@ -839,8 +839,8 @@ CREATE TABLE editor_collection_deleted_entity (
     collection integer,
     gid varchar,
     added varchar,
-    position integer,
-    comment varchar,
+    `position` integer,
+    `comment` varchar,
     PRIMARY KEY (collection)
 ) WITH (
         'cardinality' = '0'
@@ -850,8 +850,8 @@ CREATE TABLE editor_collection_event (
     collection integer,
     event integer,
     added varchar,
-    position integer,
-    comment varchar,
+    `position` integer,
+    `comment` varchar,
     PRIMARY KEY (collection)
 ) WITH (
         'cardinality' = '0'
@@ -861,8 +861,8 @@ CREATE TABLE editor_collection_genre (
     collection integer,
     genre integer,
     added varchar,
-    position integer,
-    comment varchar,
+    `position` integer,
+    `comment` varchar,
     PRIMARY KEY (collection)
 ) WITH (
         'cardinality' = '0'
@@ -881,8 +881,8 @@ CREATE TABLE editor_collection_instrument (
     collection integer,
     instrument integer,
     added varchar,
-    position integer,
-    comment varchar,
+    `position` integer,
+    `comment` varchar,
     PRIMARY KEY (collection)
 ) WITH (
         'cardinality' = '0'
@@ -892,8 +892,8 @@ CREATE TABLE editor_collection_label (
     collection integer,
     label integer,
     added varchar,
-    position integer,
-    comment varchar,
+    `position` integer,
+    `comment` varchar,
     PRIMARY KEY (collection)
 ) WITH (
         'cardinality' = '0'
@@ -903,8 +903,8 @@ CREATE TABLE editor_collection_place (
     collection integer,
     place integer,
     added varchar,
-    position integer,
-    comment varchar,
+    `position` integer,
+    `comment` varchar,
     PRIMARY KEY (collection)
 ) WITH (
         'cardinality' = '0'
@@ -914,8 +914,8 @@ CREATE TABLE editor_collection_recording (
     collection integer,
     recording integer,
     added varchar,
-    position integer,
-    comment varchar,
+    `position` integer,
+    `comment` varchar,
     PRIMARY KEY (collection)
 ) WITH (
         'cardinality' = '0'
@@ -923,10 +923,10 @@ CREATE TABLE editor_collection_recording (
 
 CREATE TABLE editor_collection_release (
     collection integer,
-    release integer,
+    `release` integer,
     added varchar,
-    position integer,
-    comment varchar,
+    `position` integer,
+    `comment` varchar,
     PRIMARY KEY (collection)
 ) WITH (
         'cardinality' = '0'
@@ -936,8 +936,8 @@ CREATE TABLE editor_collection_release_group (
     collection integer,
     release_group integer,
     added varchar,
-    position integer,
-    comment varchar,
+    `position` integer,
+    `comment` varchar,
     PRIMARY KEY (collection)
 ) WITH (
         'cardinality' = '0'
@@ -947,8 +947,8 @@ CREATE TABLE editor_collection_series (
     collection integer,
     series integer,
     added varchar,
-    position integer,
-    comment varchar,
+    `position` integer,
+    `comment` varchar,
     PRIMARY KEY (collection)
 ) WITH (
         'cardinality' = '0'
@@ -971,8 +971,8 @@ CREATE TABLE editor_collection_work (
     collection integer,
     work integer,
     added varchar,
-    position integer,
-    comment varchar,
+    `position` integer,
+    `comment` varchar,
     PRIMARY KEY (collection)
 ) WITH (
         'cardinality' = '0'
@@ -980,7 +980,7 @@ CREATE TABLE editor_collection_work (
 
 CREATE TABLE editor_language (
     editor integer,
-    language integer,
+    `language` integer,
     fluency varchar,
     PRIMARY KEY (editor)
 ) WITH (
@@ -995,7 +995,7 @@ CREATE TABLE editor_oauth_token (
     refresh_token varchar,
     access_token varchar,
     expire_time varchar,
-    scope integer,
+    `scope` integer,
     granted varchar,
     code_challenge varchar,
     code_challenge_method varchar,
@@ -1008,7 +1008,7 @@ CREATE TABLE editor_preference (
     id integer,
     editor integer,
     name varchar,
-    value varchar,
+    `value` varchar,
     PRIMARY KEY (id)
 ) WITH (
         'cardinality' = '0'
@@ -1103,11 +1103,11 @@ CREATE TABLE event (
     end_date_year integer,
     end_date_month integer,
     end_date_day integer,
-    time varchar,
+    `time` varchar,
     type integer,
     cancelled varchar,
     setlist varchar,
-    comment varchar,
+    `comment` varchar,
     edits_pending integer,
     last_updated varchar,
     ended varchar,
@@ -1172,7 +1172,7 @@ CREATE TABLE event_attribute (
 CREATE TABLE event_attribute_type (
     id integer,
     name varchar,
-    comment varchar,
+    `comment` varchar,
     free_text varchar,
     parent integer,
     child_order integer,
@@ -1186,7 +1186,7 @@ CREATE TABLE event_attribute_type (
 CREATE TABLE event_attribute_type_allowed_value (
     id integer,
     event_attribute_type integer,
-    value varchar,
+    `value` varchar,
     parent integer,
     child_order integer,
     description varchar,
@@ -1239,7 +1239,7 @@ CREATE TABLE event_series (
 CREATE TABLE event_tag (
     event integer,
     tag integer,
-    count integer,
+    `count` integer,
     last_updated varchar,
     PRIMARY KEY (event)
 ) WITH (
@@ -1284,7 +1284,7 @@ CREATE TABLE genre (
     id integer,
     gid varchar,
     name varchar,
-    comment varchar,
+    `comment` varchar,
     edits_pending integer,
     last_updated varchar,
     PRIMARY KEY (id)
@@ -1341,7 +1341,7 @@ CREATE TABLE instrument (
     type integer,
     edits_pending integer,
     last_updated varchar,
-    comment varchar,
+    `comment` varchar,
     description varchar,
     PRIMARY KEY (id)
 ) WITH (
@@ -1404,7 +1404,7 @@ CREATE TABLE instrument_attribute (
 CREATE TABLE instrument_attribute_type (
     id integer,
     name varchar,
-    comment varchar,
+    `comment` varchar,
     free_text varchar,
     parent integer,
     child_order integer,
@@ -1418,7 +1418,7 @@ CREATE TABLE instrument_attribute_type (
 CREATE TABLE instrument_attribute_type_allowed_value (
     id integer,
     instrument_attribute_type integer,
-    value varchar,
+    `value` varchar,
     parent integer,
     child_order integer,
     description varchar,
@@ -1440,7 +1440,7 @@ CREATE TABLE instrument_gid_redirect (
 CREATE TABLE instrument_tag (
     instrument integer,
     tag integer,
-    count integer,
+    `count` integer,
     last_updated varchar,
     PRIMARY KEY (instrument)
 ) WITH (
@@ -3105,7 +3105,7 @@ CREATE TABLE label (
     label_code integer,
     type integer,
     area integer,
-    comment varchar,
+    `comment` varchar,
     edits_pending integer,
     last_updated varchar,
     ended varchar,
@@ -3170,7 +3170,7 @@ CREATE TABLE label_attribute (
 CREATE TABLE label_attribute_type (
     id integer,
     name varchar,
-    comment varchar,
+    `comment` varchar,
     free_text varchar,
     parent integer,
     child_order integer,
@@ -3184,7 +3184,7 @@ CREATE TABLE label_attribute_type (
 CREATE TABLE label_attribute_type_allowed_value (
     id integer,
     label_attribute_type integer,
-    value varchar,
+    `value` varchar,
     parent integer,
     child_order integer,
     description varchar,
@@ -3244,7 +3244,7 @@ CREATE TABLE label_rating_raw (
 CREATE TABLE label_tag (
     label integer,
     tag integer,
-    count integer,
+    `count` integer,
     last_updated varchar,
     PRIMARY KEY (label)
 ) WITH (
@@ -3273,7 +3273,7 @@ CREATE TABLE label_type (
         'cardinality' = '11'
 );
 
-CREATE TABLE language (
+CREATE TABLE `language` (
     id integer,
     iso_code_2t varchar,
     iso_code_2b varchar,
@@ -3383,8 +3383,8 @@ CREATE TABLE link_type (
 CREATE TABLE link_type_attribute_type (
     link_type integer,
     attribute_type integer,
-    min integer,
-    max integer,
+    `min` integer,
+    `max` integer,
     last_updated varchar,
     PRIMARY KEY (link_type)
 ) WITH (
@@ -3393,8 +3393,8 @@ CREATE TABLE link_type_attribute_type (
 
 CREATE TABLE medium (
     id integer,
-    release integer,
-    position integer,
+    `release` integer,
+    `position` integer,
     format integer,
     name varchar,
     edits_pending integer,
@@ -3420,7 +3420,7 @@ CREATE TABLE medium_attribute (
 CREATE TABLE medium_attribute_type (
     id integer,
     name varchar,
-    comment varchar,
+    `comment` varchar,
     free_text varchar,
     parent integer,
     child_order integer,
@@ -3442,7 +3442,7 @@ CREATE TABLE medium_attribute_type_allowed_format (
 CREATE TABLE medium_attribute_type_allowed_value (
     id integer,
     medium_attribute_type integer,
-    value varchar,
+    `value` varchar,
     parent integer,
     child_order integer,
     description varchar,
@@ -3476,7 +3476,7 @@ CREATE TABLE medium_format (
     name varchar,
     parent integer,
     child_order integer,
-    year integer,
+    `year` integer,
     has_discids varchar,
     description varchar,
     gid varchar,
@@ -3516,7 +3516,7 @@ CREATE TABLE mood (
     id integer,
     gid varchar,
     name varchar,
-    comment varchar,
+    `comment` varchar,
     edits_pending integer,
     last_updated varchar,
     PRIMARY KEY (id)
@@ -3589,7 +3589,7 @@ CREATE TABLE place (
     address varchar,
     area integer,
     coordinates varchar,
-    comment varchar,
+    `comment` varchar,
     edits_pending integer,
     last_updated varchar,
     begin_date_year integer,
@@ -3660,7 +3660,7 @@ CREATE TABLE place_attribute (
 CREATE TABLE place_attribute_type (
     id integer,
     name varchar,
-    comment varchar,
+    `comment` varchar,
     free_text varchar,
     parent integer,
     child_order integer,
@@ -3674,7 +3674,7 @@ CREATE TABLE place_attribute_type (
 CREATE TABLE place_attribute_type_allowed_value (
     id integer,
     place_attribute_type integer,
-    value varchar,
+    `value` varchar,
     parent integer,
     child_order integer,
     description varchar,
@@ -3714,7 +3714,7 @@ CREATE TABLE place_rating_raw (
 CREATE TABLE place_tag (
     place integer,
     tag integer,
-    count integer,
+    `count` integer,
     last_updated varchar,
     PRIMARY KEY (place)
 ) WITH (
@@ -3749,7 +3749,7 @@ CREATE TABLE recording (
     name varchar,
     artist_credit integer,
     length integer,
-    comment varchar,
+    `comment` varchar,
     edits_pending integer,
     last_updated varchar,
     video varchar,
@@ -3814,7 +3814,7 @@ CREATE TABLE recording_attribute (
 CREATE TABLE recording_attribute_type (
     id integer,
     name varchar,
-    comment varchar,
+    `comment` varchar,
     free_text varchar,
     parent integer,
     child_order integer,
@@ -3828,7 +3828,7 @@ CREATE TABLE recording_attribute_type (
 CREATE TABLE recording_attribute_type_allowed_value (
     id integer,
     recording_attribute_type integer,
-    value varchar,
+    `value` varchar,
     parent integer,
     child_order integer,
     description varchar,
@@ -3840,9 +3840,9 @@ CREATE TABLE recording_attribute_type_allowed_value (
 
 CREATE TABLE recording_first_release_date (
     recording integer,
-    year integer,
-    month integer,
-    day integer,
+    `year` integer,
+    `month` integer,
+    `day` integer,
     PRIMARY KEY (recording)
 ) WITH (
         'cardinality' = '0'
@@ -3890,7 +3890,7 @@ CREATE TABLE recording_series (
 CREATE TABLE recording_tag (
     recording integer,
     tag integer,
-    count integer,
+    `count` integer,
     last_updated varchar,
     PRIMARY KEY (recording)
 ) WITH (
@@ -3907,7 +3907,7 @@ CREATE TABLE recording_tag_raw (
         'cardinality' = '0'
 );
 
-CREATE TABLE release (
+CREATE TABLE `release` (
     id integer,
     gid varchar,
     name varchar,
@@ -3915,10 +3915,10 @@ CREATE TABLE release (
     release_group integer,
     status integer,
     packaging integer,
-    language integer,
+    `language` integer,
     script integer,
     barcode varchar,
-    comment varchar,
+    `comment` varchar,
     edits_pending integer,
     quality integer,
     last_updated varchar,
@@ -3929,7 +3929,7 @@ CREATE TABLE release (
 
 CREATE TABLE release_alias (
     id integer,
-    release integer,
+    `release` integer,
     name varchar,
     locale varchar,
     edits_pending integer,
@@ -3962,16 +3962,16 @@ CREATE TABLE release_alias_type (
 );
 
 CREATE TABLE release_annotation (
-    release integer,
+    `release` integer,
     annotation integer,
-    PRIMARY KEY (release)
+    PRIMARY KEY (`release`)
 ) WITH (
         'cardinality' = '0'
 );
 
 CREATE TABLE release_attribute (
     id integer,
-    release integer,
+    `release` integer,
     release_attribute_type integer,
     release_attribute_type_allowed_value integer,
     release_attribute_text varchar,
@@ -3983,7 +3983,7 @@ CREATE TABLE release_attribute (
 CREATE TABLE release_attribute_type (
     id integer,
     name varchar,
-    comment varchar,
+    `comment` varchar,
     free_text varchar,
     parent integer,
     child_order integer,
@@ -3997,7 +3997,7 @@ CREATE TABLE release_attribute_type (
 CREATE TABLE release_attribute_type_allowed_value (
     id integer,
     release_attribute_type integer,
-    value varchar,
+    `value` varchar,
     parent integer,
     child_order integer,
     description varchar,
@@ -4008,33 +4008,33 @@ CREATE TABLE release_attribute_type_allowed_value (
 );
 
 CREATE TABLE release_country (
-    release integer,
+    `release` integer,
     country integer,
     date_year integer,
     date_month integer,
     date_day integer,
-    PRIMARY KEY (release)
+    PRIMARY KEY (`release`)
 ) WITH (
         'cardinality' = '12867114'
 );
 
 CREATE TABLE release_event (
-    release integer,
+    `release` integer,
     date_year integer,
     date_month integer,
     date_day integer,
     country integer,
-    PRIMARY KEY (release)
+    PRIMARY KEY (`release`)
 ) WITH (
         'cardinality' = '13261844'
 );
 
 CREATE TABLE release_first_release_date (
-    release integer,
-    year integer,
-    month integer,
-    day integer,
-    PRIMARY KEY (release)
+    `release` integer,
+    `year` integer,
+    `month` integer,
+    `day` integer,
+    PRIMARY KEY (`release`)
 ) WITH (
         'cardinality' = '0'
 );
@@ -4054,7 +4054,7 @@ CREATE TABLE release_group (
     name varchar,
     artist_credit integer,
     type integer,
-    comment varchar,
+    `comment` varchar,
     edits_pending integer,
     last_updated varchar,
     PRIMARY KEY (id)
@@ -4118,7 +4118,7 @@ CREATE TABLE release_group_attribute (
 CREATE TABLE release_group_attribute_type (
     id integer,
     name varchar,
-    comment varchar,
+    `comment` varchar,
     free_text varchar,
     parent integer,
     child_order integer,
@@ -4132,7 +4132,7 @@ CREATE TABLE release_group_attribute_type (
 CREATE TABLE release_group_attribute_type_allowed_value (
     id integer,
     release_group_attribute_type integer,
-    value varchar,
+    `value` varchar,
     parent integer,
     child_order integer,
     description varchar,
@@ -4221,7 +4221,7 @@ CREATE TABLE release_group_series (
 CREATE TABLE release_group_tag (
     release_group integer,
     tag integer,
-    count integer,
+    `count` integer,
     last_updated varchar,
     PRIMARY KEY (release_group)
 ) WITH (
@@ -4240,7 +4240,7 @@ CREATE TABLE release_group_tag_raw (
 
 CREATE TABLE release_label (
     id integer,
-    release integer,
+    `release` integer,
     label integer,
     catalog_number varchar,
     last_updated varchar,
@@ -4282,20 +4282,20 @@ CREATE TABLE release_raw (
     modify_count integer,
     source integer,
     barcode varchar,
-    comment varchar,
+    `comment` varchar,
     PRIMARY KEY (id)
 ) WITH (
         'cardinality' = '0'
 );
 
 CREATE TABLE release_series (
-    release integer,
+    `release` integer,
     series integer,
     relationship integer,
     link_order integer,
     link integer,
     text_value varchar,
-    PRIMARY KEY (release)
+    PRIMARY KEY (`release`)
 ) WITH (
         'cardinality' = '57254'
 );
@@ -4313,31 +4313,31 @@ CREATE TABLE release_status (
 );
 
 CREATE TABLE release_tag (
-    release integer,
+    `release` integer,
     tag integer,
-    count integer,
+    `count` integer,
     last_updated varchar,
-    PRIMARY KEY (release)
+    PRIMARY KEY (`release`)
 ) WITH (
         'cardinality' = '0'
 );
 
 CREATE TABLE release_tag_raw (
-    release integer,
+    `release` integer,
     editor integer,
     tag integer,
     is_upvote varchar,
-    PRIMARY KEY (release)
+    PRIMARY KEY (`release`)
 ) WITH (
         'cardinality' = '0'
 );
 
 CREATE TABLE release_unknown_country (
-    release integer,
+    `release` integer,
     date_year integer,
     date_month integer,
     date_day integer,
-    PRIMARY KEY (release)
+    PRIMARY KEY (`release`)
 ) WITH (
         'cardinality' = '394730'
 );
@@ -4367,7 +4367,7 @@ CREATE TABLE series (
     id integer,
     gid varchar,
     name varchar,
-    comment varchar,
+    `comment` varchar,
     type integer,
     ordering_type integer,
     edits_pending integer,
@@ -4433,7 +4433,7 @@ CREATE TABLE series_attribute (
 CREATE TABLE series_attribute_type (
     id integer,
     name varchar,
-    comment varchar,
+    `comment` varchar,
     free_text varchar,
     parent integer,
     child_order integer,
@@ -4447,7 +4447,7 @@ CREATE TABLE series_attribute_type (
 CREATE TABLE series_attribute_type_allowed_value (
     id integer,
     series_attribute_type integer,
-    value varchar,
+    `value` varchar,
     parent integer,
     child_order integer,
     description varchar,
@@ -4481,7 +4481,7 @@ CREATE TABLE series_ordering_type (
 CREATE TABLE series_tag (
     series integer,
     tag integer,
-    count integer,
+    `count` integer,
     last_updated varchar,
     PRIMARY KEY (series)
 ) WITH (
@@ -4535,7 +4535,7 @@ CREATE TABLE track (
     gid varchar,
     recording integer,
     medium integer,
-    position integer,
+    `position` integer,
     number varchar,
     name varchar,
     artist_credit integer,
@@ -4559,7 +4559,7 @@ CREATE TABLE track_gid_redirect (
 
 CREATE TABLE track_raw (
     id integer,
-    release integer,
+    `release` integer,
     title varchar,
     artist varchar,
     sequence integer,
@@ -4614,7 +4614,7 @@ CREATE TABLE work (
     gid varchar,
     name varchar,
     type integer,
-    comment varchar,
+    `comment` varchar,
     edits_pending integer,
     last_updated varchar,
     PRIMARY KEY (id)
@@ -4678,7 +4678,7 @@ CREATE TABLE work_attribute (
 CREATE TABLE work_attribute_type (
     id integer,
     name varchar,
-    comment varchar,
+    `comment` varchar,
     free_text varchar,
     parent integer,
     child_order integer,
@@ -4692,7 +4692,7 @@ CREATE TABLE work_attribute_type (
 CREATE TABLE work_attribute_type_allowed_value (
     id integer,
     work_attribute_type integer,
-    value varchar,
+    `value` varchar,
     parent integer,
     child_order integer,
     description varchar,
@@ -4713,7 +4713,7 @@ CREATE TABLE work_gid_redirect (
 
 CREATE TABLE work_language (
     work integer,
-    language integer,
+    `language` integer,
     edits_pending integer,
     created varchar,
     PRIMARY KEY (work)
@@ -4754,7 +4754,7 @@ CREATE TABLE work_series (
 CREATE TABLE work_tag (
     work integer,
     tag integer,
-    count integer,
+    `count` integer,
     last_updated varchar,
     PRIMARY KEY (work)
 ) WITH (
