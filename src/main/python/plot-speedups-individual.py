@@ -8,12 +8,14 @@ from config import results_path, green_color, dark_green_color, benchmarks, figu
 
 plt.rcParams['font.size'] = 18
 
+save_path = figures_path + '/speedups-overall-individual'
+
 for benchmark in benchmarks:
-    for baseline in ['dpconv', 'duckdb']:
+    for baseline in ['dpconv', 'duckdb', 'uniondp', 'yanplus', 'learned-rewrite', 'llm-r2']:
         for metric in ['exec_time', 'total_time'] if baseline == 'dpconv' else ['total_time']:
             # Load the CSV files
             meta_df = pd.read_csv(os.path.join(results_path, f'metadecomp-opt-{benchmark}.csv'))
-            base_df = pd.read_csv(os.path.join(results_path, f'{baseline}{"-opt" if baseline=="dpconv" else ""}-{benchmark}.csv'))
+            base_df = pd.read_csv(os.path.join(results_path, f'{baseline}{"" if baseline=="duckdb" else "-opt"}-{benchmark}.csv'))
             duckdb_df = pd.read_csv(os.path.join(results_path, f'duckdb-{benchmark}.csv'))
 
             # Cap the values at 3e8
@@ -78,5 +80,8 @@ for benchmark in benchmarks:
 
             # Show the plot
             plt.tight_layout(pad=0)
-            plt.savefig(os.path.join(figures_path, f'speedups-over-{baseline}-{metric}-{benchmark}.pdf'), format='pdf')
+
+            if not os.path.exists(save_path):
+                os.makedirs(save_path)
+            plt.savefig(os.path.join(save_path, f'speedups-over-{baseline}-{metric}-{benchmark}.pdf'), format='pdf')
             # plt.show()
