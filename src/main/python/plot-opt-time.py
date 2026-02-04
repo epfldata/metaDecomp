@@ -4,165 +4,217 @@ import matplotlib.pyplot as plt
 from matplotlib import font_manager as fm
 from matplotlib.ticker import MaxNLocator
 import os
+import numpy as np
+from matplotlib.offsetbox import HPacker, VPacker, AnnotationBbox, DrawingArea, TextArea
 
 from config import colors, dark_orange, results_path, figures_path, benchmarks
 
-plt.rcParams['font.size'] = 14
+plt.rcParams['font.size'] = 18
 
 bold_font = fm.FontProperties(size=12, weight='semibold')
-legend_font = fm.FontProperties(size=14, weight='semibold')
+legend_font = fm.FontProperties(size=18, weight='semibold')
 
-for series in benchmarks + ['overall']:
-    # Load the CSV files
-    if series == 'overall':
-        for s in benchmarks:
-            meta_df_part = pd.read_csv(os.path.join(results_path, f'metadecomp-opt-{s}.csv'))
-            dpconv_df_part = pd.read_csv(os.path.join(results_path, f'dpconv-opt-{s}.csv'))
-            if 'meta_df' in locals():
-                meta_df = pd.concat([meta_df, meta_df_part], ignore_index=True)
-                dpconv_df = pd.concat([dpconv_df, dpconv_df_part], ignore_index=True)
-            else:
-                meta_df = meta_df_part
-                dpconv_df = dpconv_df_part
-    else:
-        meta_df = pd.read_csv(os.path.join(results_path, f'metadecomp-opt-{series}.csv'))
-        dpconv_df = pd.read_csv(os.path.join(results_path, f'dpconv-opt-{series}.csv'))
+# Define methods and their styles
+methods = {
+    'metaDecomp': {'file': 'metadecomp-opt-{}.csv', 'col': 'total_opt_time', 'color': 'black', 'marker': 'o', 'label': 'metaDecomp'},
+    'DPconv': {'file': 'dpconv-opt-{}.csv', 'col': 'opt_time', 'color': colors[0], 'marker': 's', 'label': 'DPconv'},
+    'DuckDB': {'file': 'duckdb-{}.csv', 'col': 'opt_time', 'color': colors[1], 'marker': '^', 'label': 'DuckDB'},
+    'UnionDP': {'file': 'uniondp-opt-{}.csv', 'col': 'opt_time', 'color': colors[2], 'marker': 'd', 'label': 'UnionDP'},
+    'Yannakakis+': {'file': 'yanplus-opt-{}.csv', 'col': 'opt_time', 'color': colors[3], 'marker': 'P', 'label': 'Yannakakis$^+$'},
+    'LLM-R2': {'file': 'llm-r2-opt-{}.csv', 'col': 'opt_time', 'color': colors[4], 'marker': 'v', 'label': 'LLM-R$^2$'},
+    'LearnedRewrite': {'file': 'learned-rewrite-opt-{}.csv', 'col': 'opt_time', 'color': colors[5], 'marker': 'x', 'label': 'Learned Rewrite'}
+}
 
-    meta_df['num_rels'] = pd.to_numeric(meta_df['num_rels'], errors='coerce')
-    dpconv_df['num_rels'] = pd.to_numeric(dpconv_df['num_rels'], errors='coerce')
+# Benchmarks to plot
+benchmarks_to_plot = benchmarks # ['dsb', 'job-original', 'musicbrainz', 'job-large']
 
-    meta_df = meta_df[['num_rels', 'total_opt_time']]
-    dpconv_df = dpconv_df[['num_rels', 'opt_time']]
+# Container for overall data
+overall_data = {method: [] for method in methods}
 
-    # Group data by num_rels and calculate median
-    meta_grouped = meta_df.groupby('num_rels')
-    num_rels = meta_grouped.median().index
-    meta_median = meta_grouped['total_opt_time'].median() / 1000
+# Function to plot a single benchmark
+def plot_benchmark(series, df_map, output_name):
+    plt.figure(figsize=(7.5, 3.5))
+    
+    # Iterate through methods to plot
+    for method_name, config in methods.items():
+        if method_name not in df_map or df_map[method_name] is None:
+            continue
+            
+        df = df_map[method_name]
+        
+        # Group by num_rels
+        grouped = df.groupby('num_rels')['time_ms'].agg(['mean', 'min', 'max']).sort_index()
+        
+        # Determine x offset based on method index to avoid overlap
+        idx = list(methods.keys()).index(method_name)
+        offset = (idx - 2) * 0.1 # Center around 0
+        
+        x = grouped.index + offset
+        y = grouped['mean']
+        yerr = [grouped['mean'] - grouped['min'], grouped['max'] - grouped['mean']]
+        
+        # Plot with connecting lines
+        plt.errorbar(x, y, yerr=yerr, fmt=config['marker'], label=config['label'], 
+                     color=config['color'], capsize=3, alpha=0.8, markersize=8, linestyle=':')
 
-    dpconv_grouped = dpconv_df.groupby('num_rels')
-    dpconv_median = dpconv_grouped['opt_time'].median() / 1000
-
-    # Group data by num_rels and calculate mean, min, and max
-    meta_min = meta_grouped['total_opt_time'].min() / 1000
-    meta_max = meta_grouped['total_opt_time'].max() / 1000
-    dpconv_min = dpconv_grouped['opt_time'].min() / 1000
-    dpconv_max = dpconv_grouped['opt_time'].max() / 1000
-
-
-    # Compute 25th and 75th percentiles (Q1/Q3) instead of min/max
-    meta_q25 = meta_grouped['total_opt_time'].quantile(0.25) / 1000
-    meta_q75 = meta_grouped['total_opt_time'].quantile(0.75) / 1000
-    dpconv_q25 = dpconv_grouped['opt_time'].quantile(0.25) / 1000
-    dpconv_q75 = dpconv_grouped['opt_time'].quantile(0.75) / 1000
-
-    # Asymmetric error bars around the median (25th/75th percentiles)
-    meta_err_lower = (meta_median - meta_q25)
-    meta_err_upper = (meta_q75 - meta_median)
-    dpconv_err_lower = (dpconv_median - dpconv_q25)
-    dpconv_err_upper = (dpconv_q75 - dpconv_median)
-    meta_error = [meta_err_lower, meta_err_upper]
-    dpconv_error = [dpconv_err_lower, dpconv_err_upper]
-
-    # Create the plot -> convert to boxplot per num_rels
-    # prepare grouped data for boxplots
-    import numpy as np
-    import matplotlib.patches as mpatches
-
-    # union of groups from both datasets (sorted)
-    meta_groups = sorted(meta_df['num_rels'])
-    dpconv_groups = sorted(dpconv_df['num_rels'])
-    all_groups = sorted(set(meta_groups).union(dpconv_groups))
-
-    # collect values per group (in ms)
-    meta_values = []
-    dpconv_values = []
-    groups_included = []
-    for g in all_groups:
-        mv = (meta_df.loc[meta_df['num_rels'] == g, 'total_opt_time'] / 1000).dropna().tolist()
-        dv = (dpconv_df.loc[dpconv_df['num_rels'] == g, 'opt_time'] / 1000).dropna().tolist()
-        # skip groups with no data at all
-        print(g, mv, dv)
-        # if len(mv) == 0 and len(dv) == 0:
-            # continue
-        groups_included.append(g)
-        meta_values.append(mv)
-        dpconv_values.append(dv)
-
-    if series == 'overall':
-        plt.rcParams['font.size'] = 18
-        fig = plt.figure(figsize=(7.5, 2.5))
-    else:
-        plt.rcParams['font.size'] = 17
-        # if series == 'dsb-exact':
-            # plt.figure(figsize=(3.5, 4))
-        # else:
-        fig = plt.figure(figsize=(6, 4))
-
-    # categorical positions and offsets
-    n = len(groups_included)
-    positions = np.arange(n)
-    width = 0.6
-    pos_meta = positions
-    pos_dpconv = positions
-
-    # draw boxplots for each series at the offset positions
-    bp_meta = plt.boxplot(meta_values, positions=groups_included, widths=width,
-                          patch_artist=True, manage_ticks=False, showfliers=False)
-    bp_dpconv = plt.boxplot(dpconv_values, positions=groups_included, widths=width,
-                             patch_artist=True, manage_ticks=False, showfliers=False)
-
-    # style boxes and all related lines (whiskers, caps, medians, fliers)
-    # meta: box face = colors[0], box edge = colors[1]
-    for box in bp_meta['boxes']:
-        box.set(facecolor=colors[0], alpha=0.8, edgecolor='C0')
-    for whisker in bp_meta.get('whiskers', []):
-        whisker.set(color='C0', linewidth=1.0)
-    for cap in bp_meta.get('caps', []):
-        cap.set(color='C0', linewidth=1.0)
-    for median in bp_meta.get('medians', []):
-        median.set(color='C0', linewidth=1.2)
-    for flier in bp_meta.get('fliers', []):
-        flier.set(markeredgecolor='C0')
-
-    # dpconv: box face = colors[1], box edge = colors[0]
-    for box in bp_dpconv['boxes']:
-        box.set(facecolor=colors[1], alpha=0.8, edgecolor=dark_orange, hatch='ooo')
-    for whisker in bp_dpconv.get('whiskers', []):
-        whisker.set(color=dark_orange, linewidth=1.0)
-    for cap in bp_dpconv.get('caps', []):
-        cap.set(color=dark_orange, linewidth=1.0)
-    for median in bp_dpconv.get('medians', []):
-        median.set(color=dark_orange, linewidth=1.2)
-    for flier in bp_dpconv.get('fliers', []):
-        flier.set(markeredgecolor=dark_orange)
-
-    # log scale for y axis (times must be positive)
     plt.yscale('log')
-
-    # labels and legend (use patches)
     plt.xlabel('Number of relations', weight='bold')
-    if series == 'overall':
-        plt.ylabel('Optimization\ntime (ms)', weight='bold')
-    else:
-        plt.ylabel('Optimization time (ms)', weight='bold')
-    p_meta = mpatches.Patch(facecolor=colors[0], edgecolor='C0', label='metaDecomp', alpha=0.8)
-    p_dpconv = mpatches.Patch(facecolor=colors[1], edgecolor=dark_orange, label='DPconv', alpha=0.8, hatch='oooo')
-    plt.legend(handles=[p_meta, p_dpconv], framealpha=0.85, labelspacing=0.3, prop=legend_font)
-
-    # optional timeout line — compute from raw data to avoid index misalignment
-    overall_max = max(
-        dpconv_df['opt_time'].max() if not dpconv_df['opt_time'].empty else 0,
-        meta_df['total_opt_time'].max() if not meta_df['total_opt_time'].empty else 0
-    )
-    if overall_max >= 3e8:
+    plt.ylabel('Optimization time (ms)', weight='bold')
+    # Use integer ticks for x-axis
+    plt.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
+    
+    # Add timeout line if needed
+    max_times = [df['time_ms'].max() for df in df_map.values() if df is not None]
+    if not max_times:
+        return
+    overall_max = max(max_times)
+    if overall_max >= 3e5:
         plt.axhline(y=3e5, color='dimgray', linestyle=':')
-        if series == 'overall':
-            plt.text(x=groups_included[-1], y=3e5, s='Timeout (5 min)', color='dimgray', va='top', ha='right')
-        else:
-            plt.text(x=groups_included[0], y=3e5, s='Timeout (5 min)', color='dimgray', va='top', ha='left')
+        # if series == 'overall':
+        plt.text(x=df['num_rels'].min(), y=3e5, s='Timeout (5 min)', color='dimgray', va='top', ha='left')
+        # else:
+            # plt.text(x=groups_included[0], y=3e5, s='Timeout (5 min)', color='dimgray', va='top', ha='left')
 
-    fig.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
-
+    plt.tight_layout()
+    output_file = os.path.join(figures_path, output_name)
     plt.tight_layout(pad=0)
-    plt.savefig(os.path.join(figures_path, f'opt-time-{series}.pdf'), format='pdf')
-    plt.show()
+    plt.savefig(output_file, format='pdf')
+    print(f"  Saved plot to {output_file}")
+    plt.close()
+
+# Process each benchmark
+for series in benchmarks_to_plot:
+    print(f"Processing benchmark: {series}")
+    
+    # Pre-load all dataframes for this benchmark
+    df_map = {}
+    
+    # Load metaDecomp data first as reference for num_rels logic
+    meta_path = os.path.join(results_path, methods['metaDecomp']['file'].format(series))
+    if not os.path.exists(meta_path):
+        print(f"Skipping {series}: metaDecomp file not found at {meta_path}")
+        continue
+    
+    meta_df_raw = pd.read_csv(meta_path)
+    if 'query' in meta_df_raw.columns:
+        meta_df_raw['query'] = meta_df_raw['query'].astype(str)
+    query_to_num_rels = meta_df_raw.set_index('query')['num_rels'].to_dict()
+    
+    for method_name, config in methods.items():
+        file_path = os.path.join(results_path, config['file'].format(series))
+        if not os.path.exists(file_path):
+            df_map[method_name] = None
+            continue
+            
+        df = pd.read_csv(file_path)
+        if 'query' not in df.columns or config['col'] not in df.columns:
+            df_map[method_name] = None
+            continue
+            
+        df['query'] = df['query'].astype(str)
+        if 'num_rels' not in df.columns:
+            df['num_rels'] = df['query'].map(query_to_num_rels)
+            
+        df = df.dropna(subset=['num_rels'])
+        df['num_rels'] = pd.to_numeric(df['num_rels'])
+        
+        df[config['col']] = pd.to_numeric(df[config['col']], errors='coerce')
+        df = df.dropna(subset=[config['col']])
+        df['time_ms'] = df[config['col']] / 1000.0
+        df['time_ms'] = df['time_ms'].clip(upper=300000)
+        
+        df_map[method_name] = df
+        overall_data[method_name].append(df[['num_rels', 'time_ms']])
+        
+    plot_benchmark(series, df_map, f'opt-time-{series}.pdf')
+
+# Process Overall
+print("Processing benchmark: overall")
+overall_df_map = {}
+for method_name in methods:
+    if overall_data[method_name]:
+        overall_df_map[method_name] = pd.concat(overall_data[method_name], ignore_index=True)
+    else:
+        overall_df_map[method_name] = None
+
+plot_benchmark('overall', overall_df_map, 'opt-time-overall.pdf')
+
+# Save Legend separately
+print("Saving separate legend versions...")
+handles = []
+labels = []
+# Create dummy handles
+for method_name, config in methods.items():
+    h = plt.Line2D([0], [0], color=config['color'], marker=config['marker'], linestyle=':', label=config['label'], markersize=12)
+    handles.append(h)
+    labels.append(config['label'])
+
+# Version 1: Single row
+fig_legend = plt.figure(figsize=(12, 1))
+ax = fig_legend.add_subplot(111)
+ax.axis('off')
+legend = ax.legend(handles, labels, loc='center', ncol=len(methods), frameon=True, prop=legend_font, 
+                   handletextpad=0.2, columnspacing=0.8, borderpad=0.3)
+legend.get_frame().set_edgecolor('gray')
+legend.get_frame().set_linewidth(1)
+legend_path = os.path.join(figures_path, 'opt-time-legend.pdf')
+fig_legend.canvas.draw()
+bbox = legend.get_window_extent().transformed(fig_legend.dpi_scale_trans.inverted())
+# Manual padding of 0.05 inches to ensure border is visible but crop is tight
+from matplotlib.transforms import Bbox
+bbox_expanded = Bbox.from_extents(bbox.x0 - 0.05, bbox.y0 - 0.05, bbox.x1 + 0.05, bbox.y1 + 0.05)
+fig_legend.savefig(legend_path, format='pdf', bbox_inches=bbox_expanded, pad_inches=0)
+print(f"  Saved legend (1 row) to {legend_path}")
+plt.close(fig_legend)
+
+# Version 2: Two rows (5+2 centered)
+fig_legend_2 = plt.figure(figsize=(8, 2))
+ax2 = fig_legend_2.add_subplot(111)
+ax2.axis('off')
+
+def create_row_packer(h_list, l_list):
+    row_items = []
+    for h, l in zip(h_list, l_list):
+        # Slightly reduced height for tighter vertical fit
+        da = DrawingArea(32, 24, 0, 0)
+        # Draw line without markers
+        leg_line = plt.Line2D([2, 30], [12, 12], 
+                              color=h.get_color(), 
+                              linestyle=h.get_linestyle(), 
+                              linewidth=h.get_linewidth(),
+                              alpha=0.8)
+        da.add_artist(leg_line)
+        # Draw single marker in the exact center of the line
+        leg_marker = plt.Line2D([16], [12],
+                                color=h.get_color(),
+                                marker=h.get_marker(),
+                                markersize=h.get_markersize(),
+                                linestyle='None', # Explicitly no line for the marker artist
+                                alpha=1.0)
+        da.add_artist(leg_marker)
+        te = TextArea(l, textprops=dict(fontproperties=legend_font))
+        # Group handle and label
+        item = HPacker(children=[da, te], align="center", pad=0, sep=4)
+        row_items.append(item)
+    return HPacker(children=row_items, align="center", pad=0, sep=16)
+
+row1 = create_row_packer(handles[:5], labels[:5])
+row2 = create_row_packer(handles[5:], labels[5:])
+# Reduced sep between rows
+vbox = VPacker(children=[row1, row2], align="center", pad=0, sep=2)
+
+ab = AnnotationBbox(vbox, (0.5, 0.5), xycoords='axes fraction',
+                    box_alignment=(0.5, 0.5),
+                    pad=0.1, # Minimized padding
+                    # Reduced boxstyle pad to 0.1 for very tight fit
+                    bboxprops=dict(boxstyle="round,pad=0.1", edgecolor='gray', linewidth=1, facecolor='white'))
+ax2.add_artist(ab)
+
+legend_path_2 = os.path.join(figures_path, 'opt-time-legend-2-rows.pdf')
+fig_legend_2.canvas.draw()
+bbox2 = ab.get_window_extent().transformed(fig_legend_2.dpi_scale_trans.inverted())
+# Manual padding of 0.05 inches
+bbox_expanded_2 = Bbox.from_extents(bbox2.x0 - 0.05, bbox2.y0 - 0.05, bbox2.x1 + 0.05, bbox2.y1 + 0.05)
+fig_legend_2.savefig(legend_path_2, format='pdf', bbox_inches=bbox_expanded_2, pad_inches=0)
+print(f"  Saved legend (2 rows centered) to {legend_path_2}")
+plt.close(fig_legend_2)
