@@ -45,9 +45,9 @@ The queries are generated using the code in https://github.com/Manciukic/postgre
 All cardinality information is formatted in the same way as in https://github.com/utndatasystems/DPconv.
 These files that we use in the experiment can all be downloaded using the setup script. No further action is required.
 
-### DPconv
+### DPconv (for both DPconv and UnionDP)
 
-We adapted the code of DPconv for us to use for our experiments. This adapted version is also given in another anonymous repository.
+We adapted the code of DPconv for us to use for our experiments. We also included an implementation of UnionDP on top of the code of DPconv. This adapted version is also given in another anonymous repository.
 
 First download the code:
 ```
@@ -74,6 +74,61 @@ mkdir -p build
 cd build
 cmake ..
 make
+```
+
+### DuckDB
+
+We slightly modified the code of DuckDB to measure the optimization time. The modified code is given in another anonymous repository.
+
+First download the code:
+```
+wget "https://anonymous.4open.science/api/repo/duckdb-1240/zip" -O "duckdb.zip"
+mkdir duckdb
+tar -xzf "duckdb.zip" -C duckdb
+rm duckdb.zip
+```
+
+There should then be a folder duckdb under the root directory of this repository:
+```
+metaDecomp (root)
+|- duckdb
+   |- benchmark
+   |- data
+   |- examples
+   |- ...
+...
+```
+
+### DuckDBYanPlus (for Yannakakis+)
+
+Simply clone the repository of [DuckDBYanPlus](https://github.com/ChampionNan/DuckDBYanPlus) as is, and checkout the commit we use in our experiments:
+```
+git clone https://github.com/ChampionNan/DuckDBYanPlus.git
+cd DuckDBYanPlus
+git checkout 38d165e
+```
+
+### LLM-R2 (for LLM-R2 and Learned Rewrite)
+
+We use the code from the authors of LLM-R2, which contains the models and scripts for both LLM-R2 and Learned Rewrite. We adapted the code to run the experiments on the benchmarks used in this paper. The modified code is given in another anonymous repository.
+
+First download the code:
+```
+wget "https://anonymous.4open.science/api/repo/llm-r2-F53D/zip" -O "llm-r2.zip"
+mkdir llm-r2
+tar -xzf "llm-r2.zip" -C llm-r2
+rm llm-r2.zip
+```
+
+There should then be a folder duckdb under the root directory of this repository:
+```
+metaDecomp (root)
+|- llm-r2
+   |- data
+   |- rules_for_selected
+   |- src
+   |- ...
+...
 ```
 
 ### SparkSQL+ (join tree enumeration by the traditional GYO algorithm)
@@ -128,6 +183,40 @@ The results are stored in `experiment-results/dpconv-opt-{dsb, job-original, mus
 sbt "runMain experiments.runner.DuckDBRunner"
 ```
 
+The results are stored in `experiment-results/duckdb-{dsb, job-original, musicbrainz, job-large}-<timestamp>.csv`
+
+#### UnionDP
+
+```
+sbt "runMain experiments.runner.DPconvRunner UnionDP"
+```
+
+The results are stored in `experiment-results/uniondp-opt-{dsb, job-original, musicbrainz, job-large}-<timestamp>.csv`
+
+#### Yannakakis+
+
+```
+sbt "runMain experiments.runner.DuckDBYanPlusRunner"
+```
+
+The results are stored in `experiment-results/yanplus-opt-{dsb, job-original, musicbrainz, job-large}-<timestamp>.csv`
+
+#### LLM-R2
+
+```
+sbt "runMain experiments.runner.LLMR2Runner"
+```
+
+The results are stored in `experiment-results/llm-r2-opt-{dsb, job-original, musicbrainz, job-large}-<timestamp>.csv`
+
+#### Learned Rewrite
+
+```
+sbt "runMain experiments.runner.LearnedRewriteRunner"
+```
+
+The results are stored in `experiment-results/learned-rewrite-opt-{dsb, job-original, musicbrainz, job-large}-<timestamp>.csv`
+
 ### Join tree enumeration
 
 #### metaDecomp
@@ -165,21 +254,22 @@ python src/main/python/plot-cost-ratio-stacked.py
 python src/main/python/plot-cost-ratio-individual.py
 ```
 
-### All speedups – Figures 9b, 10, 15, 16, 18
+### All speedups – Figures 9b, 10, 15, 16, 18, 20, 22, 24, 26
 ```
 python src/main/python/plot-speedups-stacked.py
 python src/main/python/plot-speedups-individual.py
 ```
 
-### Scatter plots comparing total runtime – Figures 11, 17, 19
+### Scatter plots comparing total runtime – Figures 11, 17, 19, 21, 23, 25, 27
 
 ```
 python src/main/python/plot-scatter-all.py
 python src/main/python/plot-scatter-individual.py
 ```
 
-### Join tree enumeration – Figure 12
+### Join tree enumeration – Figures 12 & 28
 
 ```
-python src/main/python/plot-enum-time.py
+python src/main/python/plot-enum-time-vs-num-jts-all.py
+python src/main/python/plot-enum-time-vs-num-jts-individual.py
 ```
