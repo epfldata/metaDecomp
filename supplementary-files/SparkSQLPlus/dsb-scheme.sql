@@ -1,8 +1,8 @@
 CREATE TABLE call_center (
     cc_call_center_sk integer,
     cc_call_center_id varchar,
-    cc_rec_start_date varchar,
-    cc_rec_end_date varchar,
+    cc_rec_start_date date,
+    cc_rec_end_date date,
     cc_closed_date_sk integer,
     cc_open_date_sk integer,
     cc_name varchar,
@@ -28,7 +28,7 @@ CREATE TABLE call_center (
     cc_state varchar,
     cc_zip varchar,
     cc_country varchar,
-    cc_gmt_offset varchar,
+    cc_gmt_offset integer,
     cc_tax_percentage varchar,
     PRIMARY KEY (cc_call_center_sk)
 ) WITH (
@@ -69,15 +69,15 @@ CREATE TABLE catalog_returns (
     cr_reason_sk integer,
     cr_order_number integer,
     cr_return_quantity integer,
-    cr_return_amount varchar,
-    cr_return_tax varchar,
-    cr_return_amt_inc_tax varchar,
-    cr_fee varchar,
-    cr_return_ship_cost varchar,
-    cr_refunded_cash varchar,
-    cr_reversed_charge varchar,
-    cr_store_credit varchar,
-    cr_net_loss varchar,
+    cr_return_amount decimal,
+    cr_return_tax decimal,
+    cr_return_amt_inc_tax decimal,
+    cr_fee decimal,
+    cr_return_ship_cost decimal,
+    cr_refunded_cash decimal,
+    cr_reversed_charge decimal,
+    cr_store_credit decimal,
+    cr_net_loss decimal,
     PRIMARY KEY (cr_item_sk, cr_order_number)
 ) WITH (
         'cardinality' = '2158260'
@@ -103,21 +103,21 @@ CREATE TABLE catalog_sales (
     cs_promo_sk integer,
     cs_order_number integer,
     cs_quantity integer,
-    cs_wholesale_cost varchar,
-    cs_list_price varchar,
-    cs_sales_price varchar,
-    cs_ext_discount_amt varchar,
-    cs_ext_sales_price varchar,
-    cs_ext_wholesale_cost varchar,
-    cs_ext_list_price varchar,
-    cs_ext_tax varchar,
-    cs_coupon_amt varchar,
-    cs_ext_ship_cost varchar,
-    cs_net_paid varchar,
-    cs_net_paid_inc_tax varchar,
-    cs_net_paid_inc_ship varchar,
-    cs_net_paid_inc_ship_tax varchar,
-    cs_net_profit varchar,
+    cs_wholesale_cost decimal,
+    cs_list_price decimal,
+    cs_sales_price decimal,
+    cs_ext_discount_amt decimal,
+    cs_ext_sales_price decimal,
+    cs_ext_wholesale_cost decimal,
+    cs_ext_list_price decimal,
+    cs_ext_tax decimal,
+    cs_coupon_amt decimal,
+    cs_ext_ship_cost decimal,
+    cs_net_paid decimal,
+    cs_net_paid_inc_tax decimal,
+    cs_net_paid_inc_ship decimal,
+    cs_net_paid_inc_ship_tax decimal,
+    cs_net_profit decimal,
     PRIMARY KEY (cs_item_sk, cs_order_number)
 ) WITH (
         'cardinality' = '14397492'
@@ -159,7 +159,7 @@ CREATE TABLE customer_address (
     ca_state varchar,
     ca_zip varchar,
     ca_country varchar,
-    ca_gmt_offset varchar,
+    ca_gmt_offset integer,
     ca_location_type varchar,
     PRIMARY KEY (ca_address_sk)
 ) WITH (
@@ -184,7 +184,7 @@ CREATE TABLE customer_demographics (
 CREATE TABLE date_dim (
     d_date_sk integer,
     d_date_id varchar,
-    d_date varchar,
+    d_date date,
     d_month_seq integer,
     d_week_seq integer,
     d_quarter_seq integer,
@@ -217,8 +217,8 @@ CREATE TABLE date_dim (
 
 CREATE TABLE dbgen_version (
     dv_version varchar,
-    dv_create_date varchar,
-    dv_create_time varchar,
+    dv_create_date date,
+    dv_create_time time,
     dv_cmdline_args varchar
 ) WITH (
         'cardinality' = '0'
@@ -257,8 +257,8 @@ CREATE TABLE inventory (
 CREATE TABLE item (
     i_item_sk integer,
     i_item_id varchar,
-    i_rec_start_date varchar,
-    i_rec_end_date varchar,
+    i_rec_start_date date,
+    i_rec_end_date date,
     i_item_desc varchar,
     i_current_price varchar,
     i_wholesale_cost varchar,
@@ -331,8 +331,8 @@ CREATE TABLE ship_mode (
 CREATE TABLE store (
     s_store_sk integer,
     s_store_id varchar,
-    s_rec_start_date varchar,
-    s_rec_end_date varchar,
+    s_rec_start_date date,
+    s_rec_end_date date,
     s_closed_date_sk integer,
     s_store_name varchar,
     s_number_employees integer,
@@ -356,7 +356,7 @@ CREATE TABLE store (
     s_state varchar,
     s_zip varchar,
     s_country varchar,
-    s_gmt_offset varchar,
+    s_gmt_offset integer,
     s_tax_precentage varchar,
     PRIMARY KEY (s_store_sk)
 ) WITH (
@@ -375,15 +375,15 @@ CREATE TABLE store_returns (
     sr_reason_sk integer,
     sr_ticket_number integer,
     sr_return_quantity integer,
-    sr_return_amt varchar,
-    sr_return_tax varchar,
-    sr_return_amt_inc_tax varchar,
-    sr_fee varchar,
-    sr_return_ship_cost varchar,
-    sr_refunded_cash varchar,
-    sr_reversed_charge varchar,
-    sr_store_credit varchar,
-    sr_net_loss varchar,
+    sr_return_amt decimal,
+    sr_return_tax decimal,
+    sr_return_amt_inc_tax decimal,
+    sr_fee decimal,
+    sr_return_ship_cost decimal,
+    sr_refunded_cash decimal,
+    sr_reversed_charge decimal,
+    sr_store_credit decimal,
+    sr_net_loss decimal,
     PRIMARY KEY (sr_item_sk, sr_ticket_number)
 ) WITH (
         'cardinality' = '7198194'
@@ -401,18 +401,18 @@ CREATE TABLE store_sales (
     ss_promo_sk integer,
     ss_ticket_number integer,
     ss_quantity integer,
-    ss_wholesale_cost varchar,
-    ss_list_price varchar,
-    ss_sales_price varchar,
-    ss_ext_discount_amt varchar,
-    ss_ext_sales_price varchar,
-    ss_ext_wholesale_cost varchar,
-    ss_ext_list_price varchar,
-    ss_ext_tax varchar,
-    ss_coupon_amt varchar,
-    ss_net_paid varchar,
-    ss_net_paid_inc_tax varchar,
-    ss_net_profit varchar,
+    ss_wholesale_cost decimal,
+    ss_list_price decimal,
+    ss_sales_price decimal,
+    ss_ext_discount_amt decimal,
+    ss_ext_sales_price decimal,
+    ss_ext_wholesale_cost decimal,
+    ss_ext_list_price decimal,
+    ss_ext_tax decimal,
+    ss_coupon_amt decimal,
+    ss_net_paid decimal,
+    ss_net_paid_inc_tax decimal,
+    ss_net_profit decimal,
     PRIMARY KEY (ss_item_sk, ss_ticket_number)
 ) WITH (
         'cardinality' = '28800991'
@@ -421,14 +421,14 @@ CREATE TABLE store_sales (
 CREATE TABLE time_dim (
     t_time_sk integer,
     t_time_id varchar,
-    t_time integer,
+    t_time time,
     t_hour integer,
     t_minute integer,
     t_second integer,
     t_am_pm varchar,
     t_shift varchar,
     t_sub_shift varchar,
-    t_meal_time varchar,
+    t_meal_time time,
     PRIMARY KEY (t_time_sk)
 ) WITH (
         'cardinality' = '86400'
@@ -448,7 +448,7 @@ CREATE TABLE warehouse (
     w_state varchar,
     w_zip varchar,
     w_country varchar,
-    w_gmt_offset varchar,
+    w_gmt_offset integer,
     PRIMARY KEY (w_warehouse_sk)
 ) WITH (
         'cardinality' = '10'
@@ -457,8 +457,8 @@ CREATE TABLE warehouse (
 CREATE TABLE web_page (
     wp_web_page_sk integer,
     wp_web_page_id varchar,
-    wp_rec_start_date varchar,
-    wp_rec_end_date varchar,
+    wp_rec_start_date date,
+    wp_rec_end_date date,
     wp_creation_date_sk integer,
     wp_access_date_sk integer,
     wp_autogen_flag varchar,
@@ -490,15 +490,15 @@ CREATE TABLE web_returns (
     wr_reason_sk integer,
     wr_order_number integer,
     wr_return_quantity integer,
-    wr_return_amt varchar,
-    wr_return_tax varchar,
-    wr_return_amt_inc_tax varchar,
-    wr_fee varchar,
-    wr_return_ship_cost varchar,
-    wr_refunded_cash varchar,
-    wr_reversed_charge varchar,
-    wr_account_credit varchar,
-    wr_net_loss varchar,
+    wr_return_amt decimal,
+    wr_return_tax decimal,
+    wr_return_amt_inc_tax decimal,
+    wr_fee decimal,
+    wr_return_ship_cost decimal,
+    wr_refunded_cash decimal,
+    wr_reversed_charge decimal,
+    wr_account_credit decimal,
+    wr_net_loss decimal,
     PRIMARY KEY (wr_item_sk, wr_order_number)
 ) WITH (
         'cardinality' = '1440354'
@@ -524,21 +524,21 @@ CREATE TABLE web_sales (
     ws_promo_sk integer,
     ws_order_number integer,
     ws_quantity integer,
-    ws_wholesale_cost varchar,
-    ws_list_price varchar,
-    ws_sales_price varchar,
-    ws_ext_discount_amt varchar,
-    ws_ext_sales_price varchar,
-    ws_ext_wholesale_cost varchar,
-    ws_ext_list_price varchar,
-    ws_ext_tax varchar,
-    ws_coupon_amt varchar,
-    ws_ext_ship_cost varchar,
-    ws_net_paid varchar,
-    ws_net_paid_inc_tax varchar,
-    ws_net_paid_inc_ship varchar,
-    ws_net_paid_inc_ship_tax varchar,
-    ws_net_profit varchar,
+    ws_wholesale_cost decimal,
+    ws_list_price decimal,
+    ws_sales_price decimal,
+    ws_ext_discount_amt decimal,
+    ws_ext_sales_price decimal,
+    ws_ext_wholesale_cost decimal,
+    ws_ext_list_price decimal,
+    ws_ext_tax decimal,
+    ws_coupon_amt decimal,
+    ws_ext_ship_cost decimal,
+    ws_net_paid decimal,
+    ws_net_paid_inc_tax decimal,
+    ws_net_paid_inc_ship decimal,
+    ws_net_paid_inc_ship_tax decimal,
+    ws_net_profit decimal,
     PRIMARY KEY (ws_item_sk, ws_order_number)
 ) WITH (
         'cardinality' = '7197566'
@@ -547,8 +547,8 @@ CREATE TABLE web_sales (
 CREATE TABLE web_site (
     web_site_sk integer,
     web_site_id varchar,
-    web_rec_start_date varchar,
-    web_rec_end_date varchar,
+    web_rec_start_date date,
+    web_rec_end_date date,
     web_name varchar,
     web_open_date_sk integer,
     web_close_date_sk integer,
@@ -569,7 +569,7 @@ CREATE TABLE web_site (
     web_state varchar,
     web_zip varchar,
     web_country varchar,
-    web_gmt_offset varchar,
+    web_gmt_offset integer,
     web_tax_percentage varchar,
     PRIMARY KEY (web_site_sk)
 ) WITH (
