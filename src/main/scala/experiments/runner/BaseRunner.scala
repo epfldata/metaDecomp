@@ -65,7 +65,7 @@ trait BaseRunner {
 			stmt.setQueryTimeout(timeout.toSeconds.toInt)
 
 			try {
-				if (viewSqls.nonEmpty) {
+				if (viewSqls.stripSuffix(";").nonEmpty) {
 					viewsStmt.execute(viewSqls)
 					viewsStmt.close()
 				}
