@@ -21,3 +21,13 @@ def parseSubqueryTables(lines: Iterator[String]): Iterator[Set[String]] = {
 }
 
 def getTimestamp: String = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME).replace(":", "-").replaceAll("""\..*""", "")
+
+extension (s: Iterable[Double]) {
+	def median(): Double = {
+		if (s.size % 2 == 0) {
+			(s.toList.sorted.apply(s.size / 2) + s.toList.sorted.apply(s.size / 2 - 1)) / 2
+		} else {
+			s.toList.sorted.apply(s.size / 2)
+		}
+	}
+}
