@@ -12,11 +12,11 @@ object LLMR2Runner extends BaseRunner {
       connect(benchmark)
 
       val timestamp = getTimestamp
-      val resultsCsvPath = Paths.get(resultsDir, s"gpt-rewritten-$benchmark-$timestamp.csv")
+      val resultsCsvPath = Paths.get(resultsDir, s"llm-r2-opt-$benchmark-$timestamp.csv")
 
       Files.write(
         resultsCsvPath,
-        "query,opt_time_us,exec_time_us,total_time_us\n".getBytes,
+        "query,opt_time,exec_time,total_time\n".getBytes,
         StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING
       )
 
