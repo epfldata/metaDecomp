@@ -1,3 +1,4 @@
+from math import ceil
 from matplotlib.ticker import LogLocator, PercentFormatter
 from matplotlib import font_manager as fm
 import pandas as pd
@@ -7,8 +8,7 @@ import os
 
 from config import results_path, colors, benchmarks, figures_path
 
-plt.rcParams['font.size'] = 20
-bold_font = fm.FontProperties(size=16, weight='semibold')
+bold_font = fm.FontProperties(size=24, weight='semibold')
 
 series_keys = benchmarks
 legends = ['DSB', 'JOB', 'Musicbrainz', 'JOBLarge']
@@ -49,133 +49,95 @@ for baseline in ['dpconv', 'duckdb']:
             speedups[benchmark] = speedups[benchmark][speedups[benchmark] > 0]
 
         if metric == 'exec_time':
-
-            # Create the histogram
-            plt.figure(figsize=(5, 1.75))
-            # Cap the speedups at 2.0 - so that the ones with >2.0 are shown in the range 1.5-2.0
-            speedups[benchmark] = np.clip(speedups[benchmark], None, 2.21)
-
-            # bin edges and centers
-            bins = np.arange(0.0, 2.11, 0.1)
-
-            series = [speedups[k] for k in series_keys]
-
-            bin_centers = (bins[:-1] + bins[1:]) / 2.0
-            bin_width = bins[1] - bins[0]
-
-            # compute raw counts per bin for each series
-            counts_list = []
-            for s in series:
-                if len(s) == 0:
-                    counts = np.zeros(len(bin_centers), dtype=int)
-                else:
-                    counts, _ = np.histogram(s, bins=bins)
-                counts_list.append(counts)
-
-            # normalize to fractions of the total (so stacked bars sum to 1 across all bins & series)
-            total_all = sum(counts_list).sum()
-            if total_all > 0:
-                stacked_props = [counts / total_all for counts in counts_list]
-            else:
-                stacked_props = [np.zeros(len(bin_centers)) for _ in counts_list]
-
-            # plot stacked bars (one stacked bar per bin)
-            width = bin_width  # visual width of the stacked bar
-            bottom = np.zeros(len(bin_centers))
-            for i, (props, hatch) in enumerate(zip(stacked_props, hatches)):
-                plt.bar(bin_centers, props, bottom=bottom, width=width, align='center',
-                        label=legends[i], color=colors[i], hatch=hatch, edgecolor='black', linewidth=0.4)
-                bottom += props
- 
+            plt.rcParams['font.size'] = 24
+            plt.figure(figsize=(10, 2))
         else:
             plt.rcParams['font.size'] = 32
-            # Create the histogram (map numeric bins to equally spaced categorical positions)
             plt.figure(figsize=(14, 3.5))
 
-            # numeric bin edges (may contain large gaps)
-            edges = np.concatenate([np.arange(0, 2.01, 0.1), [10, 100, 1000, 10000, 100000]])
+        # numeric bin edges (may contain large gaps)
+        edges = np.concatenate([np.arange(-0.05, 2.06, 0.1), [10, 100, 1000, 10000, 100000]])
 
-            series = [speedups[k] for k in series_keys]
+        series = [speedups[k] for k in series_keys]
 
-            # compute counts per numeric bin for each series
-            counts_list = []
-            for s in series:
-                if len(s) == 0:
-                    counts = np.zeros(len(edges) - 1, dtype=int)
-                else:
-                    counts, _ = np.histogram(s, bins=edges)
-                counts_list.append(counts)
-
-            # normalize to fractions of the total (so stacked bars sum to 1 across all bins & series)
-            total_all = sum(counts_list).sum()
-            if total_all > 0:
-                stacked_props = [counts / total_all for counts in counts_list]
+        # compute counts per numeric bin for each series
+        counts_list = []
+        for s in series:
+            if len(s) == 0:
+                counts = np.zeros(len(edges) - 1, dtype=int)
             else:
-                stacked_props = [np.zeros(len(edges) - 1) for _ in counts_list]
+                counts, _ = np.histogram(s, bins=edges)
+            counts_list.append(counts)
 
-            # positions: equally spaced categorical bins (one position per numeric bin)
-            num_bins = len(edges) - 1
-            positions = np.arange(num_bins) + 0.5  # centers
+        # normalize to fractions of the total (so stacked bars sum to 1 across all bins & series)
+        total_all = sum(counts_list).sum()
+        if total_all > 0:
+            stacked_props = [counts / total_all for counts in counts_list]
+        else:
+            stacked_props = [np.zeros(len(edges) - 1) for _ in counts_list]
 
-            # plot stacked bars at equal spacing
-            width = 1  # visual width for a stacked bar (in categorical units)
-            bottom = np.zeros(num_bins)
-            for i, (props, hatch) in enumerate(zip(stacked_props, hatches)):
-                plt.bar(positions, props, bottom=bottom, width=width, align='center',
-                        label=legends[i], color=colors[i], hatch=hatch, edgecolor='black', linewidth=0.4)
-                bottom += props
+        # positions: equally spaced categorical bins (one position per numeric bin)
+        num_bins = len(edges) - 1
+        positions = np.arange(num_bins)  # centers
 
-            # build readable x tick labels from numeric edges
-            def fmt_val(x):
-                if x >= 1000:
-                    return f"{int(x)}"
-                return f"{x:g}"
+        # plot stacked bars at equal spacing
+        width = 1  # visual width for a stacked bar (in categorical units)
+        bottom = np.zeros(num_bins)
+        for i, (props, hatch) in enumerate(zip(stacked_props, hatches)):
+            plt.bar(positions, props, bottom=bottom, width=width, align='center',
+                    label=legends[i], color=colors[i], hatch=hatch, edgecolor='black', linewidth=0.4)
+            bottom += props
 
-            # place ticks at bin boundaries so bars (centered at positions) sit between ticks
-            # choose ticks: every 0.2 in the small range and all powers of ten in the large range
-            small_step = 0.2
-            small_max = 2.0
-            powers = [10, 1000, 100000]
+        # build readable x tick labels from numeric edges
+        def fmt_val(x):
+            if x >= 1000:
+                return f"{int(x)}"
+            return f"{x:g}"
 
-            # find indices in edges corresponding to desired tick values
-            tick_indices = []
-            for v in np.arange(0.0, small_max + 1e-9, small_step):
-                idx = np.where(np.isclose(edges, v))[0]
-                if idx.size:
-                    tick_indices.append(int(idx[0]))
-            for p in powers:
-                idx = np.where(np.isclose(edges, p))[0]
-                if idx.size:
-                    tick_indices.append(int(idx[0]))
+        # place ticks at bin boundaries so bars (centered at positions) sit between ticks
+        # choose ticks: every 0.2 in the small range and all powers of ten in the large range
+        small_step = 0.2
+        small_max = 2.0
+        powers = [10, 1000, 100000]
 
-            tick_indices = sorted(set(tick_indices))
+        # find indices in edges corresponding to desired tick values
+        tick_indices = []
+        for v in np.arange(-0.05, small_max + 1e-9, small_step):
+            idx = np.where(np.isclose(edges, v))[0]
+            if idx.size:
+                tick_indices.append(int(idx[0]))
+        for p in powers:
+            idx = np.where(np.isclose(edges, p))[0]
+            if idx.size:
+                tick_indices.append(int(idx[0]) - 0.5)
 
-            # format labels: show powers of ten as 10^n and small numbers normally
-            def edge_label(e):
-                if e == 0:
-                    return "0"
-                if e >= 10:
-                    log10 = np.log10(e)
-                    if np.isclose(log10, np.round(log10)):
-                        return rf"$10^{{{int(np.round(log10))}}}$"
-                return fmt_val(e)
+        tick_indices = sorted(set(tick_indices))
 
-            tick_labels = [edge_label(edges[i]) for i in tick_indices]
+        # format labels: show powers of ten as 10^n and small numbers normally
+        def edge_label(e):
+            if e == 0:
+                return "0"
+            if e >= 10:
+                log10 = np.log10(e)
+                if np.isclose(log10, np.round(log10)):
+                    return rf"$10^{{{int(np.round(log10))}}}$"
+            return fmt_val(e + 0.05)
 
-            ax = plt.gca()
-            ax.set_xticks(tick_indices)
-            # tick_font = fm.FontProperties(size=25)
-            ax.set_xticklabels(tick_labels, ha='center')
-            ax.set_xlim(0.0, num_bins)                   # view limits include all boundaries
+        tick_labels = [edge_label(edges[ceil(i)]) for i in tick_indices]
 
+        ax = plt.gca()
+        ax.set_xticks(tick_indices)
+        # tick_font = fm.FontProperties(size=25)
+        ax.set_xticklabels(tick_labels, ha='center')
+        ax.set_xlim(0.0, num_bins)                   # view limits include all boundaries
+
+        if metric == 'total_time':
             if baseline == 'dpconv':
                 plt.xlabel('(a) metaDecomp over DPconv', weight='bold')
-            else:
-                plt.xlabel('(b) metaDecomp over DuckDB', weight='bold')
-
-            if baseline == 'dpconv':
                 legend_font = fm.FontProperties(size=24, weight='semibold')
                 plt.legend(framealpha=0.5, labelspacing=0.3, prop=legend_font)
+            else:
+                plt.xlabel('(b) metaDecomp over DuckDB', weight='bold')
             
         plt.ylabel('Frequency', weight='bold')
 
