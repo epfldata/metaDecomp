@@ -8,9 +8,9 @@ import os
 
 from config import results_path, figures_path, colors
 
-plt.rcParams['font.size'] = 20
+plt.rcParams['font.size'] = 24
 
-bold_font = fm.FontProperties(size=16, weight='semibold')
+bold_font = fm.FontProperties(size=24, weight='semibold')
 
 metadecomp_path = {}
 dpconv_path = {}
@@ -55,7 +55,7 @@ series = [ratios[k] for k in series_keys]
 hatches = ['..', '--', 'xx', '||']
 
 # bin edges and centers
-bins = np.arange(0.0, 1.1, 0.1)
+bins = np.arange(0.0, 1.1, 0.05)
 bin_centers = (bins[:-1] + bins[1:]) / 2.0
 bin_width = bins[1] - bins[0]
 
@@ -76,7 +76,7 @@ else:
     stacked_props = [np.zeros(len(bin_centers)) for _ in counts_list]
 
 # plot stacked bars (one stacked bar per bin)
-plt.figure(figsize=(5, 1.75))
+plt.figure(figsize=(10, 2))
 width = bin_width  # visual width of the stacked bar
 bottom = np.zeros(len(bin_centers))
 for i, (props, hatch) in enumerate(zip(stacked_props, hatches)):
@@ -92,7 +92,7 @@ ax.yaxis.set_major_formatter(PercentFormatter(1, 0))
 # Add labels and title
 # plt.xlabel('(a) Cost ratio', weight='bold')
 plt.ylabel('Frequency', weight='bold')
-legend_font = fm.FontProperties(size=14, weight='semibold')
+legend_font = fm.FontProperties(size=20, weight='semibold')
 plt.legend(framealpha=0.5, labelspacing=0.1, prop=legend_font)
 
 # Show the plot
