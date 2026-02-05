@@ -142,6 +142,8 @@ metaDecomp (root)
 ...
 ```
 
+Before running the experiments, enter your API key on line 33 of llm_r2_rewriter_pg.py.
+
 ### SparkSQL+ (join tree enumeration by the traditional GYO algorithm)
 
 Clone the SparkSQLPlus repository, checkout the commit we use in our experiments, and build the project:
