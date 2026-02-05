@@ -98,6 +98,12 @@ metaDecomp (root)
 ...
 ```
 
+Then, simply run `make` to build the project:
+```
+cd duckdb
+make
+```
+
 ### DuckDBYanPlus (for Yannakakis+)
 
 Simply clone the repository of [DuckDBYanPlus](https://github.com/ChampionNan/DuckDBYanPlus) as is, and checkout the commit we use in our experiments:
@@ -105,6 +111,12 @@ Simply clone the repository of [DuckDBYanPlus](https://github.com/ChampionNan/Du
 git clone https://github.com/ChampionNan/DuckDBYanPlus.git
 cd DuckDBYanPlus
 git checkout 38d165e
+```
+
+This is implemented on top of the original DuckDB repository. As for DuckDB, simply run `make` to build the project:
+```
+cd DuckDBYanPlus
+make
 ```
 
 ### LLM-R2 (for LLM-R2 and Learned Rewrite)
