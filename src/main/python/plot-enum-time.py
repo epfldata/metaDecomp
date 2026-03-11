@@ -7,155 +7,102 @@ import matplotlib.patches as mpatches
 
 from config import results_path, figures_path, colors, dark_orange
 
-plt.rcParams['font.size'] = 16
+plt.rcParams['font.size'] = 19
+legend_font = fm.FontProperties(size=19, weight='semibold')
+label_font = fm.FontProperties(size=19)
 
 bold_font = fm.FontProperties(size=12, weight='semibold')
 
-# Load the CSV file
-meta_dsb = pd.read_csv(os.path.join(results_path, 'metadecomp-enum-dsb.csv'))
-meta_original = pd.read_csv(os.path.join(results_path, 'metadecomp-enum-job-original.csv'))
-meta_musicbrainz = pd.read_csv(os.path.join(results_path, 'metadecomp-enum-musicbrainz.csv'))
-meta_large = pd.read_csv(os.path.join(results_path, 'metadecomp-enum-job-large.csv'))
+save_path = os.path.join(figures_path, f'enum-time')
 
-meta_all = pd.concat([meta_dsb, meta_original, meta_musicbrainz, meta_large])
+if not os.path.exists(save_path):
+    os.makedirs(save_path)
 
-# Ensure num_rels is numeric, dropping non-numeric values
-meta_all['num_rels'] = pd.to_numeric(meta_all['num_rels'], errors='coerce')
-meta_all = meta_all.dropna(subset=['num_rels'])
-print(meta_all['num_rels'])
-meta_all['num_rels'] = meta_all['num_rels'].astype(int)
+for benchmark in ['dsb', 'job-original', 'musicbrainz', 'job-large']:
 
-# Load the CSV file
-ssp_dsb = pd.read_csv(os.path.join(results_path, 'sparksqlplus-enum-dsb.csv'))
-ssp_original = pd.read_csv(os.path.join(results_path, 'sparksqlplus-enum-job-original.csv'))
-ssp_musicbrainz = pd.read_csv(os.path.join(results_path, 'sparksqlplus-enum-musicbrainz.csv'))
-ssp_large = pd.read_csv(os.path.join(results_path, 'sparksqlplus-enum-job-large.csv'))
+    # Load the CSV file
+    meta = pd.read_csv(os.path.join(results_path, f'metadecomp-enum-{benchmark}.csv'))
+    meta = meta[meta['num_join_trees'] > 0]
+    # Ensure num_join_trees is numeric, dropping non-numeric values
+    meta['num_join_trees'] = pd.to_numeric(meta['num_join_trees'], errors='coerce')
+    meta = meta.dropna(subset=['num_join_trees'])
+    print(meta['num_join_trees'])
+    meta['num_join_trees'] = meta['num_join_trees'].astype(int)
 
-ssp_all = pd.concat([ssp_original, ssp_dsb, ssp_musicbrainz, ssp_large])
+    # Load the CSV file
+    ssp = pd.read_csv(os.path.join(results_path, f'sparksqlplus-enum-{benchmark}.csv'))
 
-# Filter meta_data to keep only rows with 'query' values that exist in ssp_data
-# meta_data = meta_data[meta_data['query'].isin(ssp_data['query'])]
+    # Filter meta_data to keep only rows with 'query' values that exist in ssp_data
+    # meta_data = meta_data[meta_data['query'].isin(ssp_data['query'])]
 
-# Create a mapping from query to num_rels in meta_data
-query_to_num_rels = meta_all.set_index('query')['num_rels'].to_dict()
+    # Create a mapping from query to num_join_trees in meta_data
+    query_to_num_join_trees = meta.set_index('query')['num_join_trees'].to_dict()
 
-# Map the num_rels to ssp_data using the query attribute
-ssp_all['num_rels'] = ssp_all['query'].map(query_to_num_rels)
+    # Map the num_join_trees to ssp_data using the query attribute
+    ssp['num_join_trees'] = ssp['query'].map(query_to_num_join_trees)
 
-# Drop the 'query' column if it exists
-meta_all = meta_all.drop(columns=['query'], errors='ignore')
-
-# Group data by num_rels and calculate median and IQR
-meta_all['time_ms'] = meta_all['time_us'] / 1000  # Convert to ms
-meta_grouped = meta_all.groupby('num_rels')
-meta_num_rels = meta_grouped.median().index
-meta_median = meta_grouped['time_ms'].median()
-meta_q25 = meta_grouped['time_ms'].quantile(0.25)
-meta_q75 = meta_grouped['time_ms'].quantile(0.75)
-
-# Asymmetric error bars around the median (clip to avoid negative extents)
-meta_err_lower = (meta_median - meta_q25).clip(lower=0)
-meta_err_upper = (meta_q75 - meta_median).clip(lower=0)
-meta_error = [meta_err_lower, meta_err_upper]
+    # Drop the 'query' column if it exists
+    meta = meta.drop(columns=['query'], errors='ignore')
 
 
 
-# Drop the 'query' column if it exists
-ssp_all = ssp_all.drop(columns=['query'], errors='ignore')
-
-# Ensure num_rels is numeric, dropping non-numeric values
-ssp_all['num_rels'] = pd.to_numeric(ssp_all['num_rels'], errors='coerce')
-ssp_all = ssp_all.dropna(subset=['num_rels'])
-
-# Group data by num_rels and calculate median and IQR for ssp
-ssp_grouped = ssp_all.groupby('num_rels')
-ssp_num_rels = ssp_grouped.median().index
-ssp_median = ssp_grouped['time_ms'].median()
-ssp_q25 = ssp_grouped['time_ms'].quantile(0.25)
-ssp_q75 = ssp_grouped['time_ms'].quantile(0.75)
-
-# Asymmetric error bars around the median (clip to avoid negative extents)
-ssp_err_lower = (ssp_median - ssp_q25).clip(lower=0)
-ssp_err_upper = (ssp_q75 - ssp_median).clip(lower=0)
-ssp_error = [ssp_err_lower, ssp_err_upper]
+    meta['time_ms'] = meta['time_us'] / 1000  # Convert to ms
 
 
-# Create the plot -> make boxplots per num_rels for meta and ssp
 
-# build union of groups (sorted)
-meta_groups = sorted(meta_all['num_rels'].unique())
-ssp_groups = sorted(ssp_all['num_rels'].unique())
-groups_included = sorted(set(meta_groups).union(set(ssp_groups)))
+    min_num_jts = meta['num_join_trees'].min()
+    max_time = max(meta['time_ms'].max(), ssp['time_ms'].max())
 
-# collect values per group (in ms)
-meta_values = []
-ssp_values = []
-labels = []
-for g in groups_included:
-    mv = meta_all.loc[meta_all['num_rels'] == g, 'time_ms'].dropna().tolist()
-    sv = ssp_all.loc[ssp_all['num_rels'] == g, 'time_ms'].dropna().tolist()
-    # include group if at least one series has data
-    if len(mv) == 0 and len(sv) == 0:
-        continue
-    meta_values.append(mv)
-    ssp_values.append(sv)
-    labels.append(str(int(g)))
+    # Create the scatter plot
+    plt.figure(figsize=(3.5, 3.5))
 
-if len(labels) == 0:
-    raise SystemExit("No data to plot")
+    plt.scatter(meta['num_join_trees'], meta['time_ms'], label = 'metaDecomp', alpha = 0.70, s = 40, marker='o', color = colors[0])
+    plt.scatter(ssp['num_join_trees'], ssp['time_ms'], label = 'GYO reduction', alpha = 0.70, s = 60, marker='^', color = colors[1])
 
-plt.figure(figsize=(6, 2.25))
+    # plt.legend(framealpha=0.85, labelspacing=0.3, prop=legend_font)
 
-n = len(labels)
-positions = np.arange(n)
-width = 0.6
-pos_meta = meta_groups # - width / 2.0
-pos_ssp = ssp_groups # + width / 2.0
+    # Set log scale for both axes
+    plt.xscale('log')
+    plt.yscale('log')
 
-# draw boxplots at offset positions
-bp_meta = plt.boxplot(meta_values, positions=groups_included, widths=width,
-                      patch_artist=True, showfliers=False, manage_ticks=False)
-bp_ssp = plt.boxplot(ssp_values, positions=groups_included, widths=width,
-                     patch_artist=True, showfliers=False, manage_ticks=False)
+    # Add labels, legend, and title
+    plt.xlabel('Number of join trees', weight='bold')
+    plt.ylabel('Enumeration time (ms)', weight='bold')
+    # plt.legend(framealpha=0.85, labelspacing=0, prop=bold_font)
 
-# style boxes and related artists using shared palette from config.colors
-col_meta = colors[0]
-col_ssp = colors[1]
-for box in bp_meta['boxes']:
-    box.set(facecolor=col_meta, edgecolor='C0', alpha=0.8)
-for whisker in bp_meta.get('whiskers', []):
-    whisker.set(color='C0', linewidth=1.0)
-for cap in bp_meta.get('caps', []):
-    cap.set(color='C0', linewidth=1.0)
-for median in bp_meta.get('medians', []):
-    median.set(color='C0', linewidth=1.2)
-for flier in bp_meta.get('fliers', []):
-    flier.set(markeredgecolor=col_meta)
+    if max_time >= 3600e3 - 1e-5:
+        plt.axhline(y=3600e3, color='dimgray', linestyle=':')
+        plt.text(y=3600e3, x=min_num_jts, s='Timeout (1 hour)', color='dimgray', va='top', ha='left', fontproperties=label_font)
 
-for box in bp_ssp['boxes']:
-    box.set(facecolor=col_ssp, edgecolor=dark_orange, alpha=0.8, hatch='ooo')
-for whisker in bp_ssp.get('whiskers', []):
-    whisker.set(color=dark_orange, linewidth=1.0)
-for cap in bp_ssp.get('caps', []):
-    cap.set(color=dark_orange, linewidth=1.0)
-for median in bp_ssp.get('medians', []):
-    median.set(color=dark_orange, linewidth=1.2)
-for flier in bp_ssp.get('fliers', []):
-    flier.set(markeredgecolor=col_ssp)
+    # Show the plot
+    plt.tight_layout(pad=0)
+    plt.savefig(os.path.join(save_path, f'enum-time-{benchmark}.pdf'), format='pdf')
+    # plt.show()
 
-# log scale for y axis
-plt.yscale('log')
+# Save the legends
+import matplotlib.lines as mlines
 
-# labels, legend, timeout line
-plt.xlabel('Number of relations', weight='bold')
-plt.ylabel('Enumeration\ntime (ms)', weight='bold')
-p_meta = mpatches.Patch(facecolor=col_meta, edgecolor='C0', label='metaDecomp', alpha=0.8)
-p_ssp = mpatches.Patch(facecolor=col_ssp, edgecolor=dark_orange, label='GYO reduction', alpha=0.8, hatch='oooo')
-plt.legend(handles=[p_meta, p_ssp], framealpha=0.85, labelspacing=0.3, prop=bold_font)
+handles = [
+    mlines.Line2D([], [], color=colors[0], marker='o', linestyle='None', markersize=12, label='metaDecomp'),
+    mlines.Line2D([], [], color=colors[1], marker='^', linestyle='None', markersize=10, label='GYO reduction')
+]
+legends = ['metaDecomp', 'GYO reduction']
 
-plt.axhline(y=3600e3, color='gray', linestyle=':')
-plt.text(x=(groups_included[0] + groups_included[-1])/2, y=3600e3, s='Timeout (1 hour)', color='gray', va='top', ha='center')
+fig_legend = plt.figure(figsize=(12, 1))
+ax = fig_legend.add_subplot(111)
+ax.axis('off')
 
-plt.tight_layout(pad=0)
-plt.savefig(os.path.join(figures_path, 'enum-time.pdf'), format='pdf')
-plt.show()
+legend_font = fm.FontProperties(size=24, weight='semibold')
+legend = ax.legend(handles, legends, loc='center', ncol=len(legends), frameon=True, prop=legend_font, 
+                   handletextpad=0.2, columnspacing=2.0, borderpad=0.4)
+legend.get_frame().set_edgecolor('gray')
+legend.get_frame().set_linewidth(1)
+legend_path = os.path.join(save_path, 'enum-time-legend.pdf')
+fig_legend.canvas.draw()
+
+from matplotlib.transforms import Bbox
+bbox = legend.get_window_extent().transformed(fig_legend.dpi_scale_trans.inverted())
+bbox_expanded = Bbox.from_extents(bbox.x0 - 0.05, bbox.y0 - 0.05, bbox.x1 + 0.05, bbox.y1 + 0.05)
+fig_legend.savefig(legend_path, format='pdf', bbox_inches=bbox_expanded, pad_inches=0)
+print(f"Saved legend to {legend_path}")
+plt.close(fig_legend)
