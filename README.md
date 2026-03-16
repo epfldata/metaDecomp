@@ -1,5 +1,11 @@
 # metaDecomp: Succinct structure representations for efficient query optimization
 
+To appear at **SIGMOD '26**: 2026 International Conference on Management of Data, Bengaluru, India, May 31–June 5, 2026.
+
+To be published in *Proceedings of the ACM on Management of Data*, Vol. 4, No. 3 (SIGMOD), Article 240 (Jun 2026), 27 pages. https://doi.org/10.1145/3802117.
+
+Full technical report available at [technical-report.pdf](technical-report.pdf).
+
 ## Prerequisites
 
 * Scala 3.3.1 with sbt 1.6.2
@@ -13,7 +19,7 @@ Please execute all the following commands from the root directory of the reposit
 
 ### Datasets, benchmark queries, cardinality estimation, folder structures
 
-Given the need to convert datasets to DuckDB and the large sizes of required files, we provide them all in a setup script. Please run the following script to set up the folder structures and download the files. Note that these files take approximately 22 GB of storage space in total.
+Given the need to convert datasets to DuckDB and the large sizes of required files, we provide them all in a setup script. Please run the following script to set up the folder structures and download the files. Note that these files take approximately 26 GB of storage space in total.
 ```
 bash src/main/scripts/setup.sh
 ```
@@ -63,7 +69,7 @@ metaDecomp (root)
 ...
 ```
 
-Then, build DPconv, as per the instructions in the original DPconv repository:
+Then, build DPconv, as per the instructions in [the original DPconv repository]((https://github.com/utndatasystems/DPconv/tree/dc56bdc52c452bf86b3ac5c224b0176148c38757)):
 ```
 cd DPconv/src
 mkdir -p build
@@ -78,6 +84,7 @@ We slightly modified the code of [DuckDB](https://github.com/duckdb/duckdb/tree/
 
 First clone the repository:
 ```
+# Remember to change back to the root of the project repository
 git clone https://github.com/zhekai-jiang/duckdb.git
 ```
 
@@ -102,6 +109,7 @@ make
 
 Simply clone the repository of [DuckDBYanPlus](https://github.com/ChampionNan/DuckDBYanPlus) as is and checkout the commit we use in our experiments:
 ```
+# Remember to change back to the root of the project repository
 git clone https://github.com/ChampionNan/DuckDBYanPlus.git
 cd DuckDBYanPlus
 git checkout 38d165e
@@ -119,6 +127,7 @@ We use the code from the authors of LLM-R2, which contains the models and script
 
 First download the code:
 ```
+# Remember to change back to the root of the project repository
 wget "https://drive.usercontent.google.com/download?id=1z4pPsONM99HoVmpSSOyugVf62MslEUbE&export=download&authuser=0&confirm=t&uuid=e3209971-f046-41d9-80b5-1e3b083e31bf&at=AGN2oQ1V7RFhqf15WVor24ve7tBj:1773678735707" -O "llm-r2.zip"
 mkdir llm-r2
 tar -xzf "llm-r2.zip" -C llm-r2
