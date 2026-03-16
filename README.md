@@ -46,14 +46,11 @@ These files that we use in the experiment can all be downloaded using the setup 
 
 ### DPconv (for both DPconv and UnionDP)
 
-We adapted the code of DPconv for us to use for our experiments. We also included an implementation of UnionDP on top of the code of DPconv. This adapted version is also given in another anonymous repository.
+We adapted the code of DPconv for us to use for our experiments. We also included an implementation of UnionDP on top of the code of DPconv. This adapted version is given in another repository, which is a fork of the original DPconv repository.
 
-First download the code:
+First clone the repository:
 ```
-wget "https://anonymous.4open.science/api/repo/DPconv-8525/zip" -O "DPconv.zip"
-mkdir DPconv
-tar -xzf "DPconv.zip" -C DPconv
-rm DPconv.zip
+git clone https://github.com/zhekai-jiang/DPconv.git
 ```
 
 There should then be a folder DPconv under the root directory of this repository:
@@ -66,7 +63,7 @@ metaDecomp (root)
 ...
 ```
 
-Then, build DPconv, as per the instructions in the DPConv repository:
+Then, build DPconv, as per the instructions in the original DPconv repository:
 ```
 cd DPconv/src
 mkdir -p build
@@ -77,14 +74,11 @@ make
 
 ### DuckDB
 
-We slightly modified the code of DuckDB to measure the optimization time. The modified code is given in another anonymous repository.
+We slightly modified the code of DuckDB to measure the optimization time. The modified code is given in another repository, which is a fork of the original DuckDB repository.
 
-First download the code:
+First clone the repository:
 ```
-wget "https://anonymous.4open.science/api/repo/duckdb-1240/zip" -O "duckdb.zip"
-mkdir duckdb
-tar -xzf "duckdb.zip" -C duckdb
-rm duckdb.zip
+git clone https://github.com/zhekai-jiang/duckdb.git
 ```
 
 There should then be a folder duckdb under the root directory of this repository:
@@ -106,7 +100,7 @@ make
 
 ### DuckDBYanPlus (for Yannakakis+)
 
-Simply clone the repository of [DuckDBYanPlus](https://github.com/ChampionNan/DuckDBYanPlus) as is, and checkout the commit we use in our experiments:
+Simply clone the repository of [DuckDBYanPlus](https://github.com/ChampionNan/DuckDBYanPlus) as is and checkout the commit we use in our experiments:
 ```
 git clone https://github.com/ChampionNan/DuckDBYanPlus.git
 cd DuckDBYanPlus
@@ -121,11 +115,11 @@ make
 
 ### LLM-R2 (for LLM-R2 and LearnedRewrite)
 
-We use the code from the authors of LLM-R2, which contains the models and scripts for both LLM-R2 and LearnedRewrite. We adapted the code to run the experiments on the benchmarks used in this paper. The modified code is given in another anonymous repository.
+We use the code from the authors of LLM-R2, which contains the models and scripts for both LLM-R2 and LearnedRewrite. We adapted the code to run the experiments on the benchmarks used in this paper.
 
 First download the code:
 ```
-wget "https://anonymous.4open.science/api/repo/llm-r2-F53D/zip" -O "llm-r2.zip"
+wget "https://drive.usercontent.google.com/download?id=1z4pPsONM99HoVmpSSOyugVf62MslEUbE&export=download&authuser=0&confirm=t&uuid=e3209971-f046-41d9-80b5-1e3b083e31bf&at=AGN2oQ1V7RFhqf15WVor24ve7tBj:1773678735707" -O "llm-r2.zip"
 mkdir llm-r2
 tar -xzf "llm-r2.zip" -C llm-r2
 rm llm-r2.zip
