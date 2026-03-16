@@ -7,7 +7,12 @@ import os
 
 from config import results_path, figures_path, green_color, dark_green_color
 
-plt.rcParams['font.size'] = 24
+plt.rcParams['font.size'] = 31
+
+save_path = os.path.join(figures_path, 'cost-ratios')
+
+if not os.path.exists(save_path):
+    os.makedirs(save_path)
 
 for benchmark in ['dsb', 'job-original', 'musicbrainz', 'job-large']:
 
@@ -34,7 +39,7 @@ for benchmark in ['dsb', 'job-original', 'musicbrainz', 'job-large']:
     ratios = np.clip(ratios, None, 0.99)
 
     # Create the histogram
-    plt.figure(figsize=(5, 4))
+    plt.figure(figsize=(5.5, 3))
     minBin = int(ratios.min() * 10.0) / 10.0
     r = (minBin, 1.0)
     coeff = 10.0 if ratios.min() < 0.3 else 20.0 if ratios.min() < 0.9 else 100.0
@@ -49,5 +54,5 @@ for benchmark in ['dsb', 'job-original', 'musicbrainz', 'job-large']:
 
     # Show the plot
     plt.tight_layout(pad=0)
-    plt.savefig(os.path.join(figures_path, f'cost-ratios-{benchmark}.pdf'), format='pdf')
+    plt.savefig(os.path.join(save_path, f'cost-ratios-{benchmark}.pdf'), format='pdf')
     plt.show()
