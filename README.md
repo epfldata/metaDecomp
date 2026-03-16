@@ -5,7 +5,7 @@
 * Scala 3.3.1 with sbt 1.6.2
 * For [DPconv](https://github.com/utndatasystems/DPconv/tree/dc56bdc52c452bf86b3ac5c224b0176148c38757), DuckDB, and Yannakakis+: CMake 4.0.3, GNU Make 3.81, clang 20.1.3
 * For join tree enumeration with traditional GYO algorithms (implemented by [SparkSQL+](https://github.com/hkustDB/SparkSQLPlus/tree/f22188bba4e971da6defb97c983e06e18e66fd7a)): Maven 3.8.6
-* For Learned Rewrite, LLM-R2, and reproducing the figures: Python 3.10.1
+* For LearnedRewrite, LLM-R2, and reproducing the figures: Python 3.10.1
 
 Please execute all the following commands from the root directory of the repository. The commands and scripts are written on macOS Tahoe 26.0.1 with zsh 5.9 / GNU bash 3.2.57(1). For other operating systems or shells, you may need to adapt the commands accordingly.
 
@@ -119,9 +119,9 @@ cd DuckDBYanPlus
 make
 ```
 
-### LLM-R2 (for LLM-R2 and Learned Rewrite)
+### LLM-R2 (for LLM-R2 and LearnedRewrite)
 
-We use the code from the authors of LLM-R2, which contains the models and scripts for both LLM-R2 and Learned Rewrite. We adapted the code to run the experiments on the benchmarks used in this paper. The modified code is given in another anonymous repository.
+We use the code from the authors of LLM-R2, which contains the models and scripts for both LLM-R2 and LearnedRewrite. We adapted the code to run the experiments on the benchmarks used in this paper. The modified code is given in another anonymous repository.
 
 First download the code:
 ```
@@ -222,7 +222,7 @@ sbt "runMain experiments.runner.LLMR2Runner"
 
 The results are stored in `experiment-results/llm-r2-opt-{dsb, job-original, musicbrainz, job-large}-<timestamp>.csv`
 
-#### Learned Rewrite
+#### LearnedRewrite
 
 ```
 sbt "runMain experiments.runner.LearnedRewriteRunner"
@@ -250,39 +250,37 @@ The results are stored in `experiment-results/sparksqlplus-enum-{dsb, job-origin
 
 ## Figures
 
-After obtaining the experiment results, the figures in the paper can be reproduced as follows. All figures will be stored in `experiment-results/figures` as PDF files.
+After obtaining experiment results, the figures in the paper can be reproduced as follows. All figures will be stored in subdirectories under `experiment-results/figures` as PDF files.
 
-Before executing the scripts below, please remove the timestamps from the generated csv files. For example, rename `experiment-results/metadecomp-opt-dsb-2025-10-16T17-24-04.csv` to `experiment-results/metadecomp-opt-dsb.csv`.
+Before executing the scripts below, please remove timestamps from generated csv files. For example, rename `experiment-results/metadecomp-opt-dsb-2025-10-16T17-24-04.csv` to `experiment-results/metadecomp-opt-dsb.csv`.
 
-### Optimization time – Figures 8 & 13
+### Optimization time – Figure 8
 
 ```
 python src/main/python/plot-opt-time.py
 ```
 
-### Comparison of the costs of optimal width-1 query plans and those of the gloally optimal plans – Figures 9a & 14
+### Comparison of the costs of optimal width-1 query plans and those of the gloally optimal plans – Figure 9
 
 ```
-python src/main/python/plot-cost-ratio-stacked.py
-python src/main/python/plot-cost-ratio-individual.py
+python src/main/python/plot-cost-ratio.py
 ```
 
-### All speedups – Figures 9b, 10, 15, 16, 18, 20, 22, 24, 26
+### All speedups – Figures 10, 11, 14, 16, 18, 20, 22, and 24
 ```
-python src/main/python/plot-speedups-stacked.py
+python src/main/python/plot-overall-speedups-stacked.py
 python src/main/python/plot-speedups-individual.py
 ```
 
-### Scatter plots comparing total runtime – Figures 11, 17, 19, 21, 23, 25, 27
+### Scatter plots comparing overall query evaluation time – Figures 12, 15, 17, 19, 21, 23, and 25
 
 ```
 python src/main/python/plot-scatter-all.py
 python src/main/python/plot-scatter-individual.py
 ```
 
-### Join tree enumeration – Figures 12 & 28
+### Join tree enumeration – Figure 12
 
 ```
-python src/main/python/plot-enum-time-vs-num-jts-all.py
-python src/main/python/plot-enum-time-vs-num-jts-individual.py
+python src/main/python/plot-enum-time.py
 ```
