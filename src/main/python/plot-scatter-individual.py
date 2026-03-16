@@ -6,7 +6,7 @@ import os
 
 from config import results_path, figures_path, yellow_color
 
-plt.rcParams['font.size'] = 18
+plt.rcParams['font.size'] = 19
 
 bold_font = fm.FontProperties(size=15, weight='semibold')
 
@@ -53,7 +53,7 @@ for (baseline, baseline_full_name) in [('dpconv', 'DPconv'), ('duckdb', 'DuckDB'
         dpconv = dpconv[~all_timeout] / 1000
 
         # Create the scatter plot
-        plt.figure(figsize=(5, 5))
+        plt.figure(figsize=(3.5, 3.5))
         # if baseline == 'duckdb':
         #     plt.scatter(base, meta, label='metaDecomp vs DuckDB', marker='o', alpha=0.7)
         #     plt.scatter(base, dpconv, label='DPconv vs DuckDB', marker='^', alpha=0.7)
@@ -79,11 +79,11 @@ for (baseline, baseline_full_name) in [('dpconv', 'DPconv'), ('duckdb', 'DuckDB'
             plt.text(y=3e5, x=xmin, s='Timeout (5 min)', color='dimgray', va='bottom', ha='left')
         if base.max() >= 3e5 - 1e-5:
             plt.axvline(x=3e5, color='dimgray', linestyle=':')
-            plt.text(x=3e5, y=ymin, s=f'{baseline_full_name} timeout (5 min)', color='dimgray', va='bottom', ha='left', rotation=270)
+            plt.text(x=3e5, y=ymin, s=f'Timeout (5 min)', color='dimgray', va='bottom', ha='left', rotation=270)
 
         # Show the plot
         plt.tight_layout(pad=0)
         if not os.path.exists(save_path):
             os.makedirs(save_path)
-        plt.savefig(os.path.join(save_path, f'runtime-{benchmark}-over-{baseline}.pdf'), format='pdf')
-        plt.show()
+        plt.savefig(os.path.join(save_path, f'scatter-{benchmark}-over-{baseline}.pdf'), format='pdf')
+        # plt.show()
