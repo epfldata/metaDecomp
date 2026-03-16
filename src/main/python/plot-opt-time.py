@@ -27,7 +27,7 @@ methods = {
     'UnionDP': {'file': 'uniondp-opt-{}.csv', 'col': 'opt_time', 'color': colors[2], 'marker': 'd', 'label': 'UnionDP'},
     'Yannakakis+': {'file': 'yanplus-opt-{}.csv', 'col': 'opt_time', 'color': colors[3], 'marker': 'P', 'label': 'Yannakakis$^+$'},
     'LLM-R2': {'file': 'llm-r2-opt-{}.csv', 'col': 'opt_time', 'color': colors[4], 'marker': 'v', 'label': 'LLM-R$^2$'},
-    'LearnedRewrite': {'file': 'learned-rewrite-opt-{}.csv', 'col': 'opt_time', 'color': colors[5], 'marker': 'x', 'label': 'Learned Rewrite'}
+    'LearnedRewrite': {'file': 'learned-rewrite-opt-{}.csv', 'col': 'opt_time', 'color': colors[5], 'marker': 'x', 'label': 'LearnedRewrite'}
 }
 
 # Benchmarks to plot
@@ -38,7 +38,7 @@ overall_data = {method: [] for method in methods}
 
 # Function to plot a single benchmark
 def plot_benchmark(series, df_map, output_name):
-    plt.figure(figsize=(7, 3.5))
+    plt.figure(figsize=(7, 4))
     
     # Iterate through methods to plot
     for method_name, config in methods.items():
@@ -73,6 +73,13 @@ def plot_benchmark(series, df_map, output_name):
     if not max_times:
         return
     overall_max = max(max_times)
+    
+    # Hide the 10^5 tick on the y-axis if there is no point greater than 10^5
+    if overall_max < 1e5:
+        ax = plt.gca()
+        locs = ax.get_yticks()
+        ax.set_yticks([loc for loc in locs if loc < 1e5])
+
     if overall_max >= 3e5:
         plt.axhline(y=3e5, color='dimgray', linestyle=':')
         # if series == 'overall':
