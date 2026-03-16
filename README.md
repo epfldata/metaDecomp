@@ -273,7 +273,7 @@ python src/main/python/plot-scatter-all.py
 python src/main/python/plot-scatter-individual.py
 ```
 
-### Join tree enumeration – Figure 12
+### Join tree enumeration – Figure 13
 
 ```
 python src/main/python/plot-enum-time.py
