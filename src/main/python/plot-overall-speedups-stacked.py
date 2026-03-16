@@ -20,7 +20,7 @@ save_path = os.path.join(figures_path, 'overall-speedup-stacked')
 if not os.path.exists(save_path):
     os.makedirs(save_path)
 
-for (baseline, baseline_label, subfigure) in [('dpconv', 'DPconv', 'a'), ('duckdb', 'DuckDB', 'b'), ('uniondp', 'UnionDP', 'c'), ('yanplus', 'Yannakakis$^+$', 'd'), ('learned-rewrite', 'Learned Rewrite', 'e'), ('llm-r2', 'LLM-R$^2$', 'f')]:
+for (baseline, baseline_label, subfigure) in [('dpconv', 'DPconv', 'a'), ('duckdb', 'DuckDB', 'b'), ('uniondp', 'UnionDP', 'c'), ('yanplus', 'Yannakakis$^+$', 'd'), ('learned-rewrite', 'LearnedRewrite', 'e'), ('llm-r2', 'LLM-R$^2$', 'f')]:
     meta_df = {}
     base_df = {}
     duckdb_df = {}
@@ -48,7 +48,7 @@ for (baseline, baseline_label, subfigure) in [('dpconv', 'DPconv', 'a'), ('duckd
         speedups[benchmark] = speedups[benchmark][speedups[benchmark] > 0]
 
     plt.rcParams['font.size'] = 26
-    plt.figure(figsize=(9, 3))
+    plt.figure(figsize=(9, 3.5))
 
     # numeric bin edges (may contain large gaps)
     if baseline == 'learned-rewrite' or baseline == 'llm-r2':
