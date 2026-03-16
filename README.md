@@ -3,7 +3,7 @@
 ## Prerequisites
 
 * Scala 3.3.1 with sbt 1.6.2
-* For [DPconv](https://github.com/utndatasystems/DPconv/tree/dc56bdc52c452bf86b3ac5c224b0176148c38757), DuckDB, and Yannakakis+: CMake 4.0.3, GNU Make 3.81, clang 20.1.3
+* For [DPconv](https://github.com/utndatasystems/DPconv/tree/dc56bdc52c452bf86b3ac5c224b0176148c38757), [DuckDB](https://github.com/duckdb/duckdb/tree/7c039464e452ddc3330e2691d3fa6d305521d09b), and [Yannakakis+](https://github.com/ChampionNan/DuckDBYanPlus/tree/38d165ee6dac9db621616121b09bb591fdd67065): CMake 4.0.3, GNU Make 3.81, clang 20.1.3
 * For join tree enumeration with traditional GYO algorithms (implemented by [SparkSQL+](https://github.com/hkustDB/SparkSQLPlus/tree/f22188bba4e971da6defb97c983e06e18e66fd7a)): Maven 3.8.6
 * For LearnedRewrite, LLM-R2, and reproducing the figures: Python 3.10.1
 
@@ -46,7 +46,7 @@ These files that we use in the experiment can all be downloaded using the setup 
 
 ### DPconv (for both DPconv and UnionDP)
 
-We adapted the code of DPconv for us to use for our experiments. We also included an implementation of UnionDP on top of the code of DPconv. This adapted version is given in another repository, which is a fork of the original DPconv repository.
+We adapted the code of [DPconv](https://github.com/utndatasystems/DPconv/tree/dc56bdc52c452bf86b3ac5c224b0176148c38757) for us to use for our experiments. We also included an implementation of UnionDP on top of the code of DPconv. This adapted version is given in another repository, which is a fork of the original DPconv repository.
 
 First clone the repository:
 ```
@@ -74,7 +74,7 @@ make
 
 ### DuckDB
 
-We slightly modified the code of DuckDB to measure the optimization time. The modified code is given in another repository, which is a fork of the original DuckDB repository.
+We slightly modified the code of [DuckDB](https://github.com/duckdb/duckdb/tree/7c039464e452ddc3330e2691d3fa6d305521d09b) to measure the optimization time. The modified code is given in another repository, which is a fork of the original DuckDB repository.
 
 First clone the repository:
 ```
