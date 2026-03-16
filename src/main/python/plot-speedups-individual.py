@@ -38,9 +38,9 @@ for benchmark in benchmarks:
             speedups = speedups[speedups > 0]
 
             if metric == 'exec_time':
-                plt.figure(figsize=(11, 3.75))
+                plt.figure(figsize=(11, 4))
             else:
-                plt.figure(figsize=(9, 3.5))
+                plt.figure(figsize=(11, 4.25))
 
             if baseline == 'learned-rewrite' or baseline == 'llm-r2':
                 # compute decade boundaries so bins align exactly at powers of ten
