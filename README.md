@@ -4,7 +4,7 @@ To appear at **SIGMOD '26**: 2026 International Conference on Management of Data
 
 To be published in *Proceedings of the ACM on Management of Data*, Vol. 4, No. 3 (SIGMOD), Article 240 (Jun 2026), 27 pages. https://doi.org/10.1145/3802117.
 
-Full technical report available at [technical-report.pdf](technical-report.pdf).
+Full technical report available at [technical-report.pdf](technical-report.pdf) / [arXiv:2603.15465](https://doi.org/10.48550/arXiv.2603.15465).
 
 ## Prerequisites
 
