@@ -1,9 +1,9 @@
 package decompositions
 
 import decompositions.CostModel.getCumulativeCost
-import sql.{Attribute, Relation}
+import decompositions.Hypergraph.{Vertex, Hyperedge}
 
-case class QualifiedCol(hyperedge: Relation, column: String)
+case class QualifiedCol(hyperedge: Hyperedge, column: String)
 case class OutputItem(qualifiedCol: QualifiedCol, aggregation: Option[String] = None) {
 	def withoutAggregation: OutputItem = OutputItem(qualifiedCol)
 }
@@ -11,13 +11,13 @@ case class FilterCondition(conditionText: String, referencedCols: Set[QualifiedC
 
 trait PlanNode()(implicit sqlIR: sql.IR) {
 	var projectTo: Set[OutputItem] = Set.empty
-	val allJoinedRelations: Set[Relation]
+	val allJoinedRelations: Set[Hyperedge]
 	val cumulativeCost: Double
 	val cardinality: Double
 	val inputCost: Double
 	val intermediateCost: Double
 
-	var joinTree: TreeNode[Attribute, Relation] = null
+	var joinTree: TreeNode = null
 
 	override def toString: String = toString(0)
 	def toString(depth: Int): String
@@ -39,7 +39,7 @@ trait PlanNode()(implicit sqlIR: sql.IR) {
 
 case class JoinNode(lhs: PlanNode, rhs: PlanNode)(implicit sqlIR: sql.IR) extends PlanNode {
 
-	val allJoinedRelations: Set[Relation] = lhs.allJoinedRelations ++ rhs.allJoinedRelations
+	val allJoinedRelations: Set[Hyperedge] = lhs.allJoinedRelations ++ rhs.allJoinedRelations
 	val cardinality: Double = if sqlIR.cardinalities.isEmpty then 0 else sqlIR.cardinalities(allJoinedRelations)
 	val cumulativeCost: Double = getCumulativeCost(lhs, rhs)
 	val inputCost: Double = lhs.inputCost + rhs.inputCost
@@ -123,9 +123,9 @@ $outerIndent}"""
 	}
 }
 
-case class ScanNode(hyperedge: Relation)(implicit sqlIR: sql.IR) extends PlanNode {
+case class ScanNode(hyperedge: Hyperedge)(implicit sqlIR: sql.IR) extends PlanNode {
 
-	val allJoinedRelations: Set[Relation] = Set(hyperedge)
+	val allJoinedRelations: Set[Hyperedge] = Set(hyperedge)
 	val cardinality: Double = if sqlIR.cardinalities.isEmpty then 0.0 else sqlIR.cardinalities(allJoinedRelations)
 	val cumulativeCost: Double = 0.0
 	val inputCost: Double = cardinality
@@ -139,7 +139,7 @@ case class ScanNode(hyperedge: Relation)(implicit sqlIR: sql.IR) extends PlanNod
 		(
 			"",
 			"SELECT " + projectTo.map(outputColumn => s"${outputColumn.qualifiedCol.hyperedge.alias}.${outputColumn.qualifiedCol.column} AS ${outputColumn.qualifiedCol.hyperedge.alias}_${outputColumn.qualifiedCol.column}").mkString(", ") + "\n"
-				+ "FROM " + hyperedge.name + " AS " + hyperedge.alias
+				+ "FROM " + hyperedge.tableName + " AS " + hyperedge.alias
 				+ (if filterConditions.isEmpty then "" else "\n" + "WHERE " + filterConditions.map(_.conditionText).mkString(" AND ")),
 			"GROUP BY " + projectTo.map(outputColumn => s"${outputColumn.qualifiedCol.hyperedge.alias}.${outputColumn.qualifiedCol.column}").mkString(", ")
 		)

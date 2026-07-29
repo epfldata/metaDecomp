@@ -1,15 +1,17 @@
 package decompositions
 
+import decompositions.Hypergraph.{Vertex, Hyperedge}
+
 import scala.collection.mutable
 
 object JoinTreeEnumerator {
-	def enumerate[VT, ET <: HyperEdge[VT]](node: MetaNode[VT, ET]): mutable.ListBuffer[TreeNode[VT, ET]] = {
+	def enumerate(node: MetaNode): mutable.ListBuffer[TreeNode] = {
 		val sortedChildren = node.children.toList.sortWith((a, b) => b.keys.subsetOf(a.keys))
 
-		val possibleBaseTrees: Iterable[TreeNode[VT, ET]] = node match {
-			case _: MetaNodePhysical[VT, ET] => List(TreeNode[VT, ET](node, Set()))
+		val possibleBaseTrees: Iterable[TreeNode] = node match {
+			case _: MetaNodePhysical => List(TreeNode(node, Set()))
 
-			case minorNode: MetaNodeMinor[VT, ET] =>
+			case minorNode: MetaNodeMinor =>
 				val includeParent = minorNode.keys == minorNode.nodes && minorNode.parent.nonEmpty
 				// In this case, we include the parent in the enumerated trees.
 				// At the end, we reroot to that parent and the virtual node may become multiple trees under the parent
@@ -17,7 +19,7 @@ object JoinTreeEnumerator {
 				// Possible trees for each child
 				val childrenTreeMappings = allMappings(childrenPossibleTrees)
 					.map(_.flatten.toIndexedSeq // Each combination is now simply a list of trees
-						++ (if includeParent then Some(TreeNode[VT, ET](minorNode.parent.get, Set())) else None)
+						++ (if includeParent then Some(TreeNode(minorNode.parent.get, Set())) else None)
 					)
 				// Mappings from each child to one possible tree
 				for (subtrees <- childrenTreeMappings;
@@ -28,9 +30,9 @@ object JoinTreeEnumerator {
 				}
 		}
 
-		val childrenPossibleSubtrees: List[mutable.ListBuffer[TreeNode[VT, ET]]] = sortedChildren.map(enumerate)
+		val childrenPossibleSubtrees: List[mutable.ListBuffer[TreeNode]] = sortedChildren.map(enumerate)
 
-		val acc = mutable.ListBuffer.empty[TreeNode[VT, ET]]
+		val acc = mutable.ListBuffer.empty[TreeNode]
 		for (base <- possibleBaseTrees; subtreesWithKeys <- allMappings(childrenPossibleSubtrees).map(_.zip(sortedChildren.map(_.keys)))) {
 			merge(base, subtreesWithKeys, acc)
 		}
@@ -49,7 +51,7 @@ object JoinTreeEnumerator {
 		rec(List(), mutable.ListBuffer.empty)
 	})
 
-	def spanningTreeFromPruferSequence[VT, ET <: HyperEdge[VT]](sequence: Seq[Int], nodes: IndexedSeq[TreeNode[VT, ET]]): TreeNode[VT, ET] = {
+	def spanningTreeFromPruferSequence(sequence: Seq[Int], nodes: IndexedSeq[TreeNode]): TreeNode = {
 		val nodesCopy = nodes.map(_.shallowCopy)
 		val degree = mutable.IndexedSeq.fill(nodesCopy.size)(1)
 		val sequenceSet = sequence.toSet
@@ -72,14 +74,14 @@ object JoinTreeEnumerator {
 		nodesCopy(rootIndex)
 	}
 
-	private def collectAllRotations[VT, ET <: HyperEdge[VT]](root: TreeNode[VT, ET], parent: TreeNode[VT, ET], keys: Set[VT], acc: mutable.ListBuffer[TreeNode[VT, ET]]): mutable.ListBuffer[TreeNode[VT, ET]] = {
+	private def collectAllRotations(root: TreeNode, parent: TreeNode, keys: Set[Vertex], acc: mutable.ListBuffer[TreeNode]): mutable.ListBuffer[TreeNode] = {
 		acc += root
 		root.children.foreach(c =>
 			if (keys.subsetOf(c.nodes) && c != parent) {
-				val currentRootCopy = TreeNode[VT, ET](root.metaNode,
+				val currentRootCopy = TreeNode(root.metaNode,
 					root.children - c
 				)
-				val newRoot = TreeNode[VT, ET](c.metaNode,
+				val newRoot = TreeNode(c.metaNode,
 					c.children + currentRootCopy)
 				collectAllRotations(newRoot, currentRootCopy, keys, acc)
 			}
@@ -87,12 +89,12 @@ object JoinTreeEnumerator {
 		acc
 	}
 
-	def collectAllRotations[VT, ET <: HyperEdge[VT]](acc: mutable.ListBuffer[TreeNode[VT, ET]], root: TreeNode[VT, ET]): mutable.ListBuffer[TreeNode[VT, ET]] = {
-		collectAllRotations(root, TreeNode[VT, ET](MetaNodeMinor[VT, ET](Set(), Set()), Set()), Set(), acc)
+	def collectAllRotations(acc: mutable.ListBuffer[TreeNode], root: TreeNode): mutable.ListBuffer[TreeNode] = {
+		collectAllRotations(root, TreeNode(MetaNodeMinor(Set(), Set()), Set()), Set(), acc)
 	}
 
-	def allRotations[VT, ET <: HyperEdge[VT]](root: TreeNode[VT, ET], keys: Set[VT]): mutable.ListBuffer[TreeNode[VT, ET]] = {
-		collectAllRotations(root, TreeNode[VT, ET](MetaNodeMinor[VT, ET](Set(), Set()), Set()), keys, mutable.ListBuffer.empty)
+	def allRotations(root: TreeNode, keys: Set[Vertex]): mutable.ListBuffer[TreeNode] = {
+		collectAllRotations(root, TreeNode(MetaNodeMinor(Set(), Set()), Set()), keys, mutable.ListBuffer.empty)
 	}
 
 	// All combinations of choices of subtree for each child
@@ -108,10 +110,10 @@ object JoinTreeEnumerator {
 		acc
 	}
 
-	private def merge[VT, ET <: HyperEdge[VT]](base: TreeNode[VT, ET], rest: List[(TreeNode[VT, ET], Set[VT])], acc: mutable.ListBuffer[TreeNode[VT, ET]]): mutable.ListBuffer[TreeNode[VT, ET]] = rest match {
+	private def merge(base: TreeNode, rest: List[(TreeNode, Set[Vertex])], acc: mutable.ListBuffer[TreeNode]): mutable.ListBuffer[TreeNode] = rest match {
 		case Nil => acc += base
 		case (nextTree, nextKeys) :: rest =>
-			if nextTree.metaNode.isInstanceOf[MetaNodeMinor[VT, ET]] && nextTree.metaNode.keys == nextTree.metaNode.nodes then
+			if nextTree.metaNode.isInstanceOf[MetaNodeMinor] && nextTree.metaNode.keys == nextTree.metaNode.nodes then
 				merge(base, nextTree.children.toList.map(c => (c, nextKeys)) ++ rest, acc)
 			else
 				for (targetNode <- base.descendentsContaining(nextKeys) ;

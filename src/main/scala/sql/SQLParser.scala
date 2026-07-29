@@ -1,6 +1,7 @@
 package sql
 
-import decompositions.{FilterCondition, HyperEdge, OutputItem, QualifiedCol}
+import decompositions.{FilterCondition, OutputItem, QualifiedCol}
+import decompositions.Hypergraph.{Hyperedge, Vertex}
 
 import scala.collection.mutable
 
@@ -86,19 +87,19 @@ object SQLParser {
 		// Create hyperedges with the merged join columns + output attributes
 		val aliasHyperedgeMap =
 			tableAliasNameMap
-				.map((alias, name) => alias -> Relation(
-					name, alias,
+				.map((alias, name) => alias -> Hyperedge(
 					columnToVertexIdMap
 						.filter { case ((columnTableAlias, columnName), vertexId) => columnTableAlias == alias }
-						.map((_, vertexId) => Attribute(vertexId.toString)).toSet)
-				).toMap
+						.map((_, vertexId) => Vertex(vertexId.toString)).toSet,
+					name, alias
+				)).toMap
 
 		// Create the names map, aliases map, filter conditions map, real column names map
-		val hyperedges: Set[Relation] = aliasHyperedgeMap.values.toSet // Set of hyperedges
-		val hyperedgeRealTableNameMap: Map[HyperEdge[Attribute], String] = aliasHyperedgeMap.map((alias, hyperedge) => hyperedge -> tableAliasNameMap(alias)) // Hyperedge -> table name
-		val hyperedgeAliasMap: Map[Relation, String] = aliasHyperedgeMap.map((alias, hyperedge) => hyperedge -> alias) // Hyperedge -> alias
+		val hyperedges: Set[Hyperedge] = aliasHyperedgeMap.values.toSet // Set of hyperedges
+		val hyperedgeRealTableNameMap: Map[Hyperedge, String] = aliasHyperedgeMap.map((alias, hyperedge) => hyperedge -> tableAliasNameMap(alias)) // Hyperedge -> table name
+		val hyperedgeAliasMap: Map[Hyperedge, String] = aliasHyperedgeMap.map((alias, hyperedge) => hyperedge -> alias) // Hyperedge -> alias
 
-		val subsetFilterConditionsMap: Map[Set[Relation], Set[FilterCondition]] =
+		val subsetFilterConditionsMap: Map[Set[Hyperedge], Set[FilterCondition]] =
 			filterConditions.toSet
 				.map { case condition @ Condition(expression, columns) => columns.map((tableName, columnName) => aliasHyperedgeMap(tableName)) -> condition } // Set of (hyperedges, condition)
 				.groupBy((hyperedges, condition) => hyperedges.toSet) // Hyperedges -> Set of (hyperedges, condition)
@@ -106,7 +107,7 @@ object SQLParser {
 					FilterCondition(condition.expression, condition.referencedTablesAndColumns.map((table, column) => QualifiedCol(aliasHyperedgeMap(table), column)))
 				)).toMap // Subset of hyperedges -> filter conditions
 
-		val vertexIdRealColumnNamesMap: Map[String, Map[Relation, String]] =
+		val vertexIdRealColumnNamesMap: Map[String, Map[Hyperedge, String]] =
 			columnToVertexIdMap.toSet
 				.map { case ((table, column), vertexId) => (vertexId -> (aliasHyperedgeMap(table) -> column)) } // Set of (vertexId, (hyperedge, columnName))
 				.groupBy((vertexId, _) => vertexId.toString) // Vertex ID -> Set of (vertexId, (hyperedge, columnName))

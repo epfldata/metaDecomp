@@ -27,7 +27,7 @@ object JoinTreeEnumerationRunner {
 		try {
 			val startTime = System.nanoTime()
 			val meta = metaGYO(sqlIR.hyperedges).get
-			val joinTrees = mutable.ListBuffer.empty[decompositions.TreeNode[sql.Attribute, sql.Relation]]
+			val joinTrees = mutable.ListBuffer.empty[decompositions.TreeNode]
 			JoinTreeEnumerator.enumerate(meta).foreach(tree => JoinTreeEnumerator.collectAllRotations(joinTrees, tree))
 			val endTime = System.nanoTime()
 

@@ -1,27 +1,26 @@
 package decompositions
 
-import sql.Relation
+import decompositions.Hypergraph.{Hyperedge, Vertex}
 
 import scala.collection.mutable
-import sql.Attribute
 
-trait MetaNode[V, E <: HyperEdge[V]](val nodes : Set[V]) {
+trait MetaNode(val nodes : Set[Vertex]) {
   val id: String
 
-  var keys : Set[V] = Set()
-  var children: Set[MetaNode[V, E]] = Set()
-  var parent: Option[MetaNode[V, E]] = None
+  var keys : Set[Vertex] = Set()
+  var children: Set[MetaNode] = Set()
+  var parent: Option[MetaNode] = None
   var order: Int = 0
 
-  def childrenPlusOrigin: Set[MetaNode[V, E]]
+  def childrenPlusOrigin: Set[MetaNode]
 
   def toString(depth: Int): String
 
-  def collectDescendents: Set[MetaNode[V, E]] = childrenPlusOrigin.flatMap(_.collectDescendents) + this
+  def collectDescendents: Set[MetaNode] = childrenPlusOrigin.flatMap(_.collectDescendents) + this
 
   def computeTopoOrder(): Unit = {
     var counter = 0
-    val queue: mutable.Queue[MetaNode[V, E]] = mutable.Queue(this)
+    val queue: mutable.Queue[MetaNode] = mutable.Queue(this)
     while (queue.nonEmpty) {
       val current = queue.dequeue()
       current.order = counter
@@ -30,17 +29,17 @@ trait MetaNode[V, E <: HyperEdge[V]](val nodes : Set[V]) {
     }
   }
 
-  var planFromNeighbour : mutable.Map[MetaNode[V, E], PlanNode] = mutable.Map() // Optimal plan for neighbour -> this
+  var planFromNeighbour : mutable.Map[MetaNode, PlanNode] = mutable.Map() // Optimal plan for neighbour -> this
   var planWithCurrentAsRoot: PlanNode = null // Optimal plan assuming this is the root
 
   def toDot(implicit sqlIR: sql.IR): String
   def toDotNonRoot(parentName: String)(implicit sqlIR: sql.IR): String
 }
 
-class MetaNodePhysical[V, E <: HyperEdge[V]](override val nodes : Set[V], val originalHyperEdge: E) extends MetaNode[V, E](nodes) {
+class MetaNodePhysical(override val nodes : Set[Vertex], val originalHyperEdge: Hyperedge) extends MetaNode(nodes) {
   override val id: String = originalHyperEdge.toString
 
-  override def childrenPlusOrigin: Set[MetaNode[V, E]] = children
+  override def childrenPlusOrigin: Set[MetaNode] = children
 
   def toString(depth: Int): String = {
     val outerIndent = "| " * (2 * depth)
@@ -57,7 +56,7 @@ $outerIndent}"""
   override def toString: String = toString(0)
 
   def toDot(implicit sqlIR: sql.IR): String = {
-    val name = originalHyperEdge.asInstanceOf[Relation].alias
+    val name = originalHyperEdge.alias
     s"""graph\"\" {
   $name ;
 	$name [label = \"$name\"] ;
@@ -67,7 +66,7 @@ $outerIndent}"""
   }
 
   def toDotNonRoot(parentName: String)(implicit sqlIR: sql.IR): String = {
-    val name = originalHyperEdge.asInstanceOf[Relation].alias
+    val name = originalHyperEdge.alias
     s"""  $parentName -- $name ;
   $name [label = \"$name\"] ;
 """
@@ -75,10 +74,10 @@ $outerIndent}"""
   }
 }
 
-class MetaNodeMinor[V, E <: HyperEdge[V]](override val nodes: Set[V],var origin : Set[MetaNode[V, E]]) extends MetaNode[V, E](nodes) {
+class MetaNodeMinor(override val nodes: Set[Vertex],var origin : Set[MetaNode]) extends MetaNode(nodes) {
   override val id: String = nodes.mkString("minor_", "_", "")
 
-  override def childrenPlusOrigin: Set[MetaNode[V, E]] = children ++ origin
+  override def childrenPlusOrigin: Set[MetaNode] = children ++ origin
 
   def toString(depth: Int): String = {
     val outerIndent = "| " * (2 * depth)
@@ -95,10 +94,10 @@ $outerIndent}"""
 
   override def toString: String = toString(0)
 
-  def rotation(tree: TreeNode[V, E], parent: TreeNode[V, E], keys: Set[V]): List[TreeNode[V, E]] = List()
+  def rotation(tree: TreeNode, parent: TreeNode, keys: Set[Vertex]): List[TreeNode] = List()
 
   def toDot(implicit sqlIR: sql.IR): String = {
-    val name = nodes.map(_.asInstanceOf[Attribute].name).mkString("minor_", "_", "")
+    val name = nodes.map(_.name).mkString("minor_", "_", "")
     s"""graph \"\" {
 	$name ;
 	$name [label = \"$name\"] ;
@@ -108,7 +107,7 @@ $outerIndent}"""
   }
 
   def toDotNonRoot(parentName: String)(implicit sqlIR: sql.IR): String = {
-    val name = nodes.map(_.asInstanceOf[Attribute].name).mkString("minor_", "_", "")
+    val name = nodes.map(_.name).mkString("minor_", "_", "")
     s"""  $parentName -- $name ;
 	$name [label = \"$name\"] ;
 """
@@ -116,15 +115,15 @@ $outerIndent}"""
   }
 }
 
-class TreeNode[V, E <: HyperEdge[V]](val metaNode: MetaNode[V, E], var children: Set[TreeNode[V, E]]) {
-  def nodes: Set[V] = metaNode.nodes
+class TreeNode(val metaNode: MetaNode, var children: Set[TreeNode]) {
+  def nodes: Set[Vertex] = metaNode.nodes
 
-  def shallowCopy: TreeNode[V, E] = TreeNode(metaNode, children)
+  def shallowCopy: TreeNode = TreeNode(metaNode, children)
 
   // Copy the tree and attach a subtree to a specified node, reusing the existing tree structure whenever possible.
   // dropRoot means we are attaching a virtual node whose enumerated trees will be rooted at its parent.
   // In this case we ignore the root but add the children.
-  def attachingNewSubtree(targetToAttach: TreeNode[V, E], newChild: TreeNode[V, E], dropRoot: Boolean): TreeNode[V, E] =
+  def attachingNewSubtree(targetToAttach: TreeNode, newChild: TreeNode, dropRoot: Boolean): TreeNode =
     if (targetToAttach == this) {
       TreeNode(metaNode, children ++ (if dropRoot then newChild.children else Set(newChild)))
     } else {
@@ -137,12 +136,12 @@ class TreeNode[V, E <: HyperEdge[V]](val metaNode: MetaNode[V, E], var children:
       }
     }
 
-  def descendentsContaining(keys: Set[V]): Set[TreeNode[V, E]] = {
+  def descendentsContaining(keys: Set[Vertex]): Set[TreeNode] = {
     if (!keys.subsetOf(this.nodes)) Set()
     else children.flatMap(_.descendentsContaining(keys)) + this
   }
 
-  def rerootTo(metaNode: MetaNode[V, E]): Option[TreeNode[V, E]] = {
+  def rerootTo(metaNode: MetaNode): Option[TreeNode] = {
     if (this.metaNode == metaNode) Some(this)
     else children.flatMap(c => c.rerootTo(metaNode) match {
       case Some(newRoot) =>
@@ -170,7 +169,7 @@ ${innerIndent}children:${children.map(_.toString(depth + 1)).mkString("", ",", "
     val outerIndent = "  " * (depth * 2)
     val innerIndent = "  " * (depth * 2 + 1)
     s"""$outerIndent{
-$innerIndent\"relation\": \"${this.metaNode.asInstanceOf[MetaNodePhysical[V, E]].originalHyperEdge.asInstanceOf[Relation].alias}\",
+$innerIndent\"relation\": \"${this.metaNode.asInstanceOf[MetaNodePhysical].originalHyperEdge.alias}\",
 $innerIndent\"children\": [
 ${children.map(_.toJson(depth + 1)).mkString(",\n")}
 $innerIndent]

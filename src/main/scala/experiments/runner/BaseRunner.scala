@@ -2,7 +2,6 @@ package experiments.runner
 
 import decompositions.PlanNode
 import experiments.Config.*
-import sql.Attribute
 
 import java.io.File
 import java.nio.file.{Files, Paths}

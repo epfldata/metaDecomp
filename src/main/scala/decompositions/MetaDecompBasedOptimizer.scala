@@ -1,26 +1,26 @@
 package decompositions
 
 import decompositions.CostModel.getCumulativeCost
-import sql.{Attribute, Relation}
+import decompositions.Hypergraph.{Vertex, Hyperedge}
 
 import scala.annotation.tailrec
 import scala.collection.mutable
 
 class MetaDecompBasedOptimizer()(implicit sqlIR: sql.IR) {
-	def run(metaJoinTree: MetaNode[Attribute, Relation]): PlanNode = {
+	def run(metaJoinTree: MetaNode): PlanNode = {
 		planBottomUp(metaJoinTree)
 		planTopDown(metaJoinTree, null)
 		metaJoinTree.computeTopoOrder()
-		val allNodes = metaJoinTree.collectDescendents.filter(_.isInstanceOf[MetaNodePhysical[Attribute, Relation]])
+		val allNodes = metaJoinTree.collectDescendents.filter(_.isInstanceOf[MetaNodePhysical])
 		allNodes.foreach(node => {
 			val children = node match {
-				case _: MetaNodePhysical[Attribute, Relation] => node.children
-				case minorNode: MetaNodeMinor[Attribute, Relation] => minorNode.children ++ minorNode.origin
+				case _: MetaNodePhysical => node.children
+				case minorNode: MetaNodeMinor => minorNode.children ++ minorNode.origin
 			}
 			val neighbours = children ++ node.parent
 			node.planWithCurrentAsRoot =
 				if neighbours.isEmpty then
-					new ScanNode(node.asInstanceOf[MetaNodePhysical[Attribute, Relation]].originalHyperEdge) {
+					new ScanNode(node.asInstanceOf[MetaNodePhysical].originalHyperEdge) {
 						joinTree = TreeNode(node, Set.empty)
 					}
 				else neighbours
@@ -51,13 +51,13 @@ class MetaDecompBasedOptimizer()(implicit sqlIR: sql.IR) {
 		optPlan
 	}
 
-	def planBottomUp(metaNode: MetaNode[Attribute, Relation]): PlanNode = {
+	def planBottomUp(metaNode: MetaNode): PlanNode = {
 		val children = metaNode match {
-			case _: MetaNodePhysical[Attribute, Relation] => metaNode.children
-			case minorNode: MetaNodeMinor[Attribute, Relation] => minorNode.children ++ minorNode.origin
+			case _: MetaNodePhysical => metaNode.children
+			case minorNode: MetaNodeMinor => minorNode.children ++ minorNode.origin
 		}
 		metaNode match {
-			case physicalNode: MetaNodePhysical[Attribute, Relation] if children.isEmpty =>
+			case physicalNode: MetaNodePhysical if children.isEmpty =>
 				return new ScanNode(physicalNode.originalHyperEdge) { joinTree = TreeNode(metaNode, Set.empty) } // Leaf node
 			case _ => ()
 		}
@@ -69,10 +69,10 @@ class MetaDecompBasedOptimizer()(implicit sqlIR: sql.IR) {
 		optimizeLocalDP(metaNode, children.map(c => c -> metaNode.planFromNeighbour(c)).toMap)
 	}
 
-	def planTopDown(metaNode: MetaNode[Attribute, Relation], planAbove: PlanNode): Unit = {
+	def planTopDown(metaNode: MetaNode, planAbove: PlanNode): Unit = {
 		val children = metaNode match {
-			case _: MetaNodePhysical[Attribute, Relation] => metaNode.children
-			case minorNode: MetaNodeMinor[Attribute, Relation] => minorNode.children ++ minorNode.origin
+			case _: MetaNodePhysical => metaNode.children
+			case minorNode: MetaNodeMinor => minorNode.children ++ minorNode.origin
 		}
 		metaNode.parent match {
 			case None => ()
@@ -95,13 +95,13 @@ class MetaDecompBasedOptimizer()(implicit sqlIR: sql.IR) {
 	 * @return The plan
 	 */
 	@tailrec
-	private def optimizeLocalHeuristic(metaNode: MetaNode[Attribute, Relation], parent: Option[MetaNode[Attribute, Relation]], neighbours: Map[MetaNode[Attribute, Relation], PlanNode], isBottomUp: Boolean = false, removedNodes: Set[MetaNode[Attribute, Relation]] = Set.empty): PlanNode = {
+	private def optimizeLocalHeuristic(metaNode: MetaNode, parent: Option[MetaNode], neighbours: Map[MetaNode, PlanNode], isBottomUp: Boolean = false, removedNodes: Set[MetaNode] = Set.empty): PlanNode = {
 		metaNode match {
-			case _: MetaNodeMinor[Attribute, Relation] =>
-				def neighbourCardinality: MetaNode[Attribute, Relation] => Double = m => m match {
-					case physicalNode: MetaNodePhysical[Attribute, Relation] =>
+			case _: MetaNodeMinor =>
+				def neighbourCardinality: MetaNode => Double = m => m match {
+					case physicalNode: MetaNodePhysical =>
 						sqlIR.cardinalities(Set(physicalNode.originalHyperEdge))
-					case minorNode: MetaNodeMinor[Attribute, Relation] =>
+					case minorNode: MetaNodeMinor =>
 						minorNode.origin.map(neighbourCardinality).min
 				}
 				val (minNeighbour, planFromMinNeighbour) = neighbours.minBy((neighbour, plan) => neighbourCardinality(neighbour))
@@ -109,7 +109,7 @@ class MetaDecompBasedOptimizer()(implicit sqlIR: sql.IR) {
 				val minNeighboursNeighboursAfterPromotion = minNeighboursNeighbours ++ neighbours.map((n, _) => n) - minNeighbour - metaNode -- removedNodes
 				optimizeLocalHeuristic(minNeighbour, if parent == Some(minNeighbour) then minNeighbour.parent else parent, minNeighboursNeighboursAfterPromotion.map(n => n -> minNeighbour.planFromNeighbour.getOrElse(n, neighbours(n))).toMap, isBottomUp, removedNodes + metaNode)
 
-			case physicalNode: MetaNodePhysical[Attribute, Relation] =>
+			case physicalNode: MetaNodePhysical =>
 				val neighboursPlans = mutable.Set.from(neighbours.values)
 				var plan: PlanNode = new ScanNode(physicalNode.originalHyperEdge) {
 					joinTree = TreeNode(metaNode, Set.empty)
@@ -151,9 +151,9 @@ class MetaDecompBasedOptimizer()(implicit sqlIR: sql.IR) {
 	 * @param neighboursPlans The plans to join relations in the subtree T_{this->neighbour}.
 	 * @return The plan
 	 */
-	def optimizeLocalDP(metaNode: MetaNode[Attribute, Relation], neighboursPlans: Map[MetaNode[Attribute, Relation], PlanNode]): PlanNode = {
+	def optimizeLocalDP(metaNode: MetaNode, neighboursPlans: Map[MetaNode, PlanNode]): PlanNode = {
 		val (base, remainingNeighboursPlans) = metaNode match {
-			case physicalNode: MetaNodePhysical[Attribute, Relation] => {
+			case physicalNode: MetaNodePhysical => {
 				(
 					new ScanNode(physicalNode.originalHyperEdge){
 						joinTree = TreeNode(physicalNode, Set.empty)
@@ -161,9 +161,9 @@ class MetaDecompBasedOptimizer()(implicit sqlIR: sql.IR) {
 					neighboursPlans
 				)
 			}
-			case minorNode: MetaNodeMinor[Attribute, Relation] => {
+			case minorNode: MetaNodeMinor => {
 				val origins = neighboursPlans.filter((n, _) => minorNode.origin.contains(n) || minorNode.keys == minorNode.nodes && minorNode.parent == Some(n))
-				val originsDP: mutable.Map[Set[MetaNode[Attribute, Relation]], PlanNode] = mutable.Map()
+				val originsDP: mutable.Map[Set[MetaNode], PlanNode] = mutable.Map()
 				Range(1, origins.keys.size + 1).foreach(size => origins.keys.toSet.subsets(size).foreach(subset => {
 					subset.size match {
 						case 1 => originsDP(subset) = origins(subset.head)
@@ -183,7 +183,7 @@ class MetaDecompBasedOptimizer()(implicit sqlIR: sql.IR) {
 			}
 		}
 		
-		val finalDP: mutable.Map[Set[MetaNode[Attribute, Relation]], PlanNode] = mutable.Map()
+		val finalDP: mutable.Map[Set[MetaNode], PlanNode] = mutable.Map()
 		Range(0, remainingNeighboursPlans.size + 1).foreach(size => remainingNeighboursPlans.keySet.subsets(size).foreach(subset => {
 			subset.size match {
 				case 0 => finalDP(subset) = base

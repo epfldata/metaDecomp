@@ -2,12 +2,13 @@ package decompositions
 
 import scala.collection.mutable
 import scala.util.boundary, boundary.break
+import decompositions.Hypergraph.{Vertex, Hyperedge, HyperedgeSetExtension}
 
-def findMinor[VT, ET <: HyperEdge[VT]](set: collection.mutable.Set[MetaNode[VT, ET]], node: Set[VT]): Option[MetaNodeMinor[VT, ET]] = {
-  set.collectFirst { case minor: MetaNodeMinor[VT, ET] if minor.nodes == node => minor }
+def findMinor(set: collection.mutable.Set[MetaNode], node: Set[Vertex]): Option[MetaNodeMinor] = {
+  set.collectFirst { case minor: MetaNodeMinor if minor.nodes == node => minor }
 }
 
-def constructEdges[VT, ET <: HyperEdge[VT]](set: collection.mutable.Set[MetaNode[VT, ET]]): Unit = {
+def constructEdges(set: collection.mutable.Set[MetaNode]): Unit = {
   for (node <- set) {
     boundary {
       val minor = findMinor(set, node.keys)
@@ -32,31 +33,31 @@ def constructEdges[VT, ET <: HyperEdge[VT]](set: collection.mutable.Set[MetaNode
   }
 }
 
-def metaGYO[VT, ET <: HyperEdge[VT]](E: Iterable[ET]) : Option[MetaNode[VT, ET]] = {
+def metaGYO(E: Iterable[Hyperedge]) : Option[MetaNode] = {
 
   val V = E.nodes
-  val metaGYOGraph = collection.mutable.Set[MetaNode[VT, ET]]()
+  val metaGYOGraph = collection.mutable.Set[MetaNode]()
   // hyperedges not eaten away as ears yet, with previously removed ears
   // attached as tree nodes
   // Line 3-4
-  val E2 = collection.mutable.Set[MetaNode[VT, ET]]() ++ E.map(x => MetaNodePhysical[VT, ET](x.nodes, x))
+  val E2 = collection.mutable.Set[MetaNode]() ++ E.map(x => MetaNodePhysical(x.nodes, x))
 
   // how many hyperedges does a node occur in?
-  val Vcnt = collection.mutable.Map[VT, Int](V.toSeq.map((_, 0)): _*)
+  val Vcnt = collection.mutable.Map[Vertex, Int](V.toSeq.map((_, 0)): _*)
   E.foreach(_.nodes.foreach(Vcnt(_) += 1))
 
 
   while (E2.nonEmpty) {
     // First generate all the minor nodes
-    val E3 = collection.mutable.Set[MetaNode[VT, ET]]() ++ E2
-    val newMinor = collection.mutable.Set[MetaNodeMinor[VT, ET]]()
+    val E3 = collection.mutable.Set[MetaNode]() ++ E2
+    val newMinor = collection.mutable.Set[MetaNodeMinor]()
 
     // Line 6-14
     while E3.nonEmpty do {
       val e = E3.head
       val shared_e = e.nodes.filter(Vcnt(_) > 1)
       var isMinor = false
-      var minor_e: MetaNodeMinor[VT, ET] = null
+      var minor_e: MetaNodeMinor = null
       for e3 <- E3.iterator do {
         if (e != e3) {
           val shared_e3 = e3.nodes.filter(Vcnt(_) > 1)
@@ -81,7 +82,7 @@ def metaGYO[VT, ET <: HyperEdge[VT]](E: Iterable[ET]) : Option[MetaNode[VT, ET]]
                     m.origin = m.origin + e + e3
                     m.keys = Set()
                     m
-                  case None => MetaNodeMinor[VT, ET](shared_e, Set(e, e3))
+                  case None => MetaNodeMinor(shared_e, Set(e, e3))
                 }
               }
               isMinor = true
@@ -111,8 +112,8 @@ def metaGYO[VT, ET <: HyperEdge[VT]](E: Iterable[ET]) : Option[MetaNode[VT, ET]]
 
 
     // a temporary set to store the ears
-    val tempEars = collection.mutable.Set[MetaNode[VT, ET]]()
-    val E4 = collection.mutable.Set[MetaNode[VT, ET]]() ++ E2
+    val tempEars = collection.mutable.Set[MetaNode]()
+    val E4 = collection.mutable.Set[MetaNode]() ++ E2
     // calculate all ears for this round, Line 12
     while E4.nonEmpty do {
       val e = E4.head
@@ -141,20 +142,20 @@ def metaGYO[VT, ET <: HyperEdge[VT]](E: Iterable[ET]) : Option[MetaNode[VT, ET]]
         for e1 <- metaGYOGraph do {
           // If two nodes have the same key, try to find a minor or create a new one
           if (e1.keys.equals(e.keys) &&
-            !(e.isInstanceOf[MetaNodeMinor[VT, ET]] && e.asInstanceOf[MetaNodeMinor[VT, ET]].origin.contains(e1))) {
+            !(e.isInstanceOf[MetaNodeMinor] && e.asInstanceOf[MetaNodeMinor].origin.contains(e1))) {
             (e1, e) match {
-              case (x : MetaNodeMinor[VT, ET], y : MetaNodeMinor[VT, ET]) if x.nodes.equals(x.keys) && y.nodes.equals(y.keys) =>
+              case (x : MetaNodeMinor, y : MetaNodeMinor) if x.nodes.equals(x.keys) && y.nodes.equals(y.keys) =>
                 throw new Exception("Two minor nodes with the same chi found")
-              case (x : MetaNodeMinor[VT, ET], y : MetaNode[VT, ET]) if x.nodes.equals(x.keys) =>
+              case (x : MetaNodeMinor, y : MetaNode) if x.nodes.equals(x.keys) =>
                 x.origin = x.origin + y
-              case (x : MetaNode[VT, ET], y : MetaNodeMinor[VT, ET]) if y.nodes.equals(y.keys) =>
+              case (x : MetaNode, y : MetaNodeMinor) if y.nodes.equals(y.keys) =>
                 y.origin = y.origin + x
               case _ =>
                 findMinor(metaGYOGraph ++ tempEars, shared_e) match {
                   case Some(minor) =>
                     minor.keys = shared_e
                     minor.origin ++= List(e, e1)
-                  case None => metaGYOGraph.add(new MetaNodeMinor[VT, ET](shared_e, Set(e, e1)) { keys = shared_e })
+                  case None => metaGYOGraph.add(new MetaNodeMinor(shared_e, Set(e, e1)) { keys = shared_e })
                 }
             }
             break()

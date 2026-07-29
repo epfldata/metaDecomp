@@ -2,7 +2,7 @@ package experiments.runner
 
 import decompositions.{MetaDecompBasedOptimizer, metaGYO}
 import experiments.Config.{benchmarks, benchmarksPath, repeatTimes, resultsDir, sqlFilesInBenchmark}
-import sql.{Attribute, IR, Relation, SQLParser}
+import sql.{IR, SQLParser}
 
 import java.nio.file.{Files, Paths, StandardOpenOption}
 import scala.io.Source
