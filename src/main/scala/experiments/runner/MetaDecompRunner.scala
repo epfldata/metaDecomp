@@ -17,7 +17,7 @@ import decompositions.Hypergraph
 
 object MetaDecompRunner extends BaseRunner {
 	def main(args: Array[String]): Unit = {
-		for (benchmark <- benchmarks) {
+		for (benchmark <- if args.size >= 1 then List(args(0)) else benchmarks) {
 			connect(benchmark)
 
 			val benchmarkPath = s"$benchmarksPath/$benchmark"
@@ -29,7 +29,7 @@ object MetaDecompRunner extends BaseRunner {
 			)
 
 
-			sqlFilesInBenchmark(benchmark).foreach(sqlFile =>
+			sqlFilesInBenchmark(benchmark).filter(f => if args.size >= 2 then f.getName.matches(args(1)) else true).foreach(sqlFile =>
 				val queryName = sqlFile.getName.stripSuffix(".sql")
 
 				if (Files.exists(Paths.get(benchmarkPath, "cardinalities", s"${queryName}.csv"))) {
@@ -144,16 +144,21 @@ object MetaDecompRunner extends BaseRunner {
 					} else {
 						println(sqlFile.getName())
 
-					val metaRunResults = for (i <- 0 until repeatTimes) yield {
-						val metaGYOStartTime = System.nanoTime()
-						val meta = metaGYO(sqlIR.hyperedges)
-						val metaGYOEndTime = System.nanoTime()
-						val metaGYOTime = (metaGYOEndTime - metaGYOStartTime) / 1000 // microseconds
-						println(s"MetaGYO run $i: $metaGYOTime us")
-						(meta, metaGYOTime)
-					}
+						val metaRunResults = (for (i <- 0 until repeatTimes) yield {
+							val metaGYOStartTime = System.nanoTime()
+							val meta = metaGYO(sqlIR.hyperedges)
+							val metaGYOEndTime = System.nanoTime()
+							val metaGYOTime = (metaGYOEndTime - metaGYOStartTime) / 1000 // microseconds
+							println(s"MetaGYO run $i: $metaGYOTime us")
+							(meta, metaGYOTime)
+						}).sortBy(_._2)
 
-					val (metaOption, metaGYOTime) = metaRunResults.sortBy(_._2).apply(repeatTimes / 2) // Take the median of 5 runs
+						val (metaOption, metaGYOTime) =
+							if metaRunResults.size % 2 == 1 then
+								metaRunResults.apply(metaRunResults.size / 2)
+							else
+								val mid = metaRunResults.size / 2
+								(metaRunResults(mid)._1, (metaRunResults(mid)._2 + metaRunResults(mid + 1)._2) / 2)
 
 						val meta = metaOption.get
 
