@@ -32,7 +32,7 @@ lazy val root = project
       "com.lihaoyi" %% "fastparse" % "3.0.2",    // non-native
 //      "com.lihaoyi" %%% "cssparse" % "3.0.2"  // native
 
-      "org.duckdb" % "duckdb_jdbc" % "1.2.2.0"
+      "org.duckdb" % "duckdb_jdbc" % "1.5.4.0"
     )
   )
 

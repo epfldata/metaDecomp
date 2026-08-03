@@ -19,8 +19,8 @@ case object Config {
 
 	def dbFilePath(benchmark: String): String = benchmark match {
 		case "job-original" | "job-large" => s"$projectRootPath/datasets/imdb/imdb.db"
-		case "dsb"          => s"$projectRootPath/datasets/dsb/dsb-10g.db"
-		case "musicbrainz"  => s"$projectRootPath/datasets/musicbrainz/musicbrainz.db"
+		case "dsb" | "dsb-cyclic"          => s"$projectRootPath/datasets/dsb/dsb-10g.db"
+		case "musicbrainz" | "musicbrainz-cyclic"  => s"$projectRootPath/datasets/musicbrainz/musicbrainz.db"
 	}
 	def dataSource(benchmark: String): String = s"jdbc:duckdb:${dbFilePath(benchmark)}"
 

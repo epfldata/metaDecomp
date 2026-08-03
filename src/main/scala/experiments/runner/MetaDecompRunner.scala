@@ -10,6 +10,10 @@ import scala.jdk.CollectionConverters.*
 import scala.sys.process._
 import experiments.parseSubqueryTables
 import experiments.getTimestamp
+import decompositions.MetaDecompGraphConstructor
+import decompositions.MetaDecompCyclicOptimizer
+import decompositions.MetaDecompGraph
+import decompositions.Hypergraph
 
 object MetaDecompRunner extends BaseRunner {
 	def main(args: Array[String]): Unit = {
@@ -41,7 +45,104 @@ object MetaDecompRunner extends BaseRunner {
 
 					implicit val sqlIR: sql.IR = SQLParser.parse(query)
 
-					toggleOptimizers(sqlIR.outputAttributes.size <= 3)
+					// toggleOptimizers(sqlIR.outputAttributes.size <= 3)
+					if (metaGYO(sqlIR.hyperedges).isEmpty) { // Cyclic
+
+						val hypergraph = Hypergraph(sqlIR.hyperedges.flatMap(_.nodes).toSet, sqlIR.hyperedges)
+
+						println(hypergraph)
+
+						var width = 2
+						var meta: MetaDecompGraph = null
+						while ({ meta = MetaDecompGraphConstructor().run(hypergraph, width); meta.sortedEdges.isEmpty } ) {
+							println(s"Width ${width} failed")
+							width += 1
+						}
+						println(s"Width ${width}")
+
+						val metaGraphTime = (for (i <- 0 until repeatTimes) yield {
+							val metaStartTime = System.nanoTime()
+							MetaDecompGraphConstructor().run(hypergraph, width)
+							val metaEndTime = System.nanoTime()
+							val metaTime = (metaEndTime - metaStartTime) / 1000 // microseconds
+							println(s"Meta graph construction run $i: $metaTime us")
+							metaTime
+						}).sorted.apply(repeatTimes / 2)
+						
+						// println(meta)
+						// println(meta.sortedEdges)
+
+						println("Loading cardinalities...")
+
+						val joinedTablesFileSource = Source.fromFile(Paths.get(benchmarkPath, "cardinalities", s"${queryName}.csv").toFile)
+						val joinedTables = parseSubqueryTables(joinedTablesFileSource.getLines)
+
+						val cardinalitiesFileSource = Source.fromFile(Paths.get(benchmarkPath, "cardinalities", s"${queryName}.csv").toFile)
+						val cardinalities = cardinalitiesFileSource.getLines.drop(3)
+						sqlIR.cardinalities = joinedTables.zip(cardinalities).map((tablesLine, cardinalitiesLine) =>
+							val hyperedgeAliasesOnLine = tablesLine
+							val hyperedgesOnLine = hyperedgeAliasesOnLine.map(alias => sqlIR.hyperedges.find(_.alias == alias).get)
+							val cardinality = cardinalitiesLine.split(" ").takeRight(1).head.toDouble
+							hyperedgesOnLine.toSet -> cardinality
+						).toMap
+						cardinalitiesFileSource.close()
+
+						joinedTablesFileSource.close()
+
+						val (plan, planningTime) = (for (i <- 0 until repeatTimes) yield {
+							val planningStartTime = System.nanoTime()
+							val plan = MetaDecompCyclicOptimizer().run(hypergraph, meta)
+							val planningEndTime = System.nanoTime()
+							val planningTime = (planningEndTime - planningStartTime) / 1000 // microseconds
+							println(s"Planning run $i: $planningTime us")
+							(plan, planningTime)
+						}).sortBy(_._2).apply(repeatTimes / 2) // Take the median of 5 runs
+
+						val totalOptTime = metaGraphTime + planningTime // microseconds
+
+						println(s"Optimization time: $metaGraphTime us + $planningTime us = $totalOptTime us")
+
+						// println(plan)
+
+						val (viewSql, finalSql, groupBy) = plan.generateSqlWithViews()
+						// println(Seq(viewSql, finalSql, groupBy).mkString("\n"))
+
+						val metaPlanSqlFilePath = Paths.get(resultsDir, "meta_plans", s"${queryName}_meta_plan.sql")
+						Files.write(metaPlanSqlFilePath, Seq(viewSql, finalSql, groupBy).mkString("\n").getBytes, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING)
+
+						val metaPlanDotFilePath = Paths.get(resultsDir, "meta_plans", s"${queryName}_meta_plan.dot")
+						Files.write(metaPlanDotFilePath, plan.toDot.getBytes, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING)
+
+						val metaPlanFigPath = Paths.get(resultsDir, "meta_plans", s"${queryName}_meta_plan.svg")
+						val metaPlanDotCommand = Seq("dot", "-Tsvg", metaPlanDotFilePath.toString, "-o", metaPlanFigPath.toString)
+						try {
+							metaPlanDotCommand.!
+						} catch {
+							case e: Throwable => println(s"Error drawing the query plan using dot: ${e.getMessage}")
+						}
+
+
+						val executionTime = runPlan(plan)
+
+						println(s"Execution time: $executionTime us")
+
+
+						val totalTime = totalOptTime + executionTime
+						println(s"Total time: ${totalOptTime + executionTime} us")
+
+						val intermediateCost = plan.intermediateCost
+						val inCost = plan.inputCost
+						val totalCost = intermediateCost + inCost
+
+						Files.write(
+							resultsPath,
+							s"$queryName,${sqlIR.hyperedges.size},,$metaGraphTime,$planningTime,$totalOptTime,$executionTime,$totalTime,$intermediateCost,$inCost,$totalCost\n"
+								.getBytes,
+							StandardOpenOption.APPEND
+						)
+
+					} else {
+						println(sqlFile.getName())
 
 					val metaRunResults = for (i <- 0 until repeatTimes) yield {
 						val metaGYOStartTime = System.nanoTime()
@@ -53,9 +154,7 @@ object MetaDecompRunner extends BaseRunner {
 					}
 
 					val (metaOption, metaGYOTime) = metaRunResults.sortBy(_._2).apply(repeatTimes / 2) // Take the median of 5 runs
-					if (metaOption.isEmpty) {
-						println("Cyclic query. Skipping.")
-					} else {
+
 						val meta = metaOption.get
 
 						val maxFanout = meta.collectDescendents.toList.map(p => (p.childrenPlusOrigin ++ p.parent).size - 1).max

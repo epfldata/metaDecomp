@@ -48,18 +48,47 @@ object DPconvRunner extends BaseRunner {
 
 					implicit val sqlIR: sql.IR = SQLParser.parse(query)
 					
-					toggleOptimizers(sqlIR.outputAttributes.size <= 3)
+					// toggleOptimizers(sqlIR.outputAttributes.size <= 3)
 
 
 					val (planInString, optTime, optCcap) = runDPConv(queryCsvPath, runUnionDP = runUnionDP)
 
 					println(s"Optimization time: $optTime us")
 
+					println("Loading cardinalities...")
+
+					val joinedTablesFileSource = Source.fromFile(Paths.get(benchmarkPath, "cardinalities", s"${queryName}.csv").toFile)
+					val joinedTables = parseSubqueryTables(joinedTablesFileSource.getLines)
+
+					val cardinalitiesFileSource = Source.fromFile(Paths.get(benchmarkPath, "cardinalities", s"${queryName}.csv").toFile)
+					val cardinalities = cardinalitiesFileSource.getLines.drop(3)
+					sqlIR.cardinalities = joinedTables.zip(cardinalities).map((tablesLine, cardinalitiesLine) =>
+						val hyperedgeAliasesOnLine = tablesLine
+						val hyperedgesOnLine = hyperedgeAliasesOnLine.map(alias => sqlIR.hyperedges.find(_.alias == alias).get)
+						val cardinality = cardinalitiesLine.split(" ").takeRight(1).head.toDouble
+						hyperedgesOnLine.toSet -> cardinality
+					).toMap
+					cardinalitiesFileSource.close()
+
+					joinedTablesFileSource.close()
+
 					val executionTime = if (planInString.nonEmpty) {
 						val plan = parsePlan(planInString)
 						plan.projectTo = sqlIR.outputAttributes
 
 						val (viewSqls, finalSql, groupBy) = plan.generateSqlWithViews()
+						println(Seq(viewSqls, finalSql, groupBy).mkString("\n"))
+
+						val dpConvPlanDotFilePath = Paths.get(resultsDir, "dpconv_plans", s"${queryName}_dpconv_plan.dot")
+						Files.write(dpConvPlanDotFilePath, plan.toDot.getBytes, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING)
+
+						val dpConvPlanFigPath = Paths.get(resultsDir, "dpconv_plans", s"${queryName}_dpconv_plan.svg")
+						val dpConvPlanDotCommand = Seq("dot", "-Tsvg", dpConvPlanDotFilePath.toString, "-o", dpConvPlanFigPath.toString)
+						try {
+							dpConvPlanDotCommand.!
+						} catch {
+							case e: Throwable => println(s"Error drawing the query plan using dot: ${e.getMessage}")
+						}
 
 						runPlan(plan)
 					} else 0
@@ -102,7 +131,7 @@ object DPconvRunner extends BaseRunner {
 				s"$dpConvBasePath/src/build/union_bench 12 $queryCsvPath"
 		)
 
-		val results = (for (i <- 0 until repeatTimes) yield {
+		val results = (for (i <- 0 until (if capped then repeatTimes else 1)) yield {
 			println(s"Started DPconv run $i at $getTimestamp")
 
 			val stdoutLines = mutable.ListBuffer[String]()
@@ -133,10 +162,14 @@ object DPconvRunner extends BaseRunner {
 			(plan, optTime, optCout)
 		}).sortBy(_._2)
 
+		if !capped then {
+			results(0)
+		} else {
 		if repeatTimes % 2 == 0 then {
 			(results(repeatTimes / 2)._1, (results(repeatTimes / 2 - 1)._2 + results(repeatTimes / 2)._2) / 2, results(repeatTimes / 2)._3)
 		} else {
 			results(repeatTimes / 2)
+			}
 		}
 	}
 

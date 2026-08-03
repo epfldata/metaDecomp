@@ -90,7 +90,8 @@ object SQLParser {
 				.map((alias, name) => alias -> Hyperedge(
 					columnToVertexIdMap
 						.filter { case ((columnTableAlias, columnName), vertexId) => columnTableAlias == alias }
-						.map((_, vertexId) => Vertex(vertexId.toString)).toSet,
+						.map((_, vertexId) => Vertex(vertexId.toString)).toSet
+						+ Vertex(alias + "_unique_attribute"),
 					name, alias
 				)).toMap
 
