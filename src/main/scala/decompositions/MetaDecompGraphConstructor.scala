@@ -20,7 +20,8 @@ class MetaDecompGraphConstructor {
 				for (s <- hypergraph.edges.filter(_.nodes.subsetOf(nodesInROrC)).subsetsOfSizeAtMost(width)
 					if (hypergraph.edgesInComponent(c).intersect(s).nonEmpty
 						&& hypergraph.edgesInComponent(c).forall(_.nodes.intersect(r.nodes).subsetOf(s.nodes)
-						&& hypergraph.isConnected(r ++ s))
+						&& hypergraph.isConnected(r ++ s)
+						&& hypergraph.isConnected(s ++ hypergraph.edgesInComponent(c)))
 					)) {
 						graph.addEdge(r, s, c)
 				}
@@ -45,14 +46,7 @@ class MetaDecompGraphConstructor {
 		val checkQueue = mutable.Queue.from(graph.sortedEdges)
 		while (checkQueue.nonEmpty) {
 			val (r, s, crs) = checkQueue.dequeue()
-			if (graph.adjList(s).exists { case (cst, ts) => cst.subsetOf(crs) && ts.isEmpty }
-				|| !hypergraph.isConnected(s --
-//					hypergraph.edges.filter(_.nodes.subsetOf(
-						graph.adjList(s).keySet.filter(_.subsetOf(crs)).flatMap(hypergraph.edgesInComponent)
-//							.toSet.nodes
-//					))
-				)
-			) {
+			if (graph.adjList(s).exists { case (cst, ts) => cst.subsetOf(crs) && ts.isEmpty }) {
 				graph.removeEdge(r, s, crs)
 			}
 		}
