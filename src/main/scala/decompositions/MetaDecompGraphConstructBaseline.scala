@@ -86,9 +86,7 @@ class MetaDecompGraphConstructBaseline {
     }
     graph.vertices.filterNot(reachableVertices.contains).foreach(graph.removeVertex)
 
-    // Debug-only sanity check block removed (optimization #5): it was purely
-    // recomputing componentsInducedBy for every edge with all println calls
-    // commented out, i.e. 100% wasted work with no observable effect.
+
 
     return graph
   }
