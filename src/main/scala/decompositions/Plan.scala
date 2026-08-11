@@ -56,8 +56,8 @@ class JoinNode(lhs: PlanNode, rhs: PlanNode)(implicit sqlIR: sql.IR) extends Pla
 		this.projectTo ++= columnsInFutureFilters
 		
 		val joinConditionColumnPairs =
-			lhs.allJoinedRelations.flatMap(_.nodes).map(_.name)
-				.intersect(rhs.allJoinedRelations.flatMap(_.nodes).map(_.name)) // The intersecting hypergraph nodes
+			lhs.allJoinedRelations.flatMap(_.nodes).map(_.name).filter(!_.endsWith("_unique_attribute"))
+				.intersect(rhs.allJoinedRelations.flatMap(_.nodes).map(_.name).filter(!_.endsWith("_unique_attribute"))) // The intersecting hypergraph nodes
 				.flatMap(n => {
 					val nodeRealColNames = sqlIR.vertexIdToColumnName(n) // Map hyperedge -> real column name in that table
 					val lhsAttributesInJoin = lhs.allJoinedRelations.intersect(nodeRealColNames.keySet).map(h => OutputItem(QualifiedCol(h, nodeRealColNames(h))))
