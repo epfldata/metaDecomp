@@ -8,7 +8,7 @@ import scala.collection.mutable
 import scala.util.control.Breaks.{break, breakable}
 import scala.collection.immutable.HashSet
 
-class MetaDecompGraphConstructBaseline {
+class MetaDecompGraphConstructInterpolatable {
 
   def run(hypergraph: Hypergraph, width: Int): MetaDecompGraph = {
     val graph = new MetaDecompGraph()
@@ -29,13 +29,25 @@ class MetaDecompGraphConstructBaseline {
       components.foreach { c =>
         var successful = false
         if (memoComp.contains((c, separator))) {
-            successful = memoComp((c, separator))
+          successful = memoComp((c, separator))
         } else {
-          val candidates =  {
-            val edgesInC = H.edgesInComponent(c)
-            val requiredNodes = edgesInC.nodes.intersect(separatorNodes)
-            H.edges.filter(_.nodes.subsetOf(separatorNodes ++ c))
-              .subsetsOfSizeAtMost(width)
+          val edgesInC = H.edgesInComponent(c)
+          val requiredNodes = edgesInC.nodes.intersect(separatorNodes)
+
+          val interpolatableCandidates =  {
+            val pool = H.edges.filter(_.nodes.subsetOf(separatorNodes ++ c))
+            val outside = pool -- separator // candidate edges to add (not already in separator)
+
+            val addOnly: Iterator[Separator] =
+              if (separator.size < width) outside.iterator.map(e2 => separator + e2)
+              else Iterator.empty
+
+            val replace: Iterator[Separator] =
+              for (e1 <- separator.iterator; e2 <- outside.iterator)
+                yield (separator - e1) + e2
+
+
+            (addOnly ++ replace)
               .filter { s =>
                 edgesInC.intersect(s).nonEmpty && // S' makes progress in C
                   requiredNodes.subsetOf(s.nodes) // No escape path
@@ -45,7 +57,7 @@ class MetaDecompGraphConstructBaseline {
           }
 
           breakable {
-            for (sp <- candidates) {
+            for (sp <- interpolatableCandidates) {
               rec(c -- sp.nodes, sp, depth + 1) match {
                 case true =>
                   successful = true
@@ -55,10 +67,35 @@ class MetaDecompGraphConstructBaseline {
               }
             }
           }
+          if (!successful) {
+            // also need to try other separators
+            val candidates =  {
+              H.edges.filter(_.nodes.subsetOf(separatorNodes ++ c))
+                .subsetsOfSizeAtMost(width)
+                .filter(s => !interpolatableCandidates.contains(s)) // don't want to check interpolatable separators twice
+                .filter { s =>
+                  edgesInC.intersect(s).nonEmpty && // S' makes progress in C
+                    requiredNodes.subsetOf(s.nodes) // No escape path
+                }
+                .filter(s => H.isConnected(separator ++ s) && H.isConnected(s ++ edgesInC))
+
+            }
+            breakable {
+              for (sp <- interpolatableCandidates) {
+                rec(c -- sp.nodes, sp, depth + 1) match {
+                  case true =>
+                    successful = true
+                    graph.addEdge(separator, sp, c)
+                    break // stop if at least one working separator found; don't want to add to much non-interp. edges
+                  case false =>
+                  // Continue to try the next S'
+                }
+              }
+            }
+          }
+
           memoComp((c, separator)) = successful
         }
-
-
 
         if (!successful) { // Some component is not successful
           allSuccessful = false
@@ -74,7 +111,7 @@ class MetaDecompGraphConstructBaseline {
     // iterate over all possible roots
     for (root <- H.edges.subsetsOfSizeAtMost(width)) {
       if (root.nonEmpty  && rec(H.vertices -- root.nodes, root, 1)(width)
-      && H.isConnected(root)
+        && H.isConnected(root)
       ) {
         val emptySeparator: Separator = HashSet.empty[Hyperedge]
         graph.addEdge(emptySeparator, root, H.vertices)
