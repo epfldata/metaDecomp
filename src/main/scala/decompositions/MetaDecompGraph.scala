@@ -14,6 +14,9 @@ class MetaDecompGraph {
 		vertices += e1
 		vertices += e2
 		adjList.getOrElseUpdate(e1, mutable.Map.empty).getOrElseUpdate(c, mutable.Set.empty) += e2
+		if (!adjList.contains(e2)) {
+			adjList(e2) = mutable.Map.empty
+		}
 		sortedEdges += ((e1, e2, c))
 	}
 
