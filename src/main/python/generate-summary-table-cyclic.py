@@ -16,21 +16,30 @@ BENCHMARKS = {
 }
 BENCHMARK_ORDER = ['dsb-cyclic', 'musicbrainz-cyclic', 'subgraph-matching'] # 'dsb', 'job-original', 'musicbrainz', 'job-large']
 
-METHODS = [
-    'metadecomp',
+META_VARIANTS = [
+    'metadecomp-complete',
+    'metadecomp-random',
+]
+
+BASELINES = [
     'dpconv',
     'duckdb',
+    'neo4j',
     # 'uniondp',
     # 'yanplus', # Yannakakis+
     # 'learned-rewrite',
     # 'llm-r2'
 ]
 
+METHODS = META_VARIANTS + BASELINES
+
 # LaTeX Label mapping
 METHOD_LABELS = {
-    'metadecomp': r'\sys{}',
+    'metadecomp-complete': r'\completealgo{}',
+    'metadecomp-random': r'\randomalgo{}',
     'dpconv': 'DPconv',
     'duckdb': 'DuckDB',
+    'neo4j': 'Neo4j',
     # 'uniondp': r'UnionDP',
     # 'yanplus': r'Yannakakis$^+$',
     # 'learned-rewrite': r'LearnedRewrite',
@@ -39,14 +48,8 @@ METHOD_LABELS = {
 
 def load_data(method, benchmark):
     filename = ''
-    if method == 'duckdb':
-        filename = f'duckdb-{benchmark}.csv'
-    elif method == 'metadecomp' and benchmark == 'dsb' and os.path.exists(os.path.join(RESULTS_DIR, 'metadecomp-opt-dsb-exact-heuristic.csv')): # Heuristic check if needed, but sticking to requested names first
-         # The user request said "experiment-results/{metadecomp...}-opt-{dsb...}.csv"
-         # but let's stick to the standard names found in the dir listing or request.
-         # The request said: metadecomp-opt-dsb.csv.
-         # Wait, in the file listing I saw: metadecomp-opt-dsb.csv. Correct.
-         filename = f'{method}-opt-{benchmark}.csv'
+    if method == 'duckdb' or method == 'neo4j':
+        filename = f'{method}-{benchmark}.csv'
     else:
         filename = f'{method}-opt-{benchmark}.csv'
     
@@ -69,6 +72,8 @@ def get_stats(series):
     if series.empty:
         return ""
     series = series.drop(series[series == 0].index)
+    if series.empty:
+        return ""
     mean_val = series.mean()
     median_val = series.median()
     p95_val = series.quantile(0.95)
@@ -100,95 +105,99 @@ def format_cell(val):
 
 def generate_table():
     # Store aggregated stats
-    # Structure: stats[metric][method][benchmark] = "Mean & 95th & 99th"
     stats = {
         'opt': {m: {b: "" for b in BENCHMARK_ORDER} for m in METHODS},
         'exec': {m: {b: "" for b in BENCHMARK_ORDER} for m in METHODS},
-        'exec_speedup': {m: {b: "" for b in BENCHMARK_ORDER} for m in METHODS},
+        'exec_speedup': {v: {b_m: {b: "" for b in BENCHMARK_ORDER} for b_m in BASELINES} for v in META_VARIANTS},
         'total': {m: {b: "" for b in BENCHMARK_ORDER} for m in METHODS},
-        'speedup': {m: {b: "" for b in BENCHMARK_ORDER} for m in METHODS}
+        'speedup': {v: {b_m: {b: "" for b in BENCHMARK_ORDER} for b_m in BASELINES} for v in META_VARIANTS},
     }
 
-    # Pre-load MetaDecomp data to determine valid queries
-    meta_dfs = {}
+    # Pre-load data to determine valid queries
+    bench_dfs = {}
     for bench in BENCHMARK_ORDER:
-        df = load_data('metadecomp', bench)
-        if df is not None:
-             # Ensure index is query name
-             if 'query' in df.columns:
-                 df.set_index('query', inplace=True)
-             meta_dfs[bench] = df
+        bench_dfs[bench] = {}
+        for method in METHODS:
+            df = load_data(method, bench)
+            if df is not None:
+                if 'query' in df.columns:
+                    df.set_index('query', inplace=True)
+                bench_dfs[bench][method] = df
 
     for bench in BENCHMARK_ORDER:
-        meta_df = meta_dfs.get(bench)
-        if meta_df is None:
+        dfs = bench_dfs[bench]
+        
+        # Determine valid queries from metadecomp variants
+        valid_queries = None
+        for v in META_VARIANTS:
+            if v in dfs:
+                if valid_queries is None:
+                    valid_queries = set(dfs[v].index)
+                else:
+                    valid_queries = valid_queries.intersection(set(dfs[v].index))
+        
+        if valid_queries is None:
             continue
-            
-        valid_queries = set(meta_df.index)
-        
-        # Load other essential methods for filtering
-        dpconv_df = load_data('dpconv', bench)
-        duckdb_df = load_data('duckdb', bench)
-        
-        if dpconv_df is not None and 'query' in dpconv_df.columns: dpconv_df.set_index('query', inplace=True)
-        if duckdb_df is not None and 'query' in duckdb_df.columns: duckdb_df.set_index('query', inplace=True)
 
         # Filter Logic
-        # Exclude if meta_df > 300s AND dpconv > 300s AND duckdb > 300s
+        # Exclude if all methods timeout (>300s)
         queries_to_exclude = set()
+        THRESHOLD = 300000000 - 1e5 # 300s in us
         for q in valid_queries:
-            t_meta = meta_df.loc[q, 'total_time'] if (q in meta_df.index and 'total_time' in meta_df.columns) else 0
-            
-            t_dp = 0
-            if dpconv_df is not None and q in dpconv_df.index and 'total_time' in dpconv_df.columns:
-                t_dp = dpconv_df.loc[q, 'total_time']
-            
-            t_duck = 0
-            if duckdb_df is not None and q in duckdb_df.index and 'total_time' in duckdb_df.columns:
-                t_duck = duckdb_df.loc[q, 'total_time']
-            
-            THRESHOLD = 300000000 - 1e5 # 300s in us
-            if (t_meta >= THRESHOLD and t_dp >= THRESHOLD and t_duck >= THRESHOLD) or (bench == "job-large" and t_duck < 50000):
+            all_timeout = True
+            for m in METHODS:
+                if m in dfs and q in dfs[m].index and 'total_time' in dfs[m].columns:
+                    if dfs[m].loc[q, 'total_time'] < THRESHOLD:
+                        all_timeout = False
+                        break
+            if all_timeout or (bench == "job-large" and 'duckdb' in dfs and q in dfs['duckdb'].index and dfs['duckdb'].loc[q, 'total_time'] < 50000):
                 queries_to_exclude.add(q)
         
-        final_queries = list(valid_queries - queries_to_exclude)
+        final_queries = [q for q in valid_queries if q not in queries_to_exclude]
         
-        # Process each method
+        # Filter all method DataFrames
+        filtered_dfs = {}
+        for m in METHODS:
+            if m in dfs:
+                common_queries = [q for q in final_queries if q in dfs[m].index]
+                filtered_dfs[m] = dfs[m].loc[common_queries]
+
+        # 1. Optimization, Execution, Overall Time
         for method in METHODS:
-                
-            df = load_data(method, bench)
-            if df is None:
+            if method not in filtered_dfs:
                 continue
+            df_filtered = filtered_dfs[method]
             
-            if 'query' in df.columns:
-                df.set_index('query', inplace=True)
-            
-            # Filter to final queries
-            # reindex adds NaNs for missing queries, which dropna() would remove or we handle
-            # We only want queries that exist in valid_queries (which came from metadecomp)
-            # Intersection of existing queries in this method and final_queries
-            common_queries = [q for q in final_queries if q in df.index]
-            df_filtered = df.loc[common_queries]
-            
-            # 1. Optimization Time
             if 'opt_time' in df_filtered.columns:
                 stats['opt'][method][bench] = get_stats(df_filtered['opt_time'])
                 
-            # 2. Execution Time
             if 'exec_time' in df_filtered.columns:
-                 stats['exec'][method][bench] = get_stats(df_filtered['exec_time'])
+                stats['exec'][method][bench] = get_stats(df_filtered['exec_time'])
 
-            # Execution speedup of metaDecomp over X
-            if method != 'metadecomp':
-                meta_aligned = meta_df.loc[df_filtered.index]
-                if 'exec_time' in df_filtered.columns and 'exec_time' in meta_aligned.columns:
-                    t_other_exec = df_filtered['exec_time']
-                    t_meta_exec = meta_aligned['exec_time']
+            if 'total_time' in df_filtered.columns:
+                stats['total'][method][bench] = get_stats(df_filtered['total_time'])
+
+        # 2. Execution & Overall Speedups for each MetaDecomp variant over baselines
+        for v in META_VARIANTS:
+            if v not in filtered_dfs:
+                continue
+            df_v = filtered_dfs[v]
+            
+            for base in BASELINES:
+                if base not in filtered_dfs:
+                    continue
+                df_b = filtered_dfs[base]
+                common_q = [q for q in df_v.index if q in df_b.index]
+
+                # Execution speedup
+                if 'exec_time' in df_v.columns and 'exec_time' in df_b.columns:
+                    t_base_exec = df_b.loc[common_q, 'exec_time']
+                    t_v_exec = df_v.loc[common_q, 'exec_time']
                     
                     ratios_exec = []
-                    for q in df_filtered.index:
-                        m_val = t_meta_exec.loc[q]
-                        o_val = t_other_exec.loc[q]
+                    for q in common_q:
+                        m_val = t_v_exec.loc[q]
+                        o_val = t_base_exec.loc[q]
                         if m_val > 0 and o_val > 0:
                             ratios_exec.append(o_val / m_val)
                     
@@ -198,55 +207,27 @@ def generate_table():
                         speedup_exec_series = pd.Series(ratios_exec)
                         p95_exec = speedup_exec_series.quantile(0.95)
                         p99_exec = speedup_exec_series.quantile(0.99)
-                        stats['exec_speedup'][method][bench] = f"{gm_exec:.2f}x & {median_exec:.2f}x & {p95_exec:.2f}x & {p99_exec:.2f}x"
+                        stats['exec_speedup'][v][base][bench] = f"{gm_exec:.2f}x & {median_exec:.2f}x & {p95_exec:.2f}x & {p99_exec:.2f}x"
 
-            # 3. Overall Time
-            # DuckDB only has total_time usually, or we compute it?
-            # User check: duckdb has total_time (from head cmd).
-            col_total = 'total_time'
-            
-            if col_total in df_filtered.columns:
-                 stats['total'][method][bench] = get_stats(df_filtered[col_total])
-            
-            # 4. Overall Speedup of MetaDecomp over X
-            # Speedup = X.total / Meta.total
-            # Skip if method is metadecomp
-            if method != 'metadecomp':
-                # We need aligned series
-                # meta_df is already filtered? No, meta_df is global for bench.
-                # Align meta_df to df_filtered
-                meta_aligned = meta_df.loc[df_filtered.index]
-                
-                # Ensure we have total_time
-                if 'total_time' in df_filtered.columns and 'total_time' in meta_aligned.columns:
-                    t_other = df_filtered['total_time']
-                    t_meta = meta_aligned['total_time']
+                # Overall speedup
+                if 'total_time' in df_v.columns and 'total_time' in df_b.columns:
+                    t_base_total = df_b.loc[common_q, 'total_time']
+                    t_v_total = df_v.loc[common_q, 'total_time']
                     
-                    # Avoid division by zero
-                    # speedups = t_other / t_meta
-                    # geometric mean
-                    
-                    ratios = []
-                    for q in df_filtered.index:
-                        m_val = t_meta.loc[q]
-                        o_val = t_other.loc[q]
+                    ratios_total = []
+                    for q in common_q:
+                        m_val = t_v_total.loc[q]
+                        o_val = t_base_total.loc[q]
                         if m_val > 0 and o_val > 0:
-                            ratios.append(o_val / m_val)
+                            ratios_total.append(o_val / m_val)
                     
-                    if ratios:
-                        gm = gmean(ratios)
-                        # The screenshot shows empty cells. Let's assume just Mean column is populated for speedup, or maybe empty for others.
-                        # Re-reading: "For speedups, calculate the geometric mean... Other mean values are arithemtic mean."
-                        # Implies we put GeoMean in the 'Mean' column.
-                        # What about 95th/99th? Maybe blank? Or maybe 95th percentile of speedup?
-                        # I'll calculate 95th/99th of speedup distribution too, why not? It fits the table.
-                        median = np.median(ratios)
-                        
-                        speedup_series = pd.Series(ratios)
+                    if ratios_total:
+                        gm = gmean(ratios_total)
+                        median = np.median(ratios_total)
+                        speedup_series = pd.Series(ratios_total)
                         p95 = speedup_series.quantile(0.95)
                         p99 = speedup_series.quantile(0.99)
-                        stats['speedup'][method][bench] = f"{gm:.2f}x & {median:.2f}x & {p95:.2f}x & {p99:.2f}x"
-                        
+                        stats['speedup'][v][base][bench] = f"{gm:.2f}x & {median:.2f}x & {p95:.2f}x & {p99:.2f}x"
 
     # Generate LaTeX
     print(r"\begin{tabular}{cc|cccc|cccc|cccc}")
@@ -260,13 +241,6 @@ def generate_table():
     def print_section_header(title, multi_row_count):
         print(r"    \multirow{" + str(multi_row_count) + r"}{*}{" + r"\bf\shortstack{" + title + r"}}")
 
-    def bold_row_values(val):
-        # val is "X & Y & Z". We want "\textbf{X} & \textbf{Y} & \textbf{Z}"
-        if not val or val.strip() == "": return "& &"
-        parts = val.split('&')
-        bolded = [r"\textbf{" + p.strip() + "}" for p in parts]
-        return " & ".join(bolded)
-
     # Optimization Time
     print_section_header("Optimization\\\\time", len(METHODS))
     for method in METHODS:
@@ -274,12 +248,7 @@ def generate_table():
         parts = []
         for bench in BENCHMARK_ORDER:
              val = stats['opt'][method][bench]
-
-             if val == "": val = "& & " # Empty 3 columns
-             
-            #  if method == 'metadecomp':
-                #  val = bold_row_values(val)
-                 
+             if val == "": val = "& & & "
              parts.append(val)
         row_str += " & ".join(parts) + r" \\"
         print(row_str)
@@ -292,32 +261,25 @@ def generate_table():
         parts = []
         for bench in BENCHMARK_ORDER:
              val = stats['exec'][method][bench]
-
-             if val == "": val = "& & "
-             
-            #  if method == 'metadecomp':
-                #  val = bold_row_values(val)
-
+             if val == "": val = "& & & "
              parts.append(val)
         row_str += " & ".join(parts) + r" \\"
         print(row_str)
     print(r"    \hline")
 
-    speedup_methods = [m for m in METHODS if m != 'metadecomp']
-
-    # Execution Speedup
-    print_section_header("Execution\\\\speedup over...", len(speedup_methods))
-    for method in speedup_methods:
-        row_str = f"        & {METHOD_LABELS[method]}  & "
-        parts = []
-        for bench in BENCHMARK_ORDER:
-             val = stats['exec_speedup'][method][bench]
-
-             if val == "": val = "& & "
-             parts.append(val)
-        row_str += " & ".join(parts) + r" \\"
-        print(row_str)
-    print(r"    \hline")
+    # Execution Speedup (separate group for each MetaDecomp variant)
+    for v in META_VARIANTS:
+        print_section_header(f"Execution speedup:\\\\{METHOD_LABELS[v]}\\\\over...", len(BASELINES))
+        for base in BASELINES:
+            row_str = f"        & {METHOD_LABELS[base]}  & "
+            parts = []
+            for bench in BENCHMARK_ORDER:
+                val = stats['exec_speedup'][v][base][bench]
+                if val == "": val = "& & & "
+                parts.append(val)
+            row_str += " & ".join(parts) + r" \\"
+            print(row_str)
+        print(r"    \hline")
     
     # Overall Evaluation Time
     print_section_header("Overall\\\\evaluation\\\\time", len(METHODS))
@@ -326,30 +288,25 @@ def generate_table():
         parts = []
         for bench in BENCHMARK_ORDER:
              val = stats['total'][method][bench]
-
-             if val == "": val = "& & "
-
-            #  if method == 'metadecomp':
-                #  val = bold_row_values(val)
-
+             if val == "": val = "& & & "
              parts.append(val)
         row_str += " & ".join(parts) + r" \\"
         print(row_str)
     print(r"    \hline")
 
-    # Overall Speedup
-    print_section_header("Overall\\\\speedup over...", len(speedup_methods))
-    for method in speedup_methods:
-        row_str = f"        & {METHOD_LABELS[method]}  & "
-        parts = []
-        for bench in BENCHMARK_ORDER:
-             val = stats['speedup'][method][bench]
-
-             if val == "": val = "& & "
-             parts.append(val)
-        row_str += " & ".join(parts) + r" \\"
-        print(row_str)
-    print(r"    \hline")
+    # Overall Speedup (separate group for each MetaDecomp variant)
+    for v in META_VARIANTS:
+        print_section_header(f"Overall speedup:\\\\{METHOD_LABELS[v]}\\\\over...", len(BASELINES))
+        for base in BASELINES:
+            row_str = f"        & {METHOD_LABELS[base]}  & "
+            parts = []
+            for bench in BENCHMARK_ORDER:
+                val = stats['speedup'][v][base][bench]
+                if val == "": val = "& & & "
+                parts.append(val)
+            row_str += " & ".join(parts) + r" \\"
+            print(row_str)
+        print(r"    \hline")
     print(r"\end{tabular}")
 
 if __name__ == "__main__":
