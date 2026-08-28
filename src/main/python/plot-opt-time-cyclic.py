@@ -21,9 +21,11 @@ if not os.path.exists(save_path):
 
 # Define methods and their styles
 methods = {
-    'metaDecomp': {'file': 'metadecomp-opt-{}.csv', 'col': 'total_opt_time', 'color': 'black', 'marker': 'o', 'label': 'metaDecomp'},
-    'DPconv': {'file': 'dpconv-opt-{}.csv', 'col': 'opt_time', 'color': colors[0], 'marker': 's', 'label': 'DPconv'},
-    'DuckDB': {'file': 'duckdb-{}.csv', 'col': 'opt_time', 'color': colors[1], 'marker': '^', 'label': 'DuckDB'},
+    'Complete MD': {'file': 'metadecomp-complete-opt-{}.csv', 'col': 'total_opt_time', 'color': colors[0], 'marker': 'o', 'label': 'Complete metaDecomp'},
+    'Randomized MD': {'file': 'metadecomp-random-opt-{}.csv', 'col': 'total_opt_time', 'color': colors[1], 'marker': 's', 'label': 'Randomized metaDecomp'},
+    'DPconv': {'file': 'dpconv-opt-{}.csv', 'col': 'opt_time', 'color': colors[2], 'marker': '^', 'label': 'DPconv'},
+    'DuckDB': {'file': 'duckdb-{}.csv', 'col': 'opt_time', 'color': colors[3], 'marker': 'd', 'label': 'DuckDB'},
+    'Neo4j': {'file': 'neo4j-{}.csv', 'col': 'opt_time', 'color': colors[4], 'marker': 'v', 'label': 'Neo4j'},
     # 'UnionDP': {'file': 'uniondp-opt-{}.csv', 'col': 'opt_time', 'color': colors[2], 'marker': 'd', 'label': 'UnionDP'},
     # 'Yannakakis+': {'file': 'yanplus-opt-{}.csv', 'col': 'opt_time', 'color': colors[3], 'marker': 'P', 'label': 'Yannakakis$^+$'},
     # 'LLM-R2': {'file': 'llm-r2-opt-{}.csv', 'col': 'opt_time', 'color': colors[4], 'marker': 'v', 'label': 'LLM-R$^2$'},
@@ -31,7 +33,7 @@ methods = {
 }
 
 # Benchmarks to plot
-benchmarks_to_plot = ['dsb-cyclic', 'musicbrainz-cyclic'] # ['dsb', 'job-original', 'musicbrainz', 'job-large']
+benchmarks_to_plot = ['dsb-cyclic', 'musicbrainz-cyclic', 'subgraph-matching', 'custom']
 
 # Container for overall data
 overall_data = {method: [] for method in methods}
@@ -50,11 +52,7 @@ def plot_benchmark(series, df_map, output_name):
         # Group by num_rels
         grouped = df.groupby('num_rels')['time_ms'].agg(['mean', 'min', 'max']).sort_index()
         
-        # Determine x offset based on method index to avoid overlap
-        idx = list(methods.keys()).index(method_name)
-        offset = (idx - 2) * 0.1 # Center around 0
-        
-        x = grouped.index + offset
+        x = grouped.index
         y = grouped['mean']
         yerr = [grouped['mean'] - grouped['min'], grouped['max'] - grouped['mean']]
         
@@ -64,7 +62,7 @@ def plot_benchmark(series, df_map, output_name):
 
     plt.yscale('log')
     plt.xlabel('Number of relations', weight='bold')
-    plt.ylabel('Optimization\ntime (ms)', weight='bold')
+    plt.ylabel('Optimization time (ms)', weight='bold')
     # Use integer ticks for x-axis
     plt.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
     
@@ -102,7 +100,7 @@ for series in benchmarks_to_plot:
     df_map = {}
     
     # Load metaDecomp data first as reference for num_rels logic
-    meta_path = os.path.join(results_path, methods['metaDecomp']['file'].format(series))
+    meta_path = os.path.join(results_path, methods['Complete MD']['file'].format(series))
     if not os.path.exists(meta_path):
         print(f"Skipping {series}: metaDecomp file not found at {meta_path}")
         continue

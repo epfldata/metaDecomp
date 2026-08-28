@@ -9,11 +9,11 @@ from config import results_path, green_color, dark_green_color, benchmarks, figu
 
 plt.rcParams['font.size'] = 40
 
-for benchmark in ['dsb-cyclic', 'musicbrainz-cyclic', 'subgraph-matching']:# benchmarks:
+for benchmark in ['dsb-cyclic', 'musicbrainz-cyclic', 'subgraph-matching', 'custom']:# benchmarks:
     for baseline in ['dpconv', 'duckdb']: #, 'uniondp', 'yanplus', 'learned-rewrite', 'llm-r2']:
         for metric in ['exec_time', 'total_time'] if baseline == 'dpconv' else ['total_time']:
             # Load the CSV files
-            meta_df = pd.read_csv(os.path.join(results_path, f'metadecomp-opt-{benchmark}.csv'))
+            meta_df = pd.read_csv(os.path.join(results_path, f'metadecomp-complete-opt-{benchmark}.csv'))
             base_df = pd.read_csv(os.path.join(results_path, f'{baseline}{"" if baseline=="duckdb" else "-opt"}-{benchmark}.csv'))
             duckdb_df = pd.read_csv(os.path.join(results_path, f'duckdb-{benchmark}.csv'))
 
@@ -48,7 +48,7 @@ for benchmark in ['dsb-cyclic', 'musicbrainz-cyclic', 'subgraph-matching']:# ben
             speedups = speedups[speedups > 0]
 
             if metric == 'exec_time':
-                plt.figure(figsize=(13, 4.5))
+                plt.figure(figsize=(11, 4.5))
             else:
                 plt.figure(figsize=(11, 4.25))
 
@@ -82,7 +82,9 @@ for benchmark in ['dsb-cyclic', 'musicbrainz-cyclic', 'subgraph-matching']:# ben
                 # numeric bin edges (may contain large gaps)
                 edges = \
                     np.concatenate([np.arange(0.1, 2.16, 0.2), [10, 100, 1000, 10000, 100000]]) if benchmark == 'subgraph-matching' \
-                    else np.concatenate([[0.01, 0.05], np.arange(0.1, 2.16, 0.2), [10, 100, 1000]])
+                    else np.concatenate([np.arange(0.1, 2.16, 0.2), [10, 100, 1000]]) if benchmark == 'custom' \
+                    else np.concatenate([[0.01], np.arange(0.1, 2.16, 0.2), [10, 100, 1000]]) if benchmark == 'musicbrainz-cyclic' \
+                    else np.concatenate([np.arange(0.1, 2.16, 0.2)])
 
                 # compute counts per numeric bin for each series
                 if len(speedups) == 0:
@@ -127,7 +129,7 @@ for benchmark in ['dsb-cyclic', 'musicbrainz-cyclic', 'subgraph-matching']:# ben
                     # idx = np.where(np.isclose(edges, p))[0]
                     # if idx.size:
                         # tick_indices.append(int(idx[0]) - 0.5)
-                for v in np.concatenate([[0.01, 0.05], np.arange(0.1, 2.16, 0.1)]): # np.arange(0.5, small_max + 1e-9, small_step):
+                for v in np.concatenate([[0.01, 0.05], np.arange(0.1, 2.16, 0.2)]): # np.arange(0.5, small_max + 1e-9, small_step):
                     idx = np.where(np.isclose(edges, v))[0]
                     if idx.size:
                         tick_indices.append(int(idx[0]) - 0.5)

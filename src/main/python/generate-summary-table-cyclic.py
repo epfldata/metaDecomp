@@ -14,7 +14,7 @@ BENCHMARKS = {
     'musicbrainz-cyclic': 'Musicbrainz',
     'subgraph-matching': 'Subgraph Matching'
 }
-BENCHMARK_ORDER = ['dsb-cyclic', 'musicbrainz-cyclic', 'subgraph-matching'] # 'dsb', 'job-original', 'musicbrainz', 'job-large']
+BENCHMARK_ORDER = ['dsb-cyclic', 'musicbrainz-cyclic', 'subgraph-matching', 'custom']
 
 META_VARIANTS = [
     'metadecomp-complete',
@@ -230,12 +230,12 @@ def generate_table():
                         stats['speedup'][v][base][bench] = f"{gm:.2f}x & {median:.2f}x & {p95:.2f}x & {p99:.2f}x"
 
     # Generate LaTeX
-    print(r"\begin{tabular}{cc|cccc|cccc|cccc}")
+    print(r"\begin{tabular}{cc|cccc|cccc|cccc|cccc}")
     print(r"    \hline")
     print(r"    \multicolumn{2}{r|}{\textbf{Benchmark $\rightarrow$}}")
-    print(r"        & \multicolumn{4}{c|}{\textbf{DSB}} & \multicolumn{4}{c|}{\textbf{Musicbrainz}} & \multicolumn{4}{c}{\textbf{Subgraph Matching}} \\")
+    print(r"        & \multicolumn{4}{c|}{\textbf{DSB}} & \multicolumn{4}{c|}{\textbf{Musicbrainz}} & \multicolumn{4}{c|}{\textbf{Subgraph Matching}} & \multicolumn{4}{c}{\textbf{Highly Constrained}} \\")
     print(r"    \textbf{Metric $\downarrow$} & \textbf{Method $\downarrow$}")
-    print(r"        & Mean & Median & 95th & 99th & Mean & Median & 95th & 99th & Mean & Median & 95th & 99th \\")
+    print(r"        & Mean & Median & 95th & 99th & Mean & Median & 95th & 99th & Mean & Median & 95th & 99th & Mean & Median & 95th & 99th \\")
     print(r"    \hline")
 
     def print_section_header(title, multi_row_count):
