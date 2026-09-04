@@ -31,18 +31,7 @@ class MetaDecompGraphConstructBaseline {
         if (memoComp.contains((c, separator))) {
             successful = memoComp((c, separator))
         } else {
-          val candidates =  {
-            val edgesInC = H.edgesInComponent(c)
-            val requiredNodes = edgesInC.nodes.intersect(separatorNodes)
-            H.edges.filter(_.nodes.subsetOf(separatorNodes ++ c))
-              .subsetsOfSizeAtMost(width)
-              .filter { s =>
-                edgesInC.intersect(s).nonEmpty && // S' makes progress in C
-                  requiredNodes.subsetOf(s.nodes) // No escape path
-              }
-              .filter(s => H.isConnected(separator ++ s) && H.isConnected(s ++ edgesInC))
-
-          }
+          val candidates = H.enumNextSeparatorCandidates(prevSep = separator, component = c, width = width)
 
           breakable {
             for (sp <- candidates) {

@@ -16,32 +16,9 @@ class MetaDecompGraphConstructor {
 			graph.adjList(r) = mutable.Map.empty
 			for (c <- hypergraph.componentsInducedBy(r.nodes)) {
 				graph.adjList(r)(c) = mutable.Set.empty
-				val nodesInROrC = c ++ r.nodes
-				for (s <- hypergraph.edges.filter(_.nodes.subsetOf(nodesInROrC)).subsetsOfSizeAtMost(width)
-					if (hypergraph.edgesInComponent(c).intersect(s).nonEmpty
-						&& hypergraph.edgesInComponent(c).forall(_.nodes.intersect(r.nodes).subsetOf(s.nodes)
-						&& hypergraph.isConnected(r ++ s)
-						&& hypergraph.isConnected(s ++ hypergraph.edgesInComponent(c)))
-					)) {
-						graph.addEdge(r, s, c)
-				}
+				hypergraph.enumNextSeparatorCandidates(prevSep = r, component = c, width = width).foreach(s => graph.addEdge(r, s, c))
 			}
 		}
-
-		// graph.vertices += Set.empty[E]
-		// graph.vertices ++= hypergraph.edges.subsetsOfSizeAtMost(width)
-		// graph.vertices.foreach(v => graph.adjList(v) = mutable.Map.empty)
-
-		// for (r <- graph.vertices; c <- hypergraph.componentsInducedBy(r.nodes)) {
-		// 	graph.adjList(r)(c) = mutable.Set.empty
-		// 	for (s <- graph.vertices
-		// 		if (s.nodes.subsetOf(c ++ r.nodes)
-		// 			&& s.nodes.intersect(c).nonEmpty
-		// 			&& Hypergraph.isConnected(r ++ s))
-		// 			&& hypergraph.edgesInComponent(c).nodes.intersect(r.nodes).subsetOf(s.nodes)) {
-		// 		graph.addEdge(r, s, c)
-		// 	}
-		// }
 
 		val checkQueue = mutable.Queue.from(graph.sortedEdges)
 		while (checkQueue.nonEmpty) {
