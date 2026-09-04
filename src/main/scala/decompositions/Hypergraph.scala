@@ -132,7 +132,6 @@ case class Hypergraph(var vertices: Set[Hypergraph.Vertex], var edges: Set[Hyper
 		def conditions(candSep: Separator): Boolean = {
 			val candSepNodes = candSep.nodes
 			candSep.intersect(edgesInC).nonEmpty
-				&& !prevSepNodes.subsetOf(candSepNodes)
 				&& interface.subsetOf(candSepNodes)
 				&& (!component.subsetOf(candSepNodes) || this.isConnected(candSep))
 				&& this.isConnected(prevSep ++ candSep)
