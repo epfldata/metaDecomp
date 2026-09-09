@@ -14,16 +14,17 @@ plt.rcParams['font.size'] = 18
 bold_font = fm.FontProperties(size=12, weight='semibold')
 legend_font = fm.FontProperties(size=18, weight='semibold')
 
-save_path = os.path.join(figures_path, 'opt-time')
+save_path = os.path.join(figures_path, 'total-time')
 
 if not os.path.exists(save_path):
     os.makedirs(save_path)
 
 # Define methods and their styles
 methods = {
-    'metaDecomp': {'file': 'metadecomp-opt-{}.csv', 'col': 'total_opt_time', 'color': 'black', 'marker': 'o', 'label': 'metaDecomp'},
-    'DPconv': {'file': 'dpconv-opt-{}.csv', 'col': 'opt_time', 'color': colors[0], 'marker': 's', 'label': 'DPconv'},
-    'DuckDB': {'file': 'duckdb-{}.csv', 'col': 'opt_time', 'color': colors[1], 'marker': '^', 'label': 'DuckDB'},
+    'metaDecomp': {'file': 'metadecomp-opt-musicbrainz-cyclic.csv', 'col': 'total_time', 'color': 'black', 'marker': 'o', 'label': 'metaDecomp'},
+    'metaDecompIP': {'file': 'metadecomp-ip-opt-musicbrainz-cyclic.csv', 'col': 'total_time', 'color': colors[2], 'marker': 'd', 'label': 'metaDecompIP'},
+    'DPconv': {'file': 'dpconv-opt-musicbrainz-cyclic-zhekai.csv', 'col': 'total_time', 'color': colors[0], 'marker': 's', 'label': 'DPconv'},
+    'DuckDB': {'file': 'duckdb-musicbrainz-cyclic-zhekai.csv', 'col': 'total_time', 'color': colors[1], 'marker': '^', 'label': 'DuckDB'},
     # 'UnionDP': {'file': 'uniondp-opt-{}.csv', 'col': 'opt_time', 'color': colors[2], 'marker': 'd', 'label': 'UnionDP'},
     # 'Yannakakis+': {'file': 'yanplus-opt-{}.csv', 'col': 'opt_time', 'color': colors[3], 'marker': 'P', 'label': 'Yannakakis$^+$'},
     # 'LLM-R2': {'file': 'llm-r2-opt-{}.csv', 'col': 'opt_time', 'color': colors[4], 'marker': 'v', 'label': 'LLM-R$^2$'},
@@ -31,7 +32,7 @@ methods = {
 }
 
 # Benchmarks to plot
-benchmarks_to_plot = ['dsb-cyclic', 'musicbrainz-cyclic'] # ['dsb', 'job-original', 'musicbrainz', 'job-large']
+benchmarks_to_plot = [ 'musicbrainz-cyclic'] # ['dsb', 'job-original', 'musicbrainz', 'job-large']
 
 # Container for overall data
 overall_data = {method: [] for method in methods}
@@ -138,7 +139,7 @@ for series in benchmarks_to_plot:
         df_map[method_name] = df
         overall_data[method_name].append(df[['num_rels', 'time_ms']])
         
-    plot_benchmark(series, df_map, f'opt-time-{series}.pdf')
+    plot_benchmark(series, df_map, f'total-time-{series}.pdf')
 
 # Process Overall
 print("Processing benchmark: overall")
@@ -149,7 +150,7 @@ for method_name in methods:
     else:
         overall_df_map[method_name] = None
 
-plot_benchmark('overall', overall_df_map, 'opt-time-overall.pdf')
+plot_benchmark('overall', overall_df_map, 'total-time-overall.pdf')
 
 # Save Legend separately
 print("Saving separate legend versions...")
@@ -169,7 +170,7 @@ legend = ax.legend(handles, labels, loc='center', ncol=len(methods), frameon=Tru
                    handletextpad=0.2, columnspacing=0.8, borderpad=0.3)
 legend.get_frame().set_edgecolor('gray')
 legend.get_frame().set_linewidth(1)
-legend_path = os.path.join(save_path, 'opt-time-legend.pdf')
+legend_path = os.path.join(save_path, 'total-time-legend.pdf')
 fig_legend.canvas.draw()
 bbox = legend.get_window_extent().transformed(fig_legend.dpi_scale_trans.inverted())
 # Manual padding of 0.05 inches to ensure border is visible but crop is tight

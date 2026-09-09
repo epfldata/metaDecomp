@@ -196,7 +196,7 @@ class JoinNode(lhs: PlanNode, rhs: PlanNode)(implicit sqlIR: sql.IR) extends Pla
 					else
 						s"${outputColumn.qualifiedCol.hyperedge.alias}_${outputColumn.qualifiedCol.column}"
 				if (lhs.projectTo.contains(outputColumn) && rhs.projectTo.contains(outputColumn)) {
-					renamedColumnName
+					s"${lhsViewName}.${renamedColumnName}"
 				} else {
 					renamedColumnName
 				}

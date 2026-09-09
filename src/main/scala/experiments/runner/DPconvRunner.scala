@@ -21,10 +21,11 @@ object DPconvRunner extends BaseRunner {
 	def main(args: Array[String]): Unit = {
 		val runUnionDP = args.contains("UnionDP")
 
-		for (benchmark <- benchmarks) {
+		for (benchmark <- if args.size >= 1 then List(args(0)) else benchmarks) {
 			connect(benchmark)
 
 			implicit val benchmarkPath: String = s"$benchmarksPath/$benchmark"
+			//println(benchmarkPath)
 
 			val resultsCsvPath = Paths.get(resultsDir, s"${if runUnionDP then "uniondp" else "dpconv"}-opt-$benchmark-$getTimestamp.csv")
 

@@ -14,6 +14,9 @@ class MetaDecompGraph {
 		vertices += e1
 		vertices += e2
 		adjList.getOrElseUpdate(e1, mutable.Map.empty).getOrElseUpdate(c, mutable.Set.empty) += e2
+		if (!adjList.contains(e2)) {
+			adjList(e2) = mutable.Map.empty
+		}
 		sortedEdges += ((e1, e2, c))
 	}
 
@@ -42,5 +45,15 @@ class MetaDecompGraph {
 			val e2sStr = ce2s.flatMap(_._2).toSeq.sortBy(e => separatorStr(e)).map(e => separatorStr(e)).mkString(", ")
 			s"${separatorStr(e1)} -> $e2sStr"
 		}.mkString("\n")
+	}
+	
+	def getVertices: mutable.Set[Separator] = {
+		var reachableVertices: mutable.Set[Separator] = mutable.Set.empty
+		sortedEdges.foreach((r, s, c) => {
+			reachableVertices += r
+			reachableVertices += s
+		})
+		
+		reachableVertices
 	}
 }

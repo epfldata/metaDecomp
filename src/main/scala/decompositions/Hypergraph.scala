@@ -2,8 +2,12 @@ package decompositions
 
 import scala.annotation.tailrec
 import scala.collection.mutable
+import scala.util.Random
+import Hypergraph.{Component, Hyperedge, HyperedgeSetExtension, Vertex}
+import utils.{nonEmptySubsetsOfSizeAtMost,subsetsOfSizeAtMost}
+import decompositions.Hypergraph.Separator
 
-import Hypergraph.{Vertex, Hyperedge, Component, HyperedgeSetExtension}
+import scala.language.postfixOps
 
 trait NamedElement(val name: String)
 implicit class NamedElementSetExtension[T <: NamedElement](val s: Set[T]) {
@@ -34,11 +38,15 @@ object Hypergraph {
 
 	type Component = Set[Vertex]
 	type Separator = Set[Hyperedge]
+
+	private val hyperedgeSetVertices = mutable.Map.empty[Set[Hyperedge], Set[Vertex]]
+	
 }
 
 case class Hypergraph(var vertices: Set[Hypergraph.Vertex], var edges: Set[Hypergraph.Hyperedge]) {
 
-	val adjVertices: Map[Hypergraph.Vertex, Set[Hypergraph.Vertex]] = vertices.map(v => v -> edges.filter(_.nodes.contains(v)).nodes).toMap
+	var adjVertices: Map[Hypergraph.Vertex, Set[Hypergraph.Vertex]] = vertices.map(v => v -> edges.filter(_.nodes.contains(v)).nodes).toMap
+	var adjEdges: Map[Hypergraph.Hyperedge, Set[Hypergraph.Hyperedge]] = edges.map(e => e -> (edges.filter(_.nodes.intersect(e.nodes).nonEmpty) - e)).toMap
 
 	override def equals(obj: Any): Boolean = obj match {
 		case Hypergraph(otherVertices, otherEdges) =>
@@ -46,7 +54,7 @@ case class Hypergraph(var vertices: Set[Hypergraph.Vertex], var edges: Set[Hyper
 		case _ => false
 	}
 
-	val edgesInComponentMemp = mutable.Map.empty[Component, Set[Hyperedge]]
+	var edgesInComponentMemp = mutable.Map.empty[Component, Set[Hyperedge]]
 
 	def edgesInComponent(component: Component): Set[Hyperedge] = {
 		edgesInComponentMemp.getOrElseUpdate(component, this.edges.filter(_.nodes.exists(component.contains)))
@@ -62,27 +70,71 @@ case class Hypergraph(var vertices: Set[Hypergraph.Vertex], var edges: Set[Hyper
 		}.mkString("\n")
 	}
 
-	private val componentsMemo = mutable.Map.empty[(Set[Vertex], Set[Vertex]), Set[Component]]
+	private var componentsMemo = mutable.Map.empty[(Set[Vertex], Set[Vertex]), Set[Component]]
+
+	def resetMemo() : Unit = {
+		componentsMemo = mutable.Map.empty[(Set[Vertex], Set[Vertex]), Set[Component]]
+		edgesInComponentMemp = mutable.Map.empty[Component, Set[Hyperedge]]
+		adjVertices = vertices.map(v => v -> edges.filter(_.nodes.contains(v)).nodes).toMap
+		adjEdges = edges.map(e => e -> (edges.filter(_.nodes.intersect(e.nodes).nonEmpty) - e)).toMap
+	}
+
+	private def computeComponents(vertices: Set[Vertex], allowedVertices: Set[Vertex] = this.vertices): Set[Component] = {
+		val components = mutable.Set.empty[Component]
+		val unvisited = mutable.Set.from(allowedVertices -- vertices)
+		while (unvisited.nonEmpty) {
+			@tailrec
+			def walk(visited: Set[Vertex]): Set[Vertex] = {
+				val updated = visited ++ visited.flatMap(adjVertices).intersect(allowedVertices) -- vertices
+				if updated == visited then updated else walk(updated)
+			}
+
+			val newComponent = walk(Set(unvisited.head))
+			components += newComponent
+			unvisited --= newComponent
+		}
+		Set.from(components)
+	}
 
 	def componentsInducedBy(vertices: Set[Vertex], allowedVertices: Set[Vertex] = this.vertices): Set[Component] = {
-		def computeComponents(vertices: Set[Vertex]): Set[Component] = {
-			val components = mutable.Set.empty[Component]
-			val unvisited = mutable.Set.from(allowedVertices -- vertices)
-			while (unvisited.nonEmpty) {
-				@tailrec
-				def walk(visited: Set[Vertex]): Set[Vertex] = {
-					val updated = visited ++ visited.flatMap(adjVertices).intersect(allowedVertices) -- vertices
-					if updated == visited then updated else walk(updated)
-				}
-
-				val newComponent = walk(Set(unvisited.head))
-				components += newComponent
-				unvisited --= newComponent
-			}
-			Set.from(components)
-		}
-
 		componentsMemo.getOrElseUpdate((vertices, allowedVertices), computeComponents(vertices)) // calcuating hash is slow
+	}
+
+	def removeRandomEdgeKeepingConnected(rng: Random = new Random()): Option[Hyperedge] = {
+		if (edges.isEmpty) return None
+
+		val shuffled = rng.shuffle(edges.toVector)
+
+		shuffled.iterator.find { candidate =>
+			val remainingEdges = edges - candidate
+			val candidateHg = Hypergraph(vertices, remainingEdges)
+			val components: Set[Component] = candidateHg.computeComponents(Set.empty)
+			var nonTrivialComponentsCount = 0
+			components.foreach(comp => {
+				if (comp.size > 1) {
+					nonTrivialComponentsCount += 1
+				} else {
+					candidateHg.vertices -= comp.toSeq.head
+				}
+			})
+			nonTrivialComponentsCount == 1
+		} match {
+			case Some(chosen) =>
+				edges = edges - chosen
+				val components = computeComponents(Set.empty)
+        // if some vertices become disconnected after edge deletion, we need to remove them
+				vertices = edges.flatMap(_.nodes)
+				resetMemo()
+				Some(chosen)
+			case None =>
+				None
+		}
+	}
+	
+	def addEdge(hyperedge: Hyperedge): Unit = {
+		edges = edges + hyperedge
+		vertices = vertices ++ hyperedge.nodes
+		resetMemo()
 	}
 	
 	def isConnected(edges: Set[Hyperedge]): Boolean = {
@@ -117,5 +169,65 @@ case class Hypergraph(var vertices: Set[Hypergraph.Vertex], var edges: Set[Hyper
 		// }
 		// reachableVertices.size == edges.flatMap(_.nodes).size
 	}
+
+	def enumNextSeparatorCandidates(prevSep: Separator, component: Component, width: Int): mutable.ListBuffer[Separator] = {
+		val candidatesAcc = mutable.ListBuffer.empty[Separator]
+		val edgesOfDist = mutable.IndexedBuffer[Set[Hyperedge]]()
+		val edgesWithinDist = mutable.IndexedBuffer[Set[Hyperedge]]()
+		val edgesInC = this.edgesInComponent(component)
+		val prevSepNodes = prevSep.nodes
+		val interface = edgesInC.nodes.intersect(prevSepNodes)
+
+		def conditions(candSep: Separator): Boolean = {
+			val candSepNodes = candSep.nodes
+			candSep.intersect(edgesInC).nonEmpty
+				&& !prevSepNodes.subsetOf(candSepNodes)
+				&& interface.subsetOf(candSepNodes)
+				&& (!component.subsetOf(candSepNodes) || this.isConnected(candSep))
+			&&
+			this.isConnected(prevSep ++ candSep)
+		}
+
+		def checkAndAddSeparator(candSep: Separator): Boolean = { // Returns true if current separator can already cover the whole component => can be a leaf node. In this case we don't need to explore alternatives.
+			if (conditions(candSep)) {
+				candidatesAcc += candSep
+				if (component.subsetOf(candSep.nodes)) {
+					return true // S will be a leaf node. Stop exploring for alternatives.
+				}
+			}
+			false
+		}
+
+		def rec(currentSet: Set[Hyperedge], dist: Int): Option[Separator] = {
+			if (checkAndAddSeparator(currentSet)) return Some(currentSet)
+			if (currentSet.size < width) {
+				if (edgesOfDist.size <= dist + 1) {
+					edgesOfDist.insert(dist + 1, edgesOfDist(dist).flatMap(e => (adjEdges(e) -- edgesWithinDist(dist)).filter(_.nodes.subsetOf(prevSep.nodes ++ component))))
+					edgesWithinDist.insert(dist + 1, edgesWithinDist(dist) ++ edgesOfDist(dist + 1))
+				}
+				edgesOfDist(dist + 1).nonEmptySubsetsOfSizeAtMost(width - currentSet.size).foreach(s => rec(currentSet ++ s, dist + 1) match {
+					case Some(s) => return Some(s)
+					case None => // continue
+				})
+			}
+			None
+		}
+
+		if prevSep.isEmpty || width <= 2 then
+			val fullList = mutable.ListBuffer.from(edges.filter(_.nodes.subsetOf(prevSepNodes ++ component)).subsetsOfSizeAtMost(width).filter(conditions))
+			fullList.find(s => component.subsetOf(s.nodes)) match {
+				case Some(s) => mutable.ListBuffer(s)
+				case None => fullList
+			}
+		else
+			edgesOfDist.insert(0, prevSep)
+			edgesWithinDist.insert(0, edgesOfDist(0))
+			prevSep.subsetsOfSizeAtMost(width - 1).foreach(s => rec(s, 0) match {
+				case Some(s) => return mutable.ListBuffer(s)
+				case None => // continue
+			})
+			candidatesAcc
+	}
+	
 }
 

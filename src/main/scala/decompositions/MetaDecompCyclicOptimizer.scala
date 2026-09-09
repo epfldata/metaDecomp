@@ -1,9 +1,12 @@
 package decompositions
 
-import decompositions.Hypergraph.{Vertex, Hyperedge, Separator}
+import decompositions.Hypergraph.{Hyperedge, Separator, Vertex}
+
 import scala.collection.mutable
 import utils.subsetsOfSizeAtMost
 import decompositions.CostModel.getCumulativeCost
+
+import java.awt.Component
 
 class MetaDecompCyclicOptimizer()(implicit sqlIR: sql.IR) {
 	def optimizeLocalDP(subplans: Set[PlanNode]): PlanNode = {
@@ -70,8 +73,11 @@ class MetaDecompCyclicOptimizer()(implicit sqlIR: sql.IR) {
 
 	def run(hypergraph: Hypergraph, metaDecompGraph: MetaDecompGraph): PlanNode = {
 		val edgeToPlan = mutable.Map.empty[(Separator, Separator), PlanNode]
+		var bestEdges: mutable.Map[(Separator, Separator, Hypergraph.Component),Set[(Hypergraph.Component, Separator)]] = mutable.Map.empty
 		metaDecompGraph.sortedEdges.foreach((r, s, crs) => {
-			val componentBestEdge = metaDecompGraph.adjList(s).keySet.toSet.filter(_.subsetOf(crs)).map(cst => cst -> metaDecompGraph.adjList(s)(cst).minBy(t => edgeToPlan((s, t)).cumulativeCost))
+			val componentBestEdge: Set[(Hypergraph.Component, Separator)] = metaDecompGraph.adjList(s).keySet.toSet.filter(_.subsetOf(crs)).map(cst => cst -> metaDecompGraph.adjList(s)(cst).minBy(t => edgeToPlan((s, t)).cumulativeCost))
+			bestEdges((r, s, crs)) = componentBestEdge
+			//println(s"Best edges for ${(r, s, crs)}: $componentBestEdge")
 			val childrenPlans = metaDecompGraph.adjList(s).keySet.toSet.filter(_.subsetOf(crs)).map(cst => metaDecompGraph.adjList(s)(cst).map(t => edgeToPlan((s, t))).minBy(_.cumulativeCost))
 			val newRelations = hypergraph.edges.filter(_.nodes.subsetOf(s.nodes)) -- childrenPlans.flatMap(_.allJoinedRelations)
 			try {
@@ -93,9 +99,15 @@ class MetaDecompCyclicOptimizer()(implicit sqlIR: sql.IR) {
 			// println(s"  ${componentBestEdge.map(p => s"(${p._1.asString}) -> (${p._2.asString})\n${edgeToPlan((s, p._2))}").mkString(" ; ")}")
 			// println(s"  Optimal query plan: ${edgeToPlan((r, s))}")
 		})
+		def printHD(r: Separator, s: Separator, crs: Hypergraph.Component): Unit = {
+			println(s"($r, $s, $crs)")
+			bestEdges((r, s, crs)).foreach((cst, t) => printHD(s, t, cst))
+		}
+
 		val root = metaDecompGraph.vertices.find(_.size == 0).get
-		// val first = metaDecompGraph.adjList(root).flatMap(_._2).minBy(t => edgeToPlan(root, t).cumulativeCost)
-		// println(s"First separator: ${first.asString}")
+		//val first = metaDecompGraph.adjList(root).flatMap(_._2).minBy(t => edgeToPlan(root, t).cumulativeCost)
+		//println(s"First separator: ${first.asString}")
+		//printHD(root, first, hypergraph.vertices)
 		val minPlan = metaDecompGraph.adjList(root).flatMap(_._2).map(t => edgeToPlan(root, t)).minBy(_.cumulativeCost)
 		minPlan.projectTo = sqlIR.outputAttributes
 		minPlan

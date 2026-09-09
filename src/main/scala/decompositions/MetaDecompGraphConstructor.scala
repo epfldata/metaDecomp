@@ -21,27 +21,14 @@ class MetaDecompGraphConstructor {
 					if (hypergraph.edgesInComponent(c).intersect(s).nonEmpty
 						&& hypergraph.edgesInComponent(c).forall(_.nodes.intersect(r.nodes).subsetOf(s.nodes)
 						&& hypergraph.isConnected(r ++ s)
-						&& hypergraph.isConnected(s ++ hypergraph.edgesInComponent(c)))
+						&& hypergraph.isConnected(s ++ hypergraph.edgesInComponent(c))
+						)
 					)) {
 						graph.addEdge(r, s, c)
 				}
 			}
 		}
 
-		// graph.vertices += Set.empty[E]
-		// graph.vertices ++= hypergraph.edges.subsetsOfSizeAtMost(width)
-		// graph.vertices.foreach(v => graph.adjList(v) = mutable.Map.empty)
-
-		// for (r <- graph.vertices; c <- hypergraph.componentsInducedBy(r.nodes)) {
-		// 	graph.adjList(r)(c) = mutable.Set.empty
-		// 	for (s <- graph.vertices
-		// 		if (s.nodes.subsetOf(c ++ r.nodes)
-		// 			&& s.nodes.intersect(c).nonEmpty
-		// 			&& Hypergraph.isConnected(r ++ s))
-		// 			&& hypergraph.edgesInComponent(c).nodes.intersect(r.nodes).subsetOf(s.nodes)) {
-		// 		graph.addEdge(r, s, c)
-		// 	}
-		// }
 
 		val checkQueue = mutable.Queue.from(graph.sortedEdges)
 		while (checkQueue.nonEmpty) {
@@ -51,18 +38,49 @@ class MetaDecompGraphConstructor {
 			}
 		}
 
+
 		val root = graph.vertices.find(_.isEmpty).get
-		val reachableVertices = mutable.Set.empty[Separator]
-		val reachabilityQueue = mutable.Queue.empty[(Separator, Component)]
+		val reachableSeparators = mutable.Set.empty[Separator]
+		val visitedStates =
+			mutable.Set.empty[(Separator, Component)]
+
+		val reachabilityQueue =
+			mutable.Queue.empty[(Separator, Component)]
+
 		reachabilityQueue.enqueue((root, hypergraph.vertices))
+
 		while (reachabilityQueue.nonEmpty) {
-			val (r, cr) = reachabilityQueue.dequeue()
-			reachableVertices += r
-			for ((cs, ss) <- graph.adjList(r) if (cs.subsetOf(cr)) ; s <- ss if (!reachableVertices.contains(s))) {
-				reachabilityQueue.enqueue((s, cs))
+			val state@(r, cr) = reachabilityQueue.dequeue()
+
+			if (visitedStates.add(state)) {
+				reachableSeparators += r
+
+				for {
+					(cs, successors) <- graph.adjList.getOrElse(
+						r,
+						mutable.Map.empty[Component, mutable.Set[Separator]]
+					)
+					if cs.subsetOf(cr)
+					s <- successors
+				} {
+					reachabilityQueue.enqueue((s, cs))
+				}
 			}
 		}
-		graph.vertices.filterNot(reachableVertices.contains).foreach(graph.removeVertex)
+
+		graph.vertices
+			.filterNot(reachableSeparators.contains)
+			.foreach(graph.removeVertex)
+
+		/*graph.sortedEdges.foreach(
+			(r, s, crs) => {
+				for (c <- hypergraph.componentsInducedBy(s.nodes)) {
+					if (c.subsetOf(crs) && graph.adjList(s)(c).isEmpty) {
+						println(s"Local condition failed")
+					}
+				}
+			}
+		)*/
 		return graph
 	}
 }
