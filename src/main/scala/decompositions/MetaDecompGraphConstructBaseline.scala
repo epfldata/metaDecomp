@@ -62,28 +62,29 @@ class MetaDecompGraphConstructBaseline {
 
     // iterate over all possible roots
     for (root <- H.edges.subsetsOfSizeAtMost(width)) {
-      if (root.nonEmpty  && rec(H.vertices -- root.nodes, root, 1)(width)
-      && H.isConnected(root)
-      ) {
+      if (root.nonEmpty  && rec(H.vertices -- root.nodes, root, 1)(width)) {
         val emptySeparator: Separator = HashSet.empty[Hyperedge]
         graph.addEdge(emptySeparator, root, H.vertices)
       }
     }
 
-    val root = graph.vertices.find(_.isEmpty).get
-    val reachableVertices = mutable.Set.empty[Separator]
-    val reachabilityQueue = mutable.Queue.empty[(Separator, Component)]
-    reachabilityQueue.enqueue((root, hypergraph.vertices))
-    while (reachabilityQueue.nonEmpty) {
-      val (r, cr) = reachabilityQueue.dequeue()
-      reachableVertices += r
-      if (graph.adjList.contains(r)) {
-        for ((cs, ss) <- graph.adjList(r) if (cs.subsetOf(cr)); s <- ss if (!reachableVertices.contains(s))) {
-          reachabilityQueue.enqueue((s, cs))
+    graph.vertices.find(_.isEmpty) match {
+      case Some(root) => 
+        val reachableVertices = mutable.Set.empty[Separator]
+        val reachabilityQueue = mutable.Queue.empty[(Separator, Component)]
+        reachabilityQueue.enqueue((root, hypergraph.vertices))
+        while (reachabilityQueue.nonEmpty) {
+          val (r, cr) = reachabilityQueue.dequeue()
+          reachableVertices += r
+          if (graph.adjList.contains(r)) {
+            for ((cs, ss) <- graph.adjList(r) if (cs.subsetOf(cr)); s <- ss if (!reachableVertices.contains(s))) {
+              reachabilityQueue.enqueue((s, cs))
+            }
+          }
         }
-      }
+        graph.vertices.filterNot(reachableVertices.contains).foreach(graph.removeVertex)
+      case None => graph.vertices.foreach(graph.removeVertex)
     }
-    graph.vertices.filterNot(reachableVertices.contains).foreach(graph.removeVertex)
 
     return graph
   }
