@@ -104,4 +104,45 @@ trait BaseRunner {
 
 		executionTime
 	}
+
+	def runPlanOnce(plan: PlanNode)(implicit sqlIR: sql.IR): Long = {
+		val (viewSqls, finalSql, groupBy) = plan.generateSqlWithViews()
+		runQueryOnceWithViewCreation(viewSqls, finalSql + "\n" + groupBy + ";")
+	}
+
+	def runQueryOnceWithViewCreation(viewSqls: String, finalSql: String): Long = {
+		val viewsStmt = conn.createStatement()
+		val stmt = conn.createStatement()
+		stmt.setQueryTimeout(timeout.toSeconds.toInt)
+
+		try {
+			if (viewSqls.stripSuffix(";").nonEmpty) {
+				viewsStmt.execute(viewSqls)
+				viewsStmt.close()
+			}
+
+			val queryFuture = Future { stmt.execute(finalSql) }
+
+			val executionStartTime = System.nanoTime()
+			println(s"Execution run started $getTimestamp:")
+			Await.result(queryFuture, timeout)
+			val executionEndTime = System.nanoTime()
+			val executionTime = (executionEndTime - executionStartTime) / 1000 // microseconds
+			println(s"Execution run: $executionTime us")
+			stmt.close()
+			executionTime
+		} catch {
+			case _: TimeoutException | _: SQLTimeoutException =>
+				println("Query timed out, terminating...")
+				stmt.cancel()
+				deleteTmpFiles()
+				println("Query timed out and was terminated.")
+				return timeout.toMicros
+			case e: Throwable =>
+				e.printStackTrace()
+				deleteTmpFiles()
+				println("Query exceeded memory limit or crashed and was terminated.")
+				return timeout.toMicros
+		}
+	}
 }

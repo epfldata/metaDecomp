@@ -54,45 +54,6 @@ object MetaDecompRunner extends BaseRunner {
 
 						println(hypergraph)
 
-						var width = 2
-						var meta: MetaDecompGraph = null
-
-						for (i <- 0 until repeatTimes) {
-							if args(0) == "complete" then 
-									MetaDecompGraphConstructBaseline().run(hypergraph, width)
-							else 
-								MetaDecompGraphRandomizedConstructor().run(hypergraph, width)
-						}
-
-						while ({
-							meta = (
-								if args(0) == "complete" then 
-									MetaDecompGraphConstructBaseline().run(hypergraph, width)
-								else 
-									MetaDecompGraphRandomizedConstructor().run(hypergraph, width)
-							);
-							meta.sortedEdges.isEmpty 
-						}) {
-							println(s"Width ${width} failed")
-							width += 1
-						}
-						println(s"Width ${width}")
-
-						val metaGraphTime = (for (i <- 0 until repeatTimes) yield {
-							val metaStartTime = System.nanoTime()
-							if args(0) == "complete" then 
-									MetaDecompGraphConstructBaseline().run(hypergraph, width)
-							else 
-								MetaDecompGraphRandomizedConstructor().run(hypergraph, width)
-							val metaEndTime = System.nanoTime()
-							val metaTime = (metaEndTime - metaStartTime) / 1000 // microseconds
-							println(s"Meta graph construction run $i: $metaTime us")
-							metaTime
-						}).sorted.apply(repeatTimes / 2)
-						
-						// println(meta)
-						// println(meta.sortedEdges)
-
 						println("Loading cardinalities...")
 
 						val joinedTablesFileSource = Source.fromFile(Paths.get(benchmarkPath, "cardinalities", s"${queryName}.csv").toFile)
@@ -110,20 +71,58 @@ object MetaDecompRunner extends BaseRunner {
 
 						joinedTablesFileSource.close()
 
-						val (plan, planningTime) = (for (i <- 0 until repeatTimes) yield {
+						println("Done")
+
+						if (args(0) != "complete") {
+							if (index == 0) {
+								for (i <- 0 until repeatTimes) {
+									var width = 2
+									MetaDecompGraphRandomizedConstructor().run(hypergraph, width)
+								}
+							}
+						}
+
+						val (width, meta, plan, metaGraphTime, planningTime, totalOptTime, executionTime, totalTime) = (for (i <- 0 until repeatTimes) yield {
+							var meta: MetaDecompGraph = null
+							val metaStartTime = System.nanoTime()
+							var width = 2
+							while ({
+								meta = (
+									if args(0) == "complete" then 
+										MetaDecompGraphConstructBaseline().run(hypergraph, width)
+									else 
+										MetaDecompGraphRandomizedConstructor().run(hypergraph, width)
+								);
+								meta.sortedEdges.isEmpty 
+							}) {
+								println(s"Width ${width} failed")
+								width += 1
+							}
+							println(s"Width ${width}")
+							val metaEndTime = System.nanoTime()
+							val metaTime = (metaEndTime - metaStartTime) / 1000 // microseconds
+							println(s"Meta graph construction run $i: $metaTime us")
+
 							val planningStartTime = System.nanoTime()
 							val plan = MetaDecompCyclicOptimizer().run(hypergraph, meta)
 							val planningEndTime = System.nanoTime()
 							val planningTime = (planningEndTime - planningStartTime) / 1000 // microseconds
 							println(s"Planning run $i: $planningTime us")
-							(plan, planningTime)
-						}).sortBy(_._2).apply(repeatTimes / 2) // Take the median of 5 runs
+							
+							val totalOptTime = metaTime + planningTime // microseconds
 
-						val totalOptTime = metaGraphTime + planningTime // microseconds
+							println(s"Optimization time: $metaTime us + $planningTime us = $totalOptTime us")
 
-						println(s"Optimization time: $metaGraphTime us + $planningTime us = $totalOptTime us")
+							val executionTime = runPlanOnce(plan)
 
-						// println(plan)
+							val totalTime = totalOptTime + executionTime
+
+							println(s"Total time: ${totalOptTime + executionTime} us")
+
+							System.gc()
+
+							(width, meta, plan, metaTime, planningTime, totalOptTime, executionTime, totalTime)
+						}).sortBy(_._7).apply(repeatTimes / 2)
 
 						val (viewSql, finalSql, groupBy) = plan.generateSqlWithViews()
 						// println(Seq(viewSql, finalSql, groupBy).mkString("\n"))
@@ -141,15 +140,6 @@ object MetaDecompRunner extends BaseRunner {
 						} catch {
 							case e: Throwable => println(s"Error drawing the query plan using dot: ${e.getMessage}")
 						}
-
-
-						val executionTime = runPlan(plan)
-
-						println(s"Execution time: $executionTime us")
-
-
-						val totalTime = totalOptTime + executionTime
-						println(s"Total time: ${totalOptTime + executionTime} us")
 
 						val intermediateCost = plan.intermediateCost
 						val inCost = plan.inputCost
