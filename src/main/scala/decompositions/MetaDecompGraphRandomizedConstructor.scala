@@ -18,7 +18,7 @@ class MetaDecompGraphRandomizedConstructor {
 
   def run(hypergraph: Hypergraph, width: Int): MetaDecompGraph = {
     val startTime = System.nanoTime()
-    def timedOut = (System.nanoTime() - startTime) / 1000 > 50 * math.pow(hypergraph.edges.size, 2) * math.pow(5, width - 2)
+    def timedOut = (System.nanoTime() - startTime) / 1000 > 75 * math.pow(hypergraph.edges.size, 2) * math.pow(5, width - 2)
     // 500 * hypergraph.edges.size * math.pow(hypergraph.edges.size / 4, width - 2)
 
     val unexhaustedCandidates = mutable.Map.empty[(Separator, Separator, Component), mutable.ListBuffer[Separator]]
@@ -26,6 +26,8 @@ class MetaDecompGraphRandomizedConstructor {
     val unaddedSolution = mutable.Map.empty[(Separator, Separator), Hypertree]
       // To store subtrees that are part of a failed run, i.e., not yet added to the meta-decomposition graph, to be used if the same subproblem is encountered again.
     val exhausted = mutable.Set.empty[(Separator, Separator)] // Subproblems of which all possible descendents have been explored.
+    val componentExhausted = mutable.Set.empty[(Separator, Component)]
+    val componentHasSolution = mutable.Map.empty[(Separator, Component), Boolean]
 
     val graph = new MetaDecompGraph()
     val H = hypergraph
@@ -47,6 +49,10 @@ class MetaDecompGraphRandomizedConstructor {
       val components = H.componentsInducedBy(separatorNodes).filter(_.subsetOf(currComp))
       var allExhausted = true
       val tree = Hypertree(currSep)
+      if (components.exists(c => componentHasSolution.getOrElse((currSep, c), true) == false)) {
+        hasSolution((prevSep, currSep)) = false
+        return None
+      }
       components.foreach { nextComp =>
         if (timedOut) return None
         var successful = false
@@ -60,6 +66,7 @@ class MetaDecompGraphRandomizedConstructor {
             case Some(subtree) =>
               successful = true
               tree.children += (nextComp, subtree)
+              componentHasSolution((currSep, nextComp)) = true
               if (exhausted.contains((currSep, nextSep))) {
                 candidates.remove(i)
               }
@@ -71,6 +78,17 @@ class MetaDecompGraphRandomizedConstructor {
         } }
         if (candidates.nonEmpty) {
           allExhausted = false
+        } else {
+          componentExhausted += ((currSep, nextComp))
+          if (componentHasSolution.getOrElse((currSep, nextComp), false) == false) {
+            // If known to have no solution, or no solution is added at all
+            hasSolution((prevSep, currSep)) = false
+            componentHasSolution((currSep, nextComp)) = false
+            return None
+          }
+          if (componentHasSolution.getOrElse((currSep, nextComp), false) == true) {
+            successful = true
+          }
         }
 
         if (!successful) { // Some component is not successful

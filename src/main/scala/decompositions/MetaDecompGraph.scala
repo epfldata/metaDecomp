@@ -23,6 +23,12 @@ class MetaDecompGraph {
 	def removeEdge(e1: Separator, e2: Separator, c: Component): Unit = {
 		adjList(e1)(c) -= e2
 		sortedEdges -= ((e1, e2, c))
+		if ((!adjList.contains(e1) || adjList(e1).isEmpty || adjList(e1).forall { case (_, ss) => ss.isEmpty }) && !adjList.exists { case (_, m) => m.values.exists { ss => ss.contains(e1) } }) {
+			removeVertex(e1)
+		}
+		if ((!adjList.contains(e2) || adjList(e2).isEmpty || adjList(e2).forall { case (_, ss) => ss.isEmpty }) && !adjList.exists { case (_, m) => m.values.exists { ss => ss.contains(e2) } }) {
+			removeVertex(e2)
+		}
 	}
 
 	def removeVertex(v: Separator): Unit = {

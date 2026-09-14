@@ -14,22 +14,25 @@ import decompositions.MetaDecompGraphConstructor
 import decompositions.MetaDecompCyclicOptimizer
 import decompositions.MetaDecompGraph
 import decompositions.Hypergraph
+import decompositions.MetaDecompGraphRandomizedConstructor
+import decompositions.MetaDecompGraphConstructBaseline
+import decompositions.MetaDecompGraphRandomNoBacktrackConstructor
 
 object MetaDecompRunner extends BaseRunner {
 	def main(args: Array[String]): Unit = {
-		for (benchmark <- if args.size >= 1 then List(args(0)) else benchmarks) {
+		for (benchmark <- if args.size >= 2 then List(args(1)) else benchmarks) {
 			connect(benchmark)
 
 			val benchmarkPath = s"$benchmarksPath/$benchmark"
-			val resultsPath = Paths.get(resultsDir, s"metadecomp-opt-$benchmark-$getTimestamp.csv")
+			val resultsPath = Paths.get(resultsDir, s"metadecomp-${args(0)}-opt-$benchmark-$getTimestamp.csv")
 			Files.write(
 				resultsPath,
-				"query,num_rels,max_fanout,metagyo_time,planning_time,total_opt_time,exec_time,total_time,cost_intm,cost_in,cout_cost\n".getBytes,
+				"query,num_rels,width,max_fanout,metagyo_time,planning_time,total_opt_time,exec_time,total_time,cost_intm,cost_in,cout_cost\n".getBytes,
 				StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING
 			)
 
 
-			sqlFilesInBenchmark(benchmark).filter(f => if args.size >= 2 then f.getName.matches(args(1)) else true).foreach(sqlFile =>
+			sqlFilesInBenchmark(benchmark).filter(f => if args.size >= 3 then f.getName.matches(args(2)) else true).zipWithIndex.foreach { case (sqlFile, index) =>
 				val queryName = sqlFile.getName.stripSuffix(".sql")
 
 				if (Files.exists(Paths.get(benchmarkPath, "cardinalities", s"${queryName}.csv"))) {
@@ -54,7 +57,23 @@ object MetaDecompRunner extends BaseRunner {
 
 						var width = 2
 						var meta: MetaDecompGraph = null
-						while ({ meta = MetaDecompGraphConstructor().run(hypergraph, width); meta.sortedEdges.isEmpty } ) {
+
+						for (i <- 0 until repeatTimes) {
+							if args(0) == "complete" then 
+									MetaDecompGraphConstructBaseline().run(hypergraph, width)
+							else 
+								MetaDecompGraphRandomizedConstructor().run(hypergraph, width)
+						}
+
+						while ({
+							meta = (
+								if args(0) == "complete" then 
+									MetaDecompGraphConstructBaseline().run(hypergraph, width)
+								else 
+									MetaDecompGraphRandomizedConstructor().run(hypergraph, width)
+							);
+							meta.sortedEdges.isEmpty 
+						}) {
 							println(s"Width ${width} failed")
 							width += 1
 						}
@@ -62,7 +81,10 @@ object MetaDecompRunner extends BaseRunner {
 
 						val metaGraphTime = (for (i <- 0 until repeatTimes) yield {
 							val metaStartTime = System.nanoTime()
-							MetaDecompGraphConstructor().run(hypergraph, width)
+							if args(0) == "complete" then 
+									MetaDecompGraphConstructBaseline().run(hypergraph, width)
+							else 
+								MetaDecompGraphRandomizedConstructor().run(hypergraph, width)
 							val metaEndTime = System.nanoTime()
 							val metaTime = (metaEndTime - metaStartTime) / 1000 // microseconds
 							println(s"Meta graph construction run $i: $metaTime us")
@@ -136,7 +158,7 @@ object MetaDecompRunner extends BaseRunner {
 
 						Files.write(
 							resultsPath,
-							s"$queryName,${sqlIR.hyperedges.size},,$metaGraphTime,$planningTime,$totalOptTime,$executionTime,$totalTime,$intermediateCost,$inCost,$totalCost\n"
+							s"$queryName,${sqlIR.hyperedges.size},$width,,$metaGraphTime,$planningTime,$totalOptTime,$executionTime,$totalTime,$intermediateCost,$inCost,$totalCost\n"
 								.getBytes,
 							StandardOpenOption.APPEND
 						)
@@ -217,13 +239,13 @@ object MetaDecompRunner extends BaseRunner {
 
 						Files.write(
 							resultsPath,
-							s"$queryName,${sqlIR.hyperedges.size},$maxFanout,$metaGYOTime,$planningTime,$totalOptTime,$executionTime,$totalTime,$intermediateCost,$inCost,$totalCost\n"
+							s"$queryName,${sqlIR.hyperedges.size},1,$maxFanout,$metaGYOTime,$planningTime,$totalOptTime,$executionTime,$totalTime,$intermediateCost,$inCost,$totalCost\n"
 								.getBytes,
 							StandardOpenOption.APPEND
 						)
 					}
 				}
-			)
+			}
 			conn.close()
 		}
 	}
