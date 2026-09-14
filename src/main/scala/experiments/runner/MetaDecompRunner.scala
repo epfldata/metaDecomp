@@ -16,7 +16,6 @@ import decompositions.MetaDecompGraph
 import decompositions.Hypergraph
 import decompositions.MetaDecompGraphRandomizedConstructor
 import decompositions.MetaDecompGraphConstructBaseline
-import decompositions.MetaDecompGraphRandomNoBacktrackConstructor
 
 object MetaDecompRunner extends BaseRunner {
 	def main(args: Array[String]): Unit = {
