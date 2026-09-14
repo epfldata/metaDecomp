@@ -66,7 +66,7 @@ class MetaDecompCyclicOptimizer()(implicit sqlIR: sql.IR) {
 	}
 
 	def optimizeLocal(subplans: Set[PlanNode]): PlanNode =
-		if subplans.size >= 8 then optimizeLocalHeuristic(subplans) else optimizeLocalDP(subplans)
+		if subplans.size >= 10 then optimizeLocalHeuristic(subplans) else optimizeLocalDP(subplans)
 
 	def run(hypergraph: Hypergraph, metaDecompGraph: MetaDecompGraph): PlanNode = {
 		val edgeToPlan = mutable.Map.empty[(Separator, Separator), PlanNode]

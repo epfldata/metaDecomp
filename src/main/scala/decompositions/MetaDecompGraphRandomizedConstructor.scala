@@ -68,7 +68,7 @@ class MetaDecompGraphRandomizedConstructor {
               tree.children += (nextComp, subtree)
               componentHasSolution((currSep, nextComp)) = true
               if (exhausted.contains((currSep, nextSep))) {
-                candidates.remove(i)
+                candidates.filterInPlace(!nextSep.subsetOf(_))
               }
               break()
             case None =>

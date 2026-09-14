@@ -33,17 +33,18 @@ class MetaDecompGraphConstructBaseline {
         } else {
           val candidates = H.enumNextSeparatorCandidates(prevSep = separator, component = c, width = width)
 
-          breakable {
-            for (sp <- candidates) {
-              rec(c -- sp.nodes, sp, depth + 1) match {
-                case true =>
-                  successful = true
-                  graph.addEdge(separator, sp, c)
-                case false =>
-                // Continue to try the next S'
-              }
+          breakable { while (candidates.nonEmpty) {
+            val sp = candidates.head
+            rec(c -- sp.nodes, sp, depth + 1) match {
+              case true =>
+                successful = true
+                graph.addEdge(separator, sp, c)
+                candidates.filterInPlace(!sp.subsetOf(_))
+              case false =>
+                candidates.remove(0)
+              // Continue to try the next S'
             }
-          }
+          } }
           memoComp((c, separator)) = successful
         }
 
