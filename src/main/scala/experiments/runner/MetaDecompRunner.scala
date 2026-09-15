@@ -82,7 +82,7 @@ object MetaDecompRunner extends BaseRunner {
 							}
 						}
 
-						val (width, meta, plan, metaGraphTime, planningTime, totalOptTime, executionTime, totalTime) = (for (i <- 0 until repeatTimes) yield {
+						val results = (for (i <- 0 until repeatTimes) yield {
 							var meta: MetaDecompGraph = null
 							val metaStartTime = System.nanoTime()
 							var width = 2
@@ -122,7 +122,20 @@ object MetaDecompRunner extends BaseRunner {
 							System.gc()
 
 							(width, meta, plan, metaTime, planningTime, totalOptTime, executionTime, totalTime)
-						}).sortBy(_._7).apply(repeatTimes / 2)
+						}).sortBy(_._7)
+
+						val (width, meta, plan, metaGraphTime, planningTime, totalOptTime, executionTime, totalTime) = {
+							if repeatTimes % 2 != 0 then
+								results(repeatTimes / 2)
+							else
+								val (width1, meta1, plan1, metaGraphTime1, planningTime1, totalOptTime1, executionTime1, totalTime1) = results(repeatTimes / 2 - 1)
+								val (width2, meta2, plan2, metaGraphTime2, planningTime2, totalOptTime2, executionTime2, totalTime2) = results(repeatTimes / 2)
+								(
+									width1, meta1, plan1,
+									(metaGraphTime1 + metaGraphTime2) / 2, (planningTime1 + planningTime2) / 2, (totalOptTime1 + totalOptTime2) / 2,
+									(executionTime1 + executionTime2) / 2, (totalTime1 + totalTime2) / 2
+								)
+						}
 
 						val (viewSql, finalSql, groupBy) = plan.generateSqlWithViews()
 						// println(Seq(viewSql, finalSql, groupBy).mkString("\n"))
