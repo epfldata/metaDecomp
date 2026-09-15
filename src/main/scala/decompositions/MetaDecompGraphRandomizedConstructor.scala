@@ -18,7 +18,7 @@ class MetaDecompGraphRandomizedConstructor {
 
   def run(hypergraph: Hypergraph, width: Int): MetaDecompGraph = {
     val startTime = System.nanoTime()
-    def timedOut = (System.nanoTime() - startTime) / 1000 > 75 * math.pow(hypergraph.edges.size, 2) * math.pow(5, width - 2)
+    def timedOut = (System.nanoTime() - startTime) / 1000 > 50 * math.pow(hypergraph.edges.size, 2) * math.pow(5, width - 2)
     // 500 * hypergraph.edges.size * math.pow(hypergraph.edges.size / 4, width - 2)
 
     val unexhaustedCandidates = mutable.Map.empty[(Separator, Separator, Component), mutable.ListBuffer[Separator]]
