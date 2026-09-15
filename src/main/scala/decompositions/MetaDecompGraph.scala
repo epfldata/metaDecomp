@@ -23,12 +23,6 @@ class MetaDecompGraph {
 	def removeEdge(e1: Separator, e2: Separator, c: Component): Unit = {
 		adjList(e1)(c) -= e2
 		sortedEdges -= ((e1, e2, c))
-		if ((!adjList.contains(e1) || adjList(e1).isEmpty || adjList(e1).forall { case (_, ss) => ss.isEmpty }) && !adjList.exists { case (_, m) => m.values.exists { ss => ss.contains(e1) } }) {
-			removeVertex(e1)
-		}
-		if ((!adjList.contains(e2) || adjList(e2).isEmpty || adjList(e2).forall { case (_, ss) => ss.isEmpty }) && !adjList.exists { case (_, m) => m.values.exists { ss => ss.contains(e2) } }) {
-			removeVertex(e2)
-		}
 	}
 
 	def removeVertex(v: Separator): Unit = {
@@ -52,4 +46,92 @@ class MetaDecompGraph {
 			s"${separatorStr(e1)} -> $e2sStr"
 		}.mkString("\n")
 	}
+
+	def findComponents(s: Separator, c: Component): Seq[Component] = {
+		adjList
+			.get(s)
+			.map(
+				_.iterator
+					.collect { case (comp, nextSeparators) if comp.subsetOf(c) && nextSeparators.nonEmpty => comp }
+					.toSeq
+			)
+			.getOrElse(Seq.empty)
+	}
+
+	def countHypertreeDecompositions(): BigInt = {
+
+		val edgeWeight = mutable.Map.empty[(Separator, Separator, Component), BigInt]
+
+
+		val stateWeight = mutable.Map.empty[(Separator, Component), BigInt]
+
+		def getStateWeight(separator: Separator,
+												component: Component): BigInt = {
+			stateWeight.getOrElseUpdate(
+				(separator, component), {
+
+					adjList
+						.get(separator)
+						.flatMap(_.get(component))
+						.map { nextSeparators =>
+							nextSeparators.foldLeft(BigInt(0)) { (sum, nextSeparator) =>
+
+								val edge = (separator, nextSeparator, component)
+
+								sum + edgeWeight.getOrElse(
+									edge,
+									throw new IllegalStateException(
+										s"Weight of child edge $edge has not been computed yet. " +
+										"This means sortedEdges is not in bottom-up component order."
+									)
+								)
+							}
+						}
+						.getOrElse(BigInt(0))
+				}
+			)
+		}
+
+		sortedEdges.foreach { edge =>
+			val (r, s, c) = edge
+
+			val childComponents = findComponents(s, c)
+
+			val weight =
+				childComponents.foldLeft(BigInt(1)) {
+					case (product, childComponent) =>
+						product * getStateWeight(s, childComponent)
+				}
+
+			edgeWeight(edge) = weight
+			
+		}
+
+
+		sortedEdges.iterator
+			.filter { case (r, _, _) => r.isEmpty }
+			.foldLeft(BigInt(0)) {
+				case (sum, edge) =>
+					sum + edgeWeight(edge)
+			}
+	}
+
+	def cutLeafEdges(): Unit = {
+		var toDelete: mutable.Set[(Separator, Separator, Component)] = mutable.Set.empty
+		sortedEdges.foreach { edge =>
+			val (r, s, c) = edge
+			if (findComponents(s, c).isEmpty) {
+				toDelete += edge
+			}
+		}
+
+		toDelete.foreach((r, s, c) => removeEdge(r, s, c))
+	}
+
+	def cutLeavesUpToLevel(n: Int): Unit = {
+		for (i <- 0 until n) {
+			cutLeafEdges()
+		}
+	}
+
 }
