@@ -18,7 +18,7 @@ class MetaDecompGraphRandomizedConstructor {
 
   def run(hypergraph: Hypergraph, width: Int): MetaDecompGraph = {
     val startTime = System.nanoTime()
-    def timedOut = (System.nanoTime() - startTime) / 1000 > 50 * math.pow(hypergraph.edges.size, 2) * math.pow(5, width - 2)
+    def timedOut = false // (System.nanoTime() - startTime) / 1000 > 50 * math.pow(hypergraph.edges.size, 2) * math.pow(5, width - 2)
     // 500 * hypergraph.edges.size * math.pow(hypergraph.edges.size / 4, width - 2)
 
     val unexhaustedCandidates = mutable.Map.empty[(Separator, Separator, Component), mutable.ListBuffer[Separator]]
@@ -114,23 +114,17 @@ class MetaDecompGraphRandomizedConstructor {
     val possibleRoots = H.edges.subsetsOfSizeAtMost(width).filter(_.nonEmpty).toIndexedSeq
     val emptySeparator = Set.empty[Hyperedge]
 
-    breakable { for (root <- possibleRoots) {
-      if (timedOut) break
-      val tree = new Hypertree(root)
-      rec(emptySeparator, H.vertices, root, 1)(width) match {
-        case Some(tree) => addGraphEdges(emptySeparator, H.vertices, tree)
-        case None => // continue
-      }
-    } }
+    val incompleteRoots = mutable.ListBuffer.from(possibleRoots)
 
-    val incompleteRoots = mutable.ListBuffer.from(possibleRoots.filterNot(s => exhausted.contains((emptySeparator, s))))
+    var numInsertedTrees = 0
 
-    while (!timedOut && incompleteRoots.nonEmpty) {
+    while (numInsertedTrees < 10 && incompleteRoots.nonEmpty) {
       val i = Random.nextInt(incompleteRoots.size)
       val root = incompleteRoots(i)
       rec(emptySeparator, H.vertices, root, 1)(width) match {
         case Some(tree) =>
           addGraphEdges(emptySeparator, H.vertices, tree)
+          numInsertedTrees += 1
           if (exhausted.contains((emptySeparator, root))) {
             incompleteRoots.remove(i)
           }
