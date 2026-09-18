@@ -1,7 +1,7 @@
 package experiments.runner
 
 import sql.{IR, SQLParser}
-import decompositions.{Hypergraph, MetaDecompBasedOptimizer, MetaDecompCyclicOptimizer, MetaDecompGraph, MetaDecompGraphConstructBaseline, MetaDecompGraphConstructInterpolatable, MetaDecompGraphConstructor, MetaDecompGraphRandomizedConstructorOld, metaGYO}
+import decompositions.{Hypergraph, MetaDecompBasedOptimizer, MetaDecompCyclicOptimizer, MetaDecompGraph, MetaDecompGraphConstructBaseline, MetaDecompGraphConstructInterpolatable, MetaDecompGraphConstructor, metaGYO, KDecomp}
 import decompositions.Hypergraph.{Vertex, Hyperedge, HyperedgeSetExtension, Separator, Component}
 import utils.*
 
@@ -21,6 +21,19 @@ import experiments.{getTimestamp, parseSubqueryTables}
 import experiments.runner.BaseRunner
 import experiments.runner.MetaDecompRunner.connect
 import experiments.runner.getWidth
+
+def getWidth(hypergraph: Hypergraph): Int = {
+  var width = 1
+
+  while ( {
+    !KDecomp().run(hypergraph, width)
+  }) {
+    println(s"Width ${width} failed")
+    width += 1
+  }
+  println(s"Width ${width}")
+  width
+}
 
 object MetaDecompRandomizedConstructorRunner extends experiments.runner.BaseRunner {
 
