@@ -25,8 +25,11 @@ import java.sql.SQLTimeoutException
 
 object CardinalityEstimationGenerator extends BaseRunner {
 	def main(args: Array[String]): Unit = {
+		require(args.length <= 3 && (args.length < 2 || Set("estimated", "exact").contains(args(1))),
+			"Usage: CardinalityEstimationGenerator [benchmark] [estimated|exact] [query-regex]")
+		val exact = args.length >= 2 && args(1) == "exact"
 		for (benchmark <- if args.size >= 1 then List(args(0)) else benchmarks ;
-		     sqlFile <- sqlFilesInBenchmark(benchmark).filter(f => if args.size >= 2 then f.getName.matches(args(1)) else true) ) {
+		     sqlFile <- sqlFilesInBenchmark(benchmark).filter(f => if args.size >= 3 then f.getName.matches(args(2)) else true) ) {
 			connect(benchmark)
 
 			val queryName = sqlFile.getName.stripSuffix(".sql")
@@ -36,13 +39,14 @@ object CardinalityEstimationGenerator extends BaseRunner {
 
 			val sqlIR = SQLParser.parse(query)
 
-			val benchmarkCardinalitiesPath = Paths.get(s"${benchmarksPath}/${benchmark}/cardinalities")
+			val benchmarkCardinalitiesPath = Paths.get(benchmarksPath, benchmark, "cardinalities")
+			val outputPath = if exact then benchmarkCardinalitiesPath.resolve("exact") else benchmarkCardinalitiesPath
+			Files.createDirectories(outputPath)
 
-			val resultsFile = Paths.get(s"${benchmarkCardinalitiesPath}", s"${queryName}.csv")
+			val resultsFile = outputPath.resolve(s"${queryName}.csv")
 
 			if (!Files.exists(resultsFile)) {
 				println(s"${sqlFile.getName}")
-				Files.createFile(resultsFile)
 
 				val queryGraphEdges =
 					for e1 <- sqlIR.hyperedges; e2 <- sqlIR.hyperedges if e1 != e2 && e1.nodes.intersect(e2.nodes).nonEmpty
@@ -87,6 +91,7 @@ object CardinalityEstimationGenerator extends BaseRunner {
 					val csg = csgIndices.map(orderedHyperedges)
 
 					val bitSetAsLong = csgIndices.foldLeft(0L)((mask, idx) => mask | (1L << idx))
+					println(s"$queryName: subquery ${orderedBitSets.size + 1}, tables ${csg.toSeq.map(_.alias).sorted.mkString(", ")} (bit set $bitSetAsLong)")
 					orderedBitSets.append(bitSetAsLong)
 
 					val joinConditions = (for t1 <- csg; t2 <- csg if t1 != t2 yield Set(t1, t2)).flatMap(pair => {
@@ -107,36 +112,39 @@ object CardinalityEstimationGenerator extends BaseRunner {
 
 					val projectToAsString = projectTo.map(outputColumn => s"${outputColumn.qualifiedCol.hyperedge.alias}.${outputColumn.qualifiedCol.column}").mkString(", ")
 
-					val query = s"EXPLAIN (FORMAT JSON) SELECT COUNT(*) FROM ( SELECT "
-						+ projectToAsString
-						+ s" FROM ${csg.map(n => s"${n.tableName} AS ${n.alias}").mkString(", ")} "
+					val fromAndWhere = s" FROM ${csg.map(n => s"${n.tableName} AS ${n.alias}").mkString(", ")} "
 						+ (if joinConditions.nonEmpty || filterConditions.nonEmpty then f" WHERE ${(joinConditions ++ filterConditions.map(_.conditionText)).mkString(" AND ")}" else "")
-						+ s" GROUP BY ${projectToAsString}"
+					val estimatedQuery = s"EXPLAIN (FORMAT JSON) SELECT COUNT(*) FROM ( SELECT "
+						+ projectToAsString
+						+ fromAndWhere
+						// + s" GROUP BY ${projectToAsString}"
 						+ ");"
+					val query = if exact then s"SELECT COUNT(*)$fromAndWhere;" else estimatedQuery
 					
-					val timeout = 30.seconds
+					val timeout = if exact then 5.minutes else 30.seconds
 					val stmt = conn.createStatement()
 					stmt.setQueryTimeout(timeout.toSeconds.toInt)
 
 					val rs = stmt.executeQuery(query)
 					if (rs.next) {
-						val jsonStr = rs.getString(2)
-						val pattern = """\"Estimated Cardinality\": \"(\d+)\"""".r
-						val matches = pattern.findAllIn(jsonStr).matchData.toSeq
-						if (matches.nonEmpty) {
-							val lastMatch = matches.last
-							val cardinalityString = lastMatch.group(1)
-							val cardinality = BigInt(cardinalityString)
-							val cappedCardinality = if (cardinality > (1L << 62) - 1) (1L << 62) - 1 else cardinality.toLong
-							cardinalities.append(cappedCardinality)
+						if (exact) {
+							cardinalities.append(rs.getLong(1))
 						} else {
-							cardinalities.append((1L << 62) - 1)
+							val jsonStr = rs.getString(2)
+							val pattern = """\"Estimated Cardinality\": \"(\d+)\"""".r
+							val matches = pattern.findAllIn(jsonStr).matchData.toSeq
+							if (matches.nonEmpty) {
+								val lastMatch = matches.last
+								val cardinalityString = lastMatch.group(1)
+								val cardinality = BigInt(cardinalityString)
+								val cappedCardinality = if (cardinality > (1L << 62) - 1) (1L << 62) - 1 else cardinality.toLong
+								cardinalities.append(cappedCardinality)
+							} else {
+								cardinalities.append((1L << 62) - 1)
+							}
 						}
-					}
-
-					if (cardinalities.size % 10000 == 0) {
-						println(s"Processed ${cardinalities.size} CSGs")
-					}
+					} else throw new IllegalStateException(s"No cardinality returned for $queryName, bit set $bitSetAsLong")
+					rs.close()
 
 					stmt.close()
 				}
@@ -164,7 +172,7 @@ object CardinalityEstimationGenerator extends BaseRunner {
 					enumerateCSGRec(s, x)
 				}
 
-				Files.write(resultsFile, s"${sqlIR.hyperedges.size} ${queryGraphEdges.size} ${orderedBitSets.size}\n${orderedHyperedges.map(_.alias).mkString(" ")}\n${queryGraphEdges.map(_.map(hyperedgeToIndex).mkString(" ")).mkString(" ")}\n${(orderedBitSets.zip(cardinalities).map { case (bitSet, card) => s"$bitSet $card" }).mkString("\n")}\n".getBytes, StandardOpenOption.APPEND)
+				Files.write(resultsFile, s"${sqlIR.hyperedges.size} ${queryGraphEdges.size} ${orderedBitSets.size}\n${orderedHyperedges.map(_.alias).mkString(" ")}\n${queryGraphEdges.map(_.map(hyperedgeToIndex).mkString(" ")).mkString(" ")}\n${(orderedBitSets.zip(cardinalities).map { case (bitSet, card) => s"$bitSet $card" }).mkString("\n")}\n".getBytes, StandardOpenOption.CREATE_NEW)
 			}
 
 			conn.close()
