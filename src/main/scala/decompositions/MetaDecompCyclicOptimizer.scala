@@ -1,6 +1,6 @@
 package decompositions
 
-import decompositions.Hypergraph.{Vertex, Hyperedge, Separator}
+import decompositions.Hypergraph.{Vertex, Hyperedge, Separator, Component}
 import scala.collection.mutable
 import utils.subsetsOfSizeAtMost
 import decompositions.CostModel.getCumulativeCost
@@ -30,7 +30,7 @@ class MetaDecompCyclicOptimizer()(implicit sqlIR: sql.IR) {
 	def optimizeLocalHeuristic(subplans: Set[PlanNode]): PlanNode = {
 		val partialPlans: mutable.Set[PlanNode] = mutable.Set.from(subplans)
 		while (partialPlans.size > 1) {
-			val (bestPair, bestPlan) = 
+			val (bestPair, bestPlan) =
 				partialPlans
 					.subsets(2)
 					.map(_.toSeq)
@@ -68,7 +68,71 @@ class MetaDecompCyclicOptimizer()(implicit sqlIR: sql.IR) {
 	def optimizeLocal(subplans: Set[PlanNode]): PlanNode =
 		if subplans.size >= 10 then optimizeLocalHeuristic(subplans) else optimizeLocalDP(subplans)
 
+	private def computePlans(hypergraph: Hypergraph, metaDecompGraph: MetaDecompGraph): (
+		mutable.Map[(Separator, Separator), PlanNode],
+		mutable.Map[(Component, Separator), Separator]
+	) = {
+		val edgeToPlan = mutable.Map.empty[(Separator, Separator), PlanNode]
+		// Child edges precede their parents in sortedEdges, so all alternatives are
+		// finalized on first use. Keep this cache local to this computation.
+		val componentsBestEdge = mutable.Map.empty[(Component, Separator), Separator]
+		metaDecompGraph.sortedEdges.foreach((r, s, crs) => {
+			val componentBestEdge = metaDecompGraph.adjList(s).keySet.toSet.filter(_.subsetOf(crs)).map(cst => cst -> componentsBestEdge.getOrElseUpdate(
+				(cst, s),
+				metaDecompGraph.adjList(s)(cst).minBy(t => edgeToPlan((s, t)).cumulativeCost)
+			))
+			val childrenPlans = componentBestEdge.map((_, t) => edgeToPlan((s, t)))
+			val newRelations = hypergraph.edges.filter(_.nodes.subsetOf(s.nodes)) -- childrenPlans.flatMap(_.allJoinedRelations)
+			try {
+				val allSubplans = childrenPlans ++ newRelations.map(ScanNode(_)) // if newRelations.isEmpty then childrenPlans else childrenPlans + optimizeLocal(newRelations.map(ScanNode(_)).toSet)
+				edgeToPlan((r, s)) = optimizeLocal(allSubplans)
+			} catch {
+				case _: Throwable => {
+					println(s"${r.asString} -> ${s.asString}, new relations: ${newRelations.asString}")
+					println(s"Components of ${s.asString}:")
+					println(metaDecompGraph.adjList(s).keySet.toSet.filter(_.subsetOf(crs)).map(c => s"${c.asString}, next separator: ${metaDecompGraph.adjList(s)(c).minBy(t => edgeToPlan((s, t)).cumulativeCost).asString}").mkString("\n"))
+					while (true) {}
+				}
+			}
+
+		})
+		(edgeToPlan, componentsBestEdge)
+	}
+
 	def run(hypergraph: Hypergraph, metaDecompGraph: MetaDecompGraph): PlanNode = {
+		val edgeToPlan = mutable.Map.empty[(Separator, Separator), PlanNode]
+		// Cache only after the bottom-up traversal has finalized the child plans.
+		val componentBestPlan = mutable.Map.empty[(Separator, Component), PlanNode]
+		metaDecompGraph.sortedEdges.foreach((r, s, crs) => {
+			val childrenPlans = metaDecompGraph.adjList(s).keySet.toSet.filter(_.subsetOf(crs)).map(cst =>
+				componentBestPlan.getOrElseUpdate((s, cst),
+					// Preserve selection over the mapped plan set: selecting a separator
+					// first can change which plan wins an equal-cost tie.
+					metaDecompGraph.adjList(s)(cst).map(t => edgeToPlan((s, t))).minBy(_.cumulativeCost)
+				)
+			)
+			val newRelations = hypergraph.edges.filter(_.nodes.subsetOf(s.nodes)) -- childrenPlans.flatMap(_.allJoinedRelations)
+			try {
+				val allSubplans = childrenPlans ++ newRelations.map(ScanNode(_)) // if newRelations.isEmpty then childrenPlans else childrenPlans + optimizeLocal(newRelations.map(ScanNode(_)).toSet)
+				edgeToPlan((r, s)) = optimizeLocal(allSubplans)
+			} catch {
+				case _: Throwable => {
+					println(s"${r.asString} -> ${s.asString}, new relations: ${newRelations.asString}")
+					println(s"Components of ${s.asString}:")
+					println(metaDecompGraph.adjList(s).keySet.toSet.filter(_.subsetOf(crs)).map(c => s"${c.asString}, next separator: ${metaDecompGraph.adjList(s)(c).minBy(t => edgeToPlan((s, t)).cumulativeCost).asString}").mkString("\n"))
+					while (true) {}
+				}
+			}
+		})
+		val root = metaDecompGraph.vertices.find(_.size == 0).get
+		// val first = metaDecompGraph.adjList(root).flatMap(_._2).minBy(t => edgeToPlan(root, t).cumulativeCost)
+		// println(s"First separator: ${first.asString}")
+		val minPlan = metaDecompGraph.adjList(root).flatMap(_._2).map(t => edgeToPlan(root, t)).minBy(_.cumulativeCost)
+		minPlan.projectTo = sqlIR.outputAttributes
+		minPlan
+	}
+
+	def runWithoutMemo(hypergraph: Hypergraph, metaDecompGraph: MetaDecompGraph): PlanNode = {
 		val edgeToPlan = mutable.Map.empty[(Separator, Separator), PlanNode]
 		metaDecompGraph.sortedEdges.foreach((r, s, crs) => {
 			val componentBestEdge = metaDecompGraph.adjList(s).keySet.toSet.filter(_.subsetOf(crs)).map(cst => cst -> metaDecompGraph.adjList(s)(cst).minBy(t => edgeToPlan((s, t)).cumulativeCost))
@@ -99,5 +163,28 @@ class MetaDecompCyclicOptimizer()(implicit sqlIR: sql.IR) {
 		val minPlan = metaDecompGraph.adjList(root).flatMap(_._2).map(t => edgeToPlan(root, t)).minBy(_.cumulativeCost)
 		minPlan.projectTo = sqlIR.outputAttributes
 		minPlan
+	}
+
+	/** Returns a new graph containing only the edges inducing a minimum-cost plan. */
+	def runOptimalDecomposition(hypergraph: Hypergraph, metaDecompGraph: MetaDecompGraph): (PlanNode, MetaDecompGraph) = {
+		val (edgeToPlan, componentsBestEdge) = computePlans(hypergraph, metaDecompGraph)
+		val root = metaDecompGraph.vertices.find(_.isEmpty).get
+		val minPlan = metaDecompGraph.adjList(root).flatMap(_._2).map(t => edgeToPlan(root, t)).minBy(_.cumulativeCost)
+		minPlan.projectTo = sqlIR.outputAttributes
+
+		val first = metaDecompGraph.adjList(root).flatMap(_._2).minBy(t => edgeToPlan((root, t)).cumulativeCost)
+		val optimalGraph = new MetaDecompGraph
+
+		def restore(r: Separator, s: Separator, component: Component): Unit = {
+			if (!optimalGraph.sortedEdges.contains((r, s, component))) {
+				optimalGraph.addEdge(r, s, component)
+				metaDecompGraph.adjList(s).keysIterator.filter(_.subsetOf(component)).foreach { c =>
+					restore(s, componentsBestEdge((c, s)), c)
+				}
+			}
+		}
+
+		restore(root, first, hypergraph.vertices)
+		(minPlan, optimalGraph)
 	}
 }
