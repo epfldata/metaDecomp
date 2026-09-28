@@ -18,9 +18,11 @@ case object Config {
 	val benchmarks: List[String] = List("dsb", "job-original", "job-large", "musicbrainz")
 
 	def dbFilePath(benchmark: String): String = benchmark match {
-		case "job-original" | "job-large" => s"$projectRootPath/datasets/imdb/imdb.db"
-		case "dsb" | "dsb-cyclic"          => s"$projectRootPath/datasets/dsb/dsb-10g.db"
+		case "job-original" | "job-large"          => s"$projectRootPath/datasets/imdb/imdb.db"
+		case "dsb" | "dsb-cyclic"                  => s"$projectRootPath/datasets/dsb/dsb-10g.db"
 		case "musicbrainz" | "musicbrainz-cyclic"  => s"$projectRootPath/datasets/musicbrainz/musicbrainz.db"
+		case "subgraph-matching"                   => s"$projectRootPath/datasets/subgraph-matching/subgraph-matching-10x.db"
+		case "custom-ar3-new" | "custom-reduced"   => s"$projectRootPath/datasets/custom-ar3-new-range1000-rowcnt10000/custom-ar3-new-range1000-rowcnt10000.db"
 	}
 	def dataSource(benchmark: String): String = s"jdbc:duckdb:${dbFilePath(benchmark)}"
 
