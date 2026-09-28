@@ -4,7 +4,7 @@ import decompositions.{MetaDecompBasedOptimizer, metaGYO}
 import experiments.Config.{benchmarks, benchmarksPath, repeatTimes, resultsDir, sqlFilesInBenchmark}
 import sql.{IR, SQLParser}
 
-import java.nio.file.{Files, Paths, StandardOpenOption}
+import java.nio.file.{Files, Path, Paths, StandardOpenOption}
 import scala.io.Source
 import scala.jdk.CollectionConverters.*
 import scala.sys.process._
@@ -16,8 +16,33 @@ import decompositions.MetaDecompGraph
 import decompositions.Hypergraph
 import decompositions.MetaDecompGraphRandomizedConstructor
 import decompositions.MetaDecompGraphConstructBaseline
+import utils.{HypergraphDot, HypergraphSvg}
 
 object MetaDecompRunner extends BaseRunner {
+	def exportHypergraphVisualization(
+		hypergraph: Hypergraph,
+		vertexDescriptions: Map[String, String],
+		outputDir: Path,
+		queryName: String
+	): Unit = {
+		val visualizationHypergraph = hypergraph.withoutUniqueAttributes
+		Files.createDirectories(outputDir)
+		Files.writeString(
+			outputDir.resolve(s"$queryName.dot"),
+			HypergraphDot.render(visualizationHypergraph, vertexDescriptions),
+			StandardOpenOption.CREATE,
+			StandardOpenOption.WRITE,
+			StandardOpenOption.TRUNCATE_EXISTING
+		)
+		Files.writeString(
+			outputDir.resolve(s"$queryName.svg"),
+			HypergraphSvg.render(visualizationHypergraph, vertexDescriptions),
+			StandardOpenOption.CREATE,
+			StandardOpenOption.WRITE,
+			StandardOpenOption.TRUNCATE_EXISTING
+		)
+	}
+
 	def main(args: Array[String]): Unit = {
 		for (benchmark <- if args.size >= 2 then List(args(1)) else benchmarks) {
 			connect(benchmark)
@@ -46,12 +71,18 @@ object MetaDecompRunner extends BaseRunner {
 					source.close()
 
 					implicit val sqlIR: sql.IR = SQLParser.parse(query)
+					val hypergraph = Hypergraph(sqlIR.hyperedges.flatMap(_.nodes).toSet, sqlIR.hyperedges)
+					val vertexDescriptions = sqlIR.vertexIdToColumnName.map { case (vertex, columns) =>
+						vertex -> columns.toVector
+							.map { case (edge, column) => s"${edge.alias}.$column" }
+							.sorted
+							.mkString(" = ")
+					}
+					val hypergraphOutputDir = Paths.get(resultsDir, "hypergraphs", benchmark)
+					exportHypergraphVisualization(hypergraph, vertexDescriptions, hypergraphOutputDir, queryName)
 
 					// toggleOptimizers(sqlIR.outputAttributes.size <= 3)
 					if (metaGYO(sqlIR.hyperedges).isEmpty) { // Cyclic
-
-						val hypergraph = Hypergraph(sqlIR.hyperedges.flatMap(_.nodes).toSet, sqlIR.hyperedges)
-
 						println(hypergraph)
 
 						println("Loading cardinalities...")

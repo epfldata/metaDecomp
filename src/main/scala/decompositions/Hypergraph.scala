@@ -40,6 +40,13 @@ object Hypergraph {
 }
 
 case class Hypergraph(var vertices: Set[Hypergraph.Vertex], var edges: Set[Hypergraph.Hyperedge]) {
+	/** Remove the private vertices deliberately added by SQLParser. */
+	def withoutUniqueAttributes: Hypergraph = {
+		val strippedEdges = edges.map { edge =>
+			edge.copy(nodes = edge.nodes.filterNot(_.name.endsWith("_unique_attribute")))
+		}
+		Hypergraph(strippedEdges.flatMap(_.nodes), strippedEdges)
+	}
 
 	val adjVertices: Map[Hypergraph.Vertex, Set[Hypergraph.Vertex]] = vertices.map(v => v -> edges.filter(_.nodes.contains(v)).nodes).toMap
 	val adjEdges: Map[Hypergraph.Hyperedge, Set[Hypergraph.Hyperedge]] = edges.map(e => e -> (edges.filter(_.nodes.intersect(e.nodes).nonEmpty) - e)).toMap
