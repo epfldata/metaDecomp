@@ -114,23 +114,17 @@ class MetaDecompGraphRandomizedConstructor {
     val possibleRoots = H.edges.subsetsOfSizeAtMost(width).filter(_.nonEmpty).toIndexedSeq
     val emptySeparator = Set.empty[Hyperedge]
 
-    breakable { for (root <- possibleRoots) {
-      if (timedOut) break
-      val tree = new Hypertree(root)
-      rec(emptySeparator, H.vertices, root, 1)(width) match {
-        case Some(tree) => addGraphEdges(emptySeparator, H.vertices, tree)
-        case None => // continue
-      }
-    } }
+    val incompleteRoots = mutable.ListBuffer.from(possibleRoots)
 
-    val incompleteRoots = mutable.ListBuffer.from(possibleRoots.filterNot(s => exhausted.contains((emptySeparator, s))))
+    var numInsertedTrees = 0
 
-    while (!timedOut && incompleteRoots.nonEmpty) {
+    while (numInsertedTrees < 10 && !timedOut && incompleteRoots.nonEmpty) {
       val i = Random.nextInt(incompleteRoots.size)
       val root = incompleteRoots(i)
       rec(emptySeparator, H.vertices, root, 1)(width) match {
         case Some(tree) =>
           addGraphEdges(emptySeparator, H.vertices, tree)
+          numInsertedTrees += 1
           if (exhausted.contains((emptySeparator, root))) {
             incompleteRoots.remove(i)
           }

@@ -12,10 +12,12 @@ import experiments.parseSubqueryTables
 import experiments.getTimestamp
 import decompositions.MetaDecompGraphConstructor
 import decompositions.MetaDecompCyclicOptimizer
+import decompositions.SharedWorkCyclicOptimizer
 import decompositions.MetaDecompGraph
 import decompositions.Hypergraph
 import decompositions.MetaDecompGraphRandomizedConstructor
 import decompositions.MetaDecompGraphConstructBaseline
+import decompositions.MetaDecompGraphConstructBaselineOptimized
 
 object MetaDecompRunner extends BaseRunner {
 	def main(args: Array[String]): Unit = {
@@ -89,7 +91,7 @@ object MetaDecompRunner extends BaseRunner {
 							while ({
 								meta = (
 									if args(0) == "complete" then 
-										MetaDecompGraphConstructBaseline().run(hypergraph, width)
+										MetaDecompGraphConstructBaselineOptimized().run(hypergraph, width)
 									else 
 										MetaDecompGraphRandomizedConstructor().run(hypergraph, width)
 								);
@@ -104,7 +106,7 @@ object MetaDecompRunner extends BaseRunner {
 							println(s"Meta graph construction run $i: $metaTime us")
 
 							val planningStartTime = System.nanoTime()
-							val plan = MetaDecompCyclicOptimizer().run(hypergraph, meta)
+							val plan = SharedWorkCyclicOptimizer().run(hypergraph, meta)
 							val planningEndTime = System.nanoTime()
 							val planningTime = (planningEndTime - planningStartTime) / 1000 // microseconds
 							println(s"Planning run $i: $planningTime us")
