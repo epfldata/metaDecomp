@@ -17,6 +17,7 @@ import decompositions.MetaDecompGraph
 import decompositions.Hypergraph
 import decompositions.MetaDecompGraphRandomizedConstructor
 import decompositions.MetaDecompGraphConstructBaseline
+import decompositions.MetaDecompGraphConstructBaselineOptimized
 
 object MetaDecompRunner extends BaseRunner {
 	def main(args: Array[String]): Unit = {
@@ -90,7 +91,7 @@ object MetaDecompRunner extends BaseRunner {
 							while ({
 								meta = (
 									if args(0) == "complete" then 
-										MetaDecompGraphConstructBaseline().run(hypergraph, width)
+										MetaDecompGraphConstructBaselineOptimized().run(hypergraph, width)
 									else 
 										MetaDecompGraphRandomizedConstructor().run(hypergraph, width)
 								);
