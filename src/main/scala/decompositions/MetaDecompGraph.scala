@@ -5,22 +5,20 @@ import decompositions.NamedElement
 import scala.collection.mutable
 import decompositions.Hypergraph._
 
-class MetaDecompGraph(val deferEdgeSorting: Boolean = true) {
+class MetaDecompGraph() {
 	type GraphEdge = (Separator, Separator, Component)
 
 	val vertices: mutable.Set[Separator] = mutable.Set.empty
 	private val edgeOrdering: Ordering[GraphEdge] = Ordering.by { case (e1, e2, c) => (c.size, e1.toString, e2.toString) }
-	private val incrementalSortedEdges =
-		if (deferEdgeSorting) None else Some(mutable.SortedSet.empty[GraphEdge](edgeOrdering))
-	val edges: mutable.Set[GraphEdge] = incrementalSortedEdges.getOrElse(mutable.HashSet.empty)
-	private val sortedEdgesCache: mutable.SortedSet[GraphEdge] =
-		incrementalSortedEdges.getOrElse(mutable.SortedSet.empty(edgeOrdering))
+	
+	val edges: mutable.Set[GraphEdge] = mutable.HashSet.empty
+	private val sortedEdgesCache: mutable.SortedSet[GraphEdge] = mutable.SortedSet.empty(edgeOrdering)
 	private var sortedEdgesDirty = false
 	var adjList: mutable.Map[Separator, mutable.Map[Component, mutable.Set[Separator]]] = mutable.Map.empty // Separator -> (Component -> Next Separators)
 
 	/** Rebuilds the bottom-up edge ordering from the hash-based edge store. */
 	def constructSortedEdges(): Unit = {
-		if (deferEdgeSorting && sortedEdgesDirty) {
+		if (sortedEdgesDirty) {
 			sortedEdgesCache.clear()
 			sortedEdgesCache ++= edges
 			sortedEdgesDirty = false
@@ -42,14 +40,14 @@ class MetaDecompGraph(val deferEdgeSorting: Boolean = true) {
 			if (!adjList.contains(e2)) {
 				adjList(e2) = mutable.Map.empty
 			}
-			if (deferEdgeSorting) sortedEdgesDirty = true
+			sortedEdgesDirty = true
 		}
 	}
 
 	def removeEdge(e1: Separator, e2: Separator, c: Component): Unit = {
 		adjList(e1)(c) -= e2
 		edges -= ((e1, e2, c))
-		if (deferEdgeSorting) sortedEdgesDirty = true
+		sortedEdgesDirty = true
 	}
 
 	def removeVertex(v: Separator): Unit = {
@@ -58,7 +56,7 @@ class MetaDecompGraph(val deferEdgeSorting: Boolean = true) {
 		}
 		adjList.foreach { case (e1, ce2s) => ce2s.foreach { case (c, e2s) => if (e2s contains v) e2s -= v } }
 		edges.filterInPlace(e => e._1 != v && e._2 != v)
-		if (deferEdgeSorting) sortedEdgesDirty = true
+		sortedEdgesDirty = true
 	}
 
 	override def toString: String = {
