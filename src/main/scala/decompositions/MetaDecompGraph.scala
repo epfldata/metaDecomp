@@ -5,24 +5,51 @@ import decompositions.NamedElement
 import scala.collection.mutable
 import decompositions.Hypergraph._
 
-class MetaDecompGraph {
+class MetaDecompGraph(val deferEdgeSorting: Boolean = true) {
+	type GraphEdge = (Separator, Separator, Component)
+
 	val vertices: mutable.Set[Separator] = mutable.Set.empty
-	val sortedEdges: mutable.SortedSet[(Separator, Separator, Component)] = mutable.SortedSet.empty(Ordering.by { case (e1, e2, c) => (c.size, e1.toString, e2.toString) })
+	private val edgeOrdering: Ordering[GraphEdge] = Ordering.by { case (e1, e2, c) => (c.size, e1.toString, e2.toString) }
+	private val incrementalSortedEdges =
+		if (deferEdgeSorting) None else Some(mutable.SortedSet.empty[GraphEdge](edgeOrdering))
+	val edges: mutable.Set[GraphEdge] = incrementalSortedEdges.getOrElse(mutable.HashSet.empty)
+	private val sortedEdgesCache: mutable.SortedSet[GraphEdge] =
+		incrementalSortedEdges.getOrElse(mutable.SortedSet.empty(edgeOrdering))
+	private var sortedEdgesDirty = false
 	var adjList: mutable.Map[Separator, mutable.Map[Component, mutable.Set[Separator]]] = mutable.Map.empty // Separator -> (Component -> Next Separators)
 
-	def addEdge(e1: Separator, e2: Separator, c: Component): Unit = {
-		vertices += e1
-		vertices += e2
-		adjList.getOrElseUpdate(e1, mutable.Map.empty).getOrElseUpdate(c, mutable.Set.empty) += e2
-		if (!adjList.contains(e2)) {
-			adjList(e2) = mutable.Map.empty
+	/** Rebuilds the bottom-up edge ordering from the hash-based edge store. */
+	def constructSortedEdges(): Unit = {
+		if (deferEdgeSorting && sortedEdgesDirty) {
+			sortedEdgesCache.clear()
+			sortedEdgesCache ++= edges
+			sortedEdgesDirty = false
 		}
-		sortedEdges += ((e1, e2, c))
+	}
+
+	/** Lazily exposes an up-to-date bottom-up edge ordering to existing callers. */
+	def sortedEdges: mutable.SortedSet[GraphEdge] = {
+		if (sortedEdgesDirty) constructSortedEdges()
+		sortedEdgesCache
+	}
+
+	def addEdge(e1: Separator, e2: Separator, c: Component): Unit = {
+		val edge = (e1, e2, c)
+		if (edges.add(edge)) {
+			vertices += e1
+			vertices += e2
+			adjList.getOrElseUpdate(e1, mutable.Map.empty).getOrElseUpdate(c, mutable.Set.empty) += e2
+			if (!adjList.contains(e2)) {
+				adjList(e2) = mutable.Map.empty
+			}
+			if (deferEdgeSorting) sortedEdgesDirty = true
+		}
 	}
 
 	def removeEdge(e1: Separator, e2: Separator, c: Component): Unit = {
 		adjList(e1)(c) -= e2
-		sortedEdges -= ((e1, e2, c))
+		edges -= ((e1, e2, c))
+		if (deferEdgeSorting) sortedEdgesDirty = true
 	}
 
 	def removeVertex(v: Separator): Unit = {
@@ -30,7 +57,8 @@ class MetaDecompGraph {
 			adjList.remove(v)
 		}
 		adjList.foreach { case (e1, ce2s) => ce2s.foreach { case (c, e2s) => if (e2s contains v) e2s -= v } }
-		sortedEdges.filterInPlace(e => e._1 != v && e._2 != v)
+		edges.filterInPlace(e => e._1 != v && e._2 != v)
+		if (deferEdgeSorting) sortedEdgesDirty = true
 	}
 
 	override def toString: String = {
@@ -59,6 +87,7 @@ class MetaDecompGraph {
 	}
 
 	def countHypertreeDecompositions(): BigInt = {
+		constructSortedEdges()
 
 		val edgeWeight = mutable.Map.empty[(Separator, Separator, Component), BigInt]
 
@@ -66,7 +95,7 @@ class MetaDecompGraph {
 		val stateWeight = mutable.Map.empty[(Separator, Component), BigInt]
 
 		def getStateWeight(separator: Separator,
-												component: Component): BigInt = {
+											 component: Component): BigInt = {
 			stateWeight.getOrElseUpdate(
 				(separator, component), {
 
@@ -82,7 +111,7 @@ class MetaDecompGraph {
 									edge,
 									throw new IllegalStateException(
 										s"Weight of child edge $edge has not been computed yet. " +
-										"This means sortedEdges is not in bottom-up component order."
+											"This means sortedEdges is not in bottom-up component order."
 									)
 								)
 							}
@@ -94,7 +123,6 @@ class MetaDecompGraph {
 
 		sortedEdges.foreach { edge =>
 			val (r, s, c) = edge
-
 			val childComponents = findComponents(s, c)
 
 			val weight =
@@ -104,7 +132,7 @@ class MetaDecompGraph {
 				}
 
 			edgeWeight(edge) = weight
-			
+
 		}
 
 
@@ -117,6 +145,7 @@ class MetaDecompGraph {
 	}
 
 	def cutLeafEdges(): Unit = {
+		constructSortedEdges()
 		var toDelete: mutable.Set[(Separator, Separator, Component)] = mutable.Set.empty
 		sortedEdges.foreach { edge =>
 			val (r, s, c) = edge
