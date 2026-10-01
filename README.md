@@ -10,6 +10,7 @@ Full technical report available at [technical-report.pdf](technical-report.pdf) 
 
 * Scala 3.3.1 with sbt 1.6.2
 * For [DPconv](https://github.com/utndatasystems/DPconv/tree/dc56bdc52c452bf86b3ac5c224b0176148c38757), [DuckDB](https://github.com/duckdb/duckdb/tree/7c039464e452ddc3330e2691d3fa6d305521d09b), and [Yannakakis+](https://github.com/ChampionNan/DuckDBYanPlus/tree/38d165ee6dac9db621616121b09bb591fdd67065): CMake 4.0.3, GNU Make 3.81, clang 20.1.3
+* For [Neo4j](https://github.com/neo4j/neo4j): Java 21 (`openjdk@21`), Maven 3.9+
 * For join tree enumeration with traditional GYO algorithms (implemented by [SparkSQL+](https://github.com/hkustDB/SparkSQLPlus/tree/f22188bba4e971da6defb97c983e06e18e66fd7a)): Maven 3.8.6
 * For LearnedRewrite, LLM-R2, and reproducing the figures: Python 3.10.1
 
@@ -119,6 +120,47 @@ This is implemented on top of the original DuckDB repository. As for DuckDB, sim
 ```
 cd DuckDBYanPlus
 make
+```
+
+### Neo4j
+
+We slightly modified the Cypher planner in [Neo4j](https://github.com/neo4j/neo4j) to measure the join order optimization time. The modified code is given in another repository, which is a fork of the original Neo4j repository.
+
+1. Clone the repository:
+```bash
+# Remember to change back to the root of the project repository
+git clone https://github.com/zhekai-jiang/neo4j.git
+```
+
+2. Build and extract the standalone Neo4j server distribution using Maven:
+```bash
+cd neo4j
+mvn clean package -pl packaging/standalone/standalone-community -am -DskipTests -Denforcer.skip=true -Dcheckstyle.skip=true -Dlicensing.skip=true
+tar -xzf packaging/standalone/target/neo4j-community-*-unix.tar.gz -C packaging/standalone/target/
+```
+
+3. Link the dataset folder and configure the memory limit in `packaging/standalone/target/neo4j-community-*/conf/neo4j.conf`:
+```bash
+# Link the dataset from datasets/subgraph-matching/neo4j-data into Neo4j's data folder
+rm -rf packaging/standalone/target/neo4j-community-*/data
+ln -s ../../../../../datasets/subgraph-matching/neo4j-data packaging/standalone/target/neo4j-community-*/data
+```
+
+In `packaging/standalone/target/neo4j-community-*/conf/neo4j.conf`:
+```properties
+server.memory.heap.initial_size=8g
+server.memory.heap.max_size=40g
+server.memory.pagecache.size=2g
+dbms.memory.transaction.total.max=40g
+db.memory.transaction.max=40g
+db.memory.transaction.total.max=40g
+dbms.security.auth_enabled=false
+```
+
+4. Start the Neo4j server directly from the source build:
+```bash
+./packaging/standalone/target/neo4j-community-*/bin/neo4j start
+cd ..
 ```
 
 ### LLM-R2 (for LLM-R2 and LearnedRewrite)
@@ -232,6 +274,14 @@ sbt "runMain experiments.runner.LearnedRewriteRunner"
 ```
 
 The results are stored in `experiment-results/learned-rewrite-opt-{dsb, job-original, musicbrainz, job-large}-<timestamp>.csv`
+
+#### Neo4j
+
+```bash
+sbt "runMain experiments.runner.Neo4jRunner"
+```
+
+The results are stored in `experiment-results/neo4j-{benchmark}-<timestamp>.csv`
 
 ### Join tree enumeration
 

@@ -27,6 +27,9 @@ case object Config {
 	def dataSource(benchmark: String): String = s"jdbc:duckdb:${dbFilePath(benchmark)}"
 
 	val resultsDir = s"$projectRootPath/experiment-results"
+	val neo4jOptTimeLog: String = Option(System.getenv("NEO4J_OPT_TIME_LOG"))
+		.orElse(Option(System.getProperty("neo4j.opt.time.log")))
+		.getOrElse(s"${System.getProperty("java.io.tmpdir").stripSuffix("/")}/neo4j-opt-time.log")
 
 	val repeatTimes = 10
 	val timeout: Duration = 300.seconds
@@ -35,4 +38,13 @@ case object Config {
 		new java.io.File(s"$benchmarksPath/$benchmark/queries").listFiles
 			.filter(_.getName.endsWith(".sql"))
 			.sortBy(_.getName)
+
+	def cypherFilesInBenchmark(benchmark: String): Array[File] = {
+		val dir = new java.io.File(s"$benchmarksPath/$benchmark/queries_cypher")
+		if (dir.exists()) {
+			dir.listFiles.filter(_.getName.endsWith(".cypher")).sortBy(_.getName)
+		} else {
+			Array.empty[File]
+		}
+	}
 }
