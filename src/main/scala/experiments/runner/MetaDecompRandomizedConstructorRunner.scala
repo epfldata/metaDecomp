@@ -1,8 +1,8 @@
 package experiments.runner
 
 import sql.{IR, SQLParser}
-import decompositions.{Hypergraph, MetaDecompBasedOptimizer, MetaDecompCyclicOptimizer, MetaDecompGraph, MetaDecompGraphConstructBaseline, MetaDecompGraphConstructInterpolatable, MetaDecompGraphConstructor, metaGYO, KDecomp}
-import decompositions.Hypergraph.{Vertex, Hyperedge, HyperedgeSetExtension, Separator, Component}
+import decompositions.{Hypergraph, KDecomp, MetaDecompBasedOptimizer, MetaDecompCyclicOptimizer, SharedWorkCyclicOptimizer,  MetaDecompGraph, MetaDecompGraphConstructBaseline, MetaDecompGraphConstructInterpolatable, MetaDecompGraphConstructor, PlanNode, metaGYO}
+import decompositions.Hypergraph.{Component, Hyperedge, HyperedgeSetExtension, Separator, Vertex}
 import utils.*
 
 import scala.collection.mutable
@@ -15,12 +15,11 @@ import scala.sys.process.*
 import dotty.tools.dotc.util.SimpleIdentitySet.empty
 import experiments.Config.{benchmarks, benchmarksPath, repeatTimes, resultsDir, sqlFilesInBenchmark}
 
-
 import java.nio.file.{Files, Paths, StandardOpenOption}
 import experiments.{getTimestamp, parseSubqueryTables}
 import experiments.runner.BaseRunner
 import experiments.runner.MetaDecompRunner.connect
-import experiments.runner.getWidth
+
 
 def getWidth(hypergraph: Hypergraph): Int = {
   var width = 1
@@ -28,12 +27,11 @@ def getWidth(hypergraph: Hypergraph): Int = {
   while ( {
     !KDecomp().run(hypergraph, width)
   }) {
-    println(s"Width ${width} failed")
     width += 1
   }
-  println(s"Width ${width}")
   width
 }
+
 
 object MetaDecompRandomizedConstructorRunner extends experiments.runner.BaseRunner {
 
@@ -42,7 +40,7 @@ object MetaDecompRandomizedConstructorRunner extends experiments.runner.BaseRunn
   }
 
   // constructs MetaDecompConsisting only of one decomposition
-  def HypertreeToMetaDecompGraph(tree: Hypertree, vertices: Set[Hypergraph.Vertex]) : MetaDecompGraph = {
+  private def HypertreeToMetaDecompGraph(tree: Hypertree, vertices: Set[Hypergraph.Vertex]) : MetaDecompGraph = {
     val graph = new MetaDecompGraph()
 
     def addGraphEdges(prevSep: Separator, component: Component, subtree: Hypertree): Unit = {
@@ -54,10 +52,17 @@ object MetaDecompRandomizedConstructorRunner extends experiments.runner.BaseRunn
     graph
   }
 
-  def run(hypergraph: Hypergraph, width: Int, benchmarkPath: String = "", queryName: String = "", sqlFile: java.io.File, query: String): String = {
+  def run(hypergraph: Hypergraph, width: Int, benchmarkPath: String = "", queryName: String = "", sqlFile: java.io.File, query: String, fairMeasurement: Boolean = false): String = {
     val startTime = System.nanoTime()
-    def timedOut = (System.nanoTime() - startTime) / 1000 > 7500000 * math.pow(hypergraph.edges.size, 2) * math.pow(5, width - 2)
+    var excludedMeasurementTime = 0L
+    def timedOut = (System.nanoTime() - startTime - excludedMeasurementTime) / 1000 > 7500000 * math.pow(hypergraph.edges.size, 2) * math.pow(5, width - 2)
     // 500 * hypergraph.edges.size * math.pow(hypergraph.edges.size / 4, width - 2)
+
+    def excludeFromConstructionTimeout[A](operation: => A): A = {
+      val measurementStart = System.nanoTime()
+      try operation
+      finally excludedMeasurementTime += System.nanoTime() - measurementStart
+    }
 
     val unexhaustedCandidates = mutable.Map.empty[(Separator, Separator, Component), mutable.ListBuffer[Separator]]
     val hasSolution = mutable.Map.empty[(Separator, Separator), Boolean]
@@ -98,11 +103,74 @@ object MetaDecompRandomizedConstructorRunner extends experiments.runner.BaseRunn
 
     def getAndExecutePlan(meta: MetaDecompGraph, label: String): (Long, Double) = {
       val planningStartTime = System.nanoTime()
-      val plan = MetaDecompCyclicOptimizer().run(hypergraph, meta)
+      val plan = SharedWorkCyclicOptimizer().run(hypergraph, meta)
       val planningTime = (System.nanoTime() - planningStartTime) / 1000
       val cost = plan.cumulativeCost
       println(s"$label: planning=$planningTime us, cumulativeCost=$cost")
       (runPlan(plan), cost)
+    }
+
+    case class InsertedCandidate(insertion: Int, plan: PlanNode, preliminaryTime: Long, cost: Double)
+
+    val insertedCandidates = mutable.ArrayBuffer.empty[InsertedCandidate]
+
+    def median(times: Seq[Long]): Long = times.sorted.apply(times.size / 2)
+
+    /**
+     * Preliminary comparison for the newly inserted tree. Each plan runs the
+     * same number of times in first and second position.
+     */
+    def measureAlternating(accumulatedPlan: PlanNode, insertedPlan: PlanNode): (Long, Long) = {
+      val accumulatedTimes = mutable.ArrayBuffer.empty[Long]
+      val insertedTimes = mutable.ArrayBuffer.empty[Long]
+
+      for (round <- 0 until repeatTimes) {
+        if (round % 2 == 0) {
+          accumulatedTimes += runPlanOnce(accumulatedPlan)
+          insertedTimes += runPlanOnce(insertedPlan)
+        } else {
+          insertedTimes += runPlanOnce(insertedPlan)
+          accumulatedTimes += runPlanOnce(accumulatedPlan)
+        }
+      }
+
+      (median(accumulatedTimes.toSeq), median(insertedTimes.toSeq))
+    }
+
+    /**
+     * Independently remeasure the accumulated plan and the three inserted
+     * candidates with the lowest preliminary medians. One unmeasured run per
+     * plan warms the execution path. Rotating the starting plan gives every
+     * plan every execution position equally often.
+     */
+    def remeasureFinalists(accumulatedPlan: PlanNode, finalists: Seq[InsertedCandidate]): (Long, Seq[(InsertedCandidate, Long)]) = {
+      val labelledPlans = ("accumulated", accumulatedPlan) +:
+        finalists.map(candidate => s"inserted-${candidate.insertion}" -> candidate.plan)
+
+      labelledPlans.foreach { case (_, plan) => runPlanOnce(plan) }
+
+      val times = mutable.Map.from(labelledPlans.map { case (label, _) => label -> mutable.ArrayBuffer.empty[Long] })
+      val planCount = labelledPlans.size
+      val rounds = ((repeatTimes + planCount - 1) / planCount) * planCount
+
+      for (round <- 0 until rounds) {
+        val offset = round % planCount
+        val executionOrder = labelledPlans.drop(offset) ++ labelledPlans.take(offset)
+        executionOrder.foreach { case (label, plan) =>
+          times(label) += runPlanOnce(plan)
+        }
+      }
+
+      val accumulatedTime = median(times("accumulated").toSeq)
+      val insertedTimes = finalists.map(candidate =>
+        candidate -> median(times(s"inserted-${candidate.insertion}").toSeq)
+      )
+      (accumulatedTime, insertedTimes)
+    }
+
+    def measureSinglePlan(plan: PlanNode): Long = {
+      runPlanOnce(plan) // unmeasured warm-up
+      median((0 until repeatTimes).map(_ => runPlanOnce(plan)))
     }
 
     def rec(prevSep: Separator, currComp: Set[Vertex], currSep: Separator, depth: Int)(implicit width: Int): Option[Hypertree] = {
@@ -191,7 +259,7 @@ object MetaDecompRandomizedConstructorRunner extends experiments.runner.BaseRunn
     val emptySeparator = Set.empty[Hyperedge]
 
     var cnt = 0
-    val cntLimit = 30
+    val cntLimit = 20
     var extractedSeq = ""
     var lowestInsertedTime: Long = -1
     var lowestInsertedCost = Double.PositiveInfinity
@@ -204,12 +272,47 @@ object MetaDecompRandomizedConstructorRunner extends experiments.runner.BaseRunn
       val extracted = graph.countHypertreeDecompositions()
       extractedSeq += s",$extracted"
 
-      val (completeTime, completeCost) = getAndExecutePlan(graph, "Accumulated graph")
-      val (insertedTreeTime, insertedCost) = getAndExecutePlan(HypertreeToMetaDecompGraph(tree, H.vertices), "Inserted tree")
-      if (lowestInsertedTime == -1 || lowestInsertedTime > insertedTreeTime) {
+      val (completeTime, completeCost, insertedTreeTime, insertedCost, selectedInsertedCost) =
+        if (fairMeasurement) excludeFromConstructionTimeout {
+          val accumulatedPlanningStart = System.nanoTime()
+          val accumulatedPlan = SharedWorkCyclicOptimizer().run(hypergraph, graph)
+          val accumulatedPlanningTime = (System.nanoTime() - accumulatedPlanningStart) / 1000
+
+          val insertedGraph = HypertreeToMetaDecompGraph(tree, H.vertices)
+          val insertedPlanningStart = System.nanoTime()
+          val insertedPlan = SharedWorkCyclicOptimizer().run(hypergraph, insertedGraph)
+          val insertedPlanningTime = (System.nanoTime() - insertedPlanningStart) / 1000
+          val insertedCost = insertedPlan.cumulativeCost
+
+          println(s"Accumulated graph: planning=$accumulatedPlanningTime us, cumulativeCost=${accumulatedPlan.cumulativeCost}")
+          println(s"Inserted tree: planning=$insertedPlanningTime us, cumulativeCost=$insertedCost")
+
+          val (_, preliminaryInsertedTime) = measureAlternating(accumulatedPlan, insertedPlan)
+          insertedCandidates += InsertedCandidate(cnt, insertedPlan, preliminaryInsertedTime, insertedCost)
+
+          val finalists = insertedCandidates.sortBy(_.preliminaryTime).take(3).toSeq
+          val (fairAccumulatedTime, finalistTimes) = remeasureFinalists(accumulatedPlan, finalists)
+          val (fastestCandidate, fairInsertedTime) = finalistTimes.minBy(_._2)
+
+          println(s"Preliminary inserted time: $preliminaryInsertedTime us")
+          println(s"Remeasured finalists: ${finalistTimes.map { case (candidate, time) => s"insertion ${candidate.insertion}=$time us" }.mkString(", ")}")
+
+          (fairAccumulatedTime, accumulatedPlan.cumulativeCost, fairInsertedTime, insertedCost, fastestCandidate.cost)
+        } else {
+          val (accumulatedTime, accumulatedCost) = getAndExecutePlan(graph, "Accumulated graph")
+          val (newInsertedTime, newInsertedCost) = getAndExecutePlan(HypertreeToMetaDecompGraph(tree, H.vertices), "Inserted tree")
+          (accumulatedTime, accumulatedCost, newInsertedTime, newInsertedCost, newInsertedCost)
+        }
+
+      if (fairMeasurement) {
+        // This value is independently remeasured at every insertion; do not
+        // retain a historical minimum measured under an earlier cache state.
         lowestInsertedTime = insertedTreeTime
-        fastestInsertedCost = insertedCost
-      }
+        fastestInsertedCost = selectedInsertedCost
+      } else if (lowestInsertedTime == -1 || lowestInsertedTime > insertedTreeTime) {
+          lowestInsertedTime = insertedTreeTime
+          fastestInsertedCost = insertedCost
+        }
       lowestInsertedCost = math.min(lowestInsertedCost, insertedCost)
 
       println(s"$queryName insertion=$cnt: completeTime=$completeTime us, insertedTime=$insertedTreeTime us, lowestInsertedTime=$lowestInsertedTime us")
@@ -260,14 +363,23 @@ object MetaDecompRandomizedConstructorRunner extends experiments.runner.BaseRunn
 
     extractedSeq += ",complete"
     val completeGraph = MetaDecompGraphConstructBaseline().run(hypergraph, width)
-    val (execTime, cost) = getAndExecutePlan(completeGraph, "Complete")
+    val (execTime, cost) =
+      if (fairMeasurement) {
+        val planningStart = System.nanoTime()
+        val plan = MetaDecompCyclicOptimizer().run(hypergraph, completeGraph)
+        val planningTime = (System.nanoTime() - planningStart) / 1000
+        //println(s"Complete: planning=$planningTime us, cumulativeCost=${plan.cumulativeCost}")
+        (measureSinglePlan(plan), plan.cumulativeCost)
+      } else {
+        getAndExecutePlan(completeGraph, "Complete")
+      }
     val extractedHDs = completeGraph.countHypertreeDecompositions()
     extractedSeq += s",$execTime,$cost"
 
     if (extractedSeq != "") {
       println(extractedSeq)
     }
-    println(s"Inserted $cnt trees out of $extractedHDs available" )
+    println(s"$queryName,$extractedHDs" )
     return extractedSeq
   }
 
