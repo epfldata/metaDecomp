@@ -1,0 +1,82 @@
+\section{Omitted Proofs in Section~\ref{sec:hierarchical-query-plan}}
+\label{app:hier}
+
+\subsection{Proof of Theorem~\ref{thm:w1plan-size-bound}}
+
+Let $p^* \in V(\mathcal{P})$ be a node in the plan where the maximum width is achieved, i.e., $w(p^*) = w(\mathcal{P})$.  By the definition of $w(p^*)$, there must exist a set of relations $S \subseteq E(H_{p^*})$ such that $|S| = w(p^*)$ and $I(p^*) \subseteq \bigcup_{e \in S} e$.  Therefore, the result of $Q(p^*)$ must be a subset of the join of all relations in $S$.  In the worst-case scenario, where all relations in $S$ share no common attributes and their join is a Cartesian product, the size of this join is $O(N^{|S|})$, which gives an upper bound of $O(N^{w(\mathcal{P})})$.
+
+\subsection{Proof of Theorem~\ref{thm:w1plan-jt}}
+    \paragraph{$(\Leftarrow)$}
+    % For each $p \in \mathcal{P}$, if $Q(p)$ only involves one relation, $Q(p) = q$ holds for all join trees because of the coverage condition of a join tree. 
+    Let $T$ be the join tree of the query $Q$ that induces the query plan $\mathcal{P}$. Then, for any $q \in V(T)$, the interface $I_q$ between the induced hypergraph $H_q$ for subtree $T_q$ rooted at $q$ and the residual hypergraph $\overline{H}_q$ satisfies $I_q \subseteq q$, because of the connectedness condition of the join tree.  In addition, by \cref{def:w1plan-induced-by-jt}(1), we have $Q(p) = Q(q)$. This implies that the induced hypergraphs $H_p = H_q$. Therefore, for every $p \in \mathcal{P}$, we can find a set $S = \{q\}$ that covers $I_p$, and $w(p) = 1$ holds as $|S| = 1$.
+
+    \paragraph{$(\Rightarrow)$}
+    Given a width-1 query plan $\mathcal{P}$, we construct such a join tree $T$ by induction.  
+    For each leaf node $p \in V(\mathcal{P})$, we simply construct a tree with the relation corresponding to the leaf node, and this is vacuously a join tree.
+    For each join operation $p \in V(\mathcal{P})$,  assume that there exist valid join trees $T_{c_1}$ and $T_{c_2}$ for each of the two child nodes $c_1$ and $c_2$, repsectively.  Let $q_1 \in V(T_{c_1})$ be the relation that covers the interface $I_{c_1}$ and $q_2 \in V(T_{c_2})$ covers $I_{c_2}$, we make $q_1$ the root of $T_{c_1}$ and $q_2$ the root of $T_{c_2}$, then $I_{c_1} \cap I_{c_2} = q_1 \cap q_2$, and we can merge $T_1$ and $T_2$ to obtain $T'$ by connecting $q_1$ and $q_2$.  
+    The new tree $T'$ still preserves the connectedness condition, since, for all $q_1' \in V(T_{c_1})$ and all $q_2' \in V(T_{c_2})$, $q_1$ and $q_2$ are on the path between $q_1'$ and $q_2'$, and therefore $\chi(q_1') \cap \chi(q_2') \subseteq I_{c_1} \subseteq \chi(q_1)$ and $\chi(q_1') \cap \chi(q_2') \subseteq I_{c_2} \subseteq \chi(q_2)$. Then, by the connectedness condition within each of the two subtrees $T_{c_1}$ and $T_{c_2}$, we have that $\chi(q_1') \cap \chi(q_2') \subseteq \chi(q_1') \cap \chi(q_1) \subseteq \chi(q_1'')$ for all $q_1''$ on the path between $q_1'$ and $q_1$, and $\chi(q_1') \cap \chi(q_2') \subseteq \chi(q_2') \cap \chi(q_2) \subseteq \chi(q_2'')$ for all $q_2''$ on the path between $q_2'$ and $q_2$.
+    Therefore, $T'$ is a valid join tree for the query induced by the node $p$.
+    
+\subsection{Proof of \cref{thm:opt-hierarchical-time}}
+
+Following \cref{thm:w1plan-jt}, we have
+
+\begin{lemma}
+    For all width-1 query plans $\mathcal{P}$ induced by a join tree $T$,
+    for all non-leaf nodes $t \in V(T)$ with distinct children $c_1$ and $c_2$,
+    if $p_1, p_2 \in V(\mathcal{P})$ are the nodes on $\mathcal{P}$ such that $Q(p_1) = Q(c_1)$ and $Q(p_2) = Q(c_2)$,
+    then there exists no $q \in \mathcal{P}$ such that $Q(q) = Q(p_1) \bowtie Q(p_2) = Q(c_1) \bowtie Q(c_2)$.
+\end{lemma}
+
+\begin{proof}
+    Suppose there is such a $q$, then by \cref{def:w1plan-induced-by-jt}, there would have been an edge between $c_1$ and $c_2$ on $T$, contradicting with the assumption that $c_1$ and $c_2$ are distinct children of some node $t$.
+\end{proof}
+
+This means that, given a width-1 query plan $\mathcal{P}$ induced by a join tree $T$, for each $t \in V(T)$, with children $c_1, \dots, c_{f(t)}$ and the corresponding $p \in V(\mathcal{P})$ such that $Q(t) = Q(p)$, if we consider the sub–query plans $\mathcal{P}_{c_1}, \dots, \mathcal{P}_{c_{f(t)}}$, induced by the sub–join trees $T_{c_1}, \dots, T_{c_{f(t)}}$ rooted at the children of $t$, each as a single relation, then the sub–query plan $\mathcal{P}_p$ rooted at $p$ is a \emph{left-deep plan} consisting of $t$, $\mathcal{P}_{c_1}, \dots, \mathcal{P}_{c_{f(t)}}$, and $t$ is an operand of the deepest join operation.
+
+Therefore, the optimization can be done by a dynamic programming algorithm, as shown in \cref{alg:opt-hierarchical}. In the algorithm, $\mathsf{children}(v)$ is the set of all children of $v$.
+
+
+
+\begin{algorithm}
+\caption{Finding the optimal width-1 query plan induced by a join tree} \label{alg:opt-hierarchical}
+\SetKwInOut{Input}{input}
+\SetKwInOut{Output}{output}
+\SetKwInOut{Known}{known}
+\Input{A join tree $T$}
+\Output{The optimal width-1 query plan induced by $T$}
+
+\ForEach {$v \in V(T)$, in bottom-up order \label{alg-line:opt-hierarchical-traversal}} {
+    \ForEach{child $c$ of $v$} {
+        \If {$\lambda(c) \neq \emptyset$}{
+            $P(v, \{ c \}) \gets P(c, \mathsf{children}(c) \cup \{ c \})$ \;
+        } \Else {
+            $P(v, \{ c \}) \gets P(c, \mathsf{children}(c))$ \;
+        }
+    }
+    \If{$\lambda(v) \neq \emptyset$}{
+        $P(v, \{ v \}) \gets $ query plan with one node $v$ \;
+    }
+    \If {$\lambda(v) = \emptyset$} {
+        $S \gets 2^{\mathsf{children}(v)} \setminus \{ \emptyset \}$ \;
+    } \Else {
+        $S \gets \{ T \cup \{ v \} : T \in 2^{\mathsf{children}(v)} \setminus \emptyset \}$ \;
+    }
+    \ForEach {$T \in S$, ordered by increasing size \label{alg-line:opt-hierarchical-subsets}} {
+        $P(v, T) \gets \arg\!\min_{p \in \{ P(v, T \setminus \{ u \}) \bowtie P(v, \{ u \}) : u \in T \}} \mathsf{cost}(p)$ \label{alg-line:opt-hierarchical-last} \;
+    }
+}
+\Return {$P(\mathsf{root}(T), S(\mathsf{root}(T)))$} \;
+
+\end{algorithm}
+
+In the algorithm, the outer loop (\cref{alg-line:opt-hierarchical-traversal}) is executed $|V(T)| = |Q|$ times. The complexity of the loop body is dominated by enumerating all possible $T$ (\cref{alg-line:opt-hierarchical-subsets}) and $u \in T$ (\cref{alg-line:opt-hierarchical-last}). Noting that the number of children of $v$ is bounded by the fan-out $f(p)$, the complexity of this part is given by
+\begin{align*}
+    \sum_{i = 1}^{f(v)} \binom{f(v)}{i} \times i &= \sum_{i = 1}^{f(v)} \frac{f(v)!}{i! (f(v) - i)!} \times i = \sum_{i = 1}^{f(v)} \frac{f(v)!}{(i-1)! (f(v) - i)!} \\
+    & = \sum_{i = 1}^{f(v)} f(v) \times \frac{(f(v) - 1)!}{(i-1)! ((f(v) - 1) - (i-1))!} \\
+    & = \sum_{i = 1}^{f(v)} f(v) \times \binom{f(v) - 1}{i - 1} = f(v) \sum_{i = 0}^{f(v) - 1} \binom{f(v) - 1}{i} \\
+    & = f(v) 2^{f(v) - 1} \leq \max_{v \in V(T)} f(v) 2^{f(v) - 1} = f(T) 2^{f(T) - 1}.
+\end{align*}
+
+So, overall, the complexity is $O(f(T) 2^{f(T) - 1} |Q|)$.
+

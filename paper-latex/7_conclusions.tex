@@ -1,0 +1,7 @@
+\section{Conclusions and Future Work}
+\label{sec:conclusions}
+
+In this paper, we have introduced novel techniques for query optimization based on structural properties via meta-decompositions. They offer promising opportunities to integrate theoretically desirable structure-based optimization into practical database systems to efficiently evaluate large, complex queries.
+A natural next step is to extend our width notion and meta-decompositions-based framework to cyclic queries. While width-1 query plans cannot exist for cyclic queries (according to \cref{thm:acyclicwidth}) we may, e.g., identify minimal-width query plans and represent all minimal-width hypertree decompositions.
+In addition, to improve our current simple strategy of selection pushdown, it is possible to incorporate existing techniques for evaluating conjunctive queries with comparisons~\cite{SIGMOD22}. Similar is the case for many other operators that are so far excluded in this paper, such as aggregations~\cite{AJAR, FAQ}, top-$k$~\cite{wang2023relational}, differences~\cite{SIGMOD23, PODS24}, etc., for which there already exist theoretically desirable structure-guided approaches. The performance of such methods can also benefit from our cost-based optimization framework.
+Finally, even though our technique has shown its robustness, it will still benefit from more accurate cardinality estimation. Recent research~\cite{LPBound, Cai2019CE} shows promising techniques that can be adopted to develop efficient, reliable cardinality estimators suitable within our proposed framework.

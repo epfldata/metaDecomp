@@ -1,0 +1,35 @@
+\section{Omitted Details in \cref{sec:opt}}
+\label{app:opt}
+
+\subsection{Supporting Re-branching for \cref{alg:cost}}
+
+For each node $p$, if there exists a subtree $T_q$ that can be attached as a child of $p$, we simply use an additional bit in the DP table ($\sf plan$) to indicate whether $T_q$ is included. And we call $\sf optimizeLocal$ with or without the relations in $T_q$ accordingly. We note again that this is a very rare possibility in practical queries.
+
+\subsection{Greedy Algorithm for Local Join Ordering}
+\label{app:greedy}
+
+The implementation of local join ordering using a greedy algorithm is as shown in \cref{alg:greedy}.
+
+\begin{algorithm}
+\caption{Greedy implementation of $\sf optimizeLocal$}
+\label{alg:greedy}
+\SetKwInOut{Input}{input}
+\SetKwInOut{Output}{output}
+\SetKwInOut{Known}{known}
+\Input{Node $q$ on meta representation, a set of query plans $\mathcal{P}$}
+\Output{A query plan that joins the relation in $q$ with all query plans in $\mathcal{P}$}
+
+\If(\tcp*[f]{$\lambda(q) = \emptyset$, there is no relation in $q$}){$q$ is a minor node}{
+    $P \gets $ remove $P_1$ from $\mathcal{P}$ with the minimum result cardinality \;
+} \Else {
+    $P \gets $ the relation in $\lambda(q)$ \;
+}
+
+\While{$\mathcal{P} \neq \emptyset$}{
+    $P_i \gets $ remove $P_i$ from $\mathcal{P}$ that minimizes the cost to join $P$ with $P_i$ \;
+    $P \gets $ the plan $P_i \bowtie P$ \;
+}
+
+\Return{$P$} \;
+
+\end{algorithm}

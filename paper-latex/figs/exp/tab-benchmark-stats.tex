@@ -1,0 +1,25 @@
+
+\begin{footnotesize}
+\begin{table}
+    \centering
+    \begin{tabular}{cc|c|c|c|c|c}
+        \hline
+        \multicolumn{2}{r|}{\bf{Benchmarks $\rightarrow$}}               & \bf{DSB} & \bf{JOB} & \bf\makecell{Musicbrainz} & \bf\makecell{JOBLarge} & \bf\makecell{Overall} \\ \hline
+        \multirow{3}{*}{\bf\shortstack{Number of\\relations}}  & Min     & 5        & 4        & 2                            & 8                         & 2 \\
+                                                               & Median  & 6        & 8        & 10                           & 18                        & 8 \\
+                                                               & Max     & 9        & 17       & 26                           & 34                        & 34 \\ \hline
+        \multirow{3}{*}{\bf\shortstack{Fan-out}}               & Min     & 2        & 2        & 1                            & 2                         & 1 \\
+                                                               & Median  & 3        & 3        & 4                            & 4                         & 3 \\
+                                                               & Max     & 4        & 5        & 9                            & 5                         & 9 \\ \hline
+        \multirow{3}{*}{\bf\shortstack{Number of\\join trees}} & Min     & 5        & 12       & 2                            & 72                        & 2 \\
+                                                               & Median  & 7        & 144      & 22500                        & 40000                     & 126 \\
+                                                               & Max     & 54       & 352512   & $> 10^8$                     & $> 10^8$                  & $> 10^8$ \\ \hline
+    \end{tabular}
+    % \vspace{-0.2em}
+    \caption
+    % of{table}
+    {Structural properties of queries in each benchmark}
+    \vspace{-1\baselineskip}
+    \label{tab:query-props}
+\end{table}
+\end{footnotesize}

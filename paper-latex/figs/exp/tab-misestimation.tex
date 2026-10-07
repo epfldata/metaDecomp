@@ -1,0 +1,34 @@
+
+\begin{table}
+    % \centering
+    \begin{footnotesize}
+        % \renewcommand{\arraystretch}{1.1}
+        % \setlength\tabcolsep{1pt}
+
+\begin{tabular}{cc|cccc|cccc}
+    \hline
+    \multicolumn{2}{r|}{\textbf{Benchmark $\rightarrow$}}
+        & \multicolumn{4}{c|}{\textbf{DSB}} & \multicolumn{4}{c}{\textbf{JOB}} \\
+    \textbf{Method $\downarrow$} & \textbf{Cardinality $\downarrow$}
+        & Mean & Median & 95th & 99th & Mean & Median & 95th & 99th \\
+    \hline
+    \multirow{2}{*}{\sys{}}
+        & Exact & 0.01 s & 0.01 s & 0.04 s & 0.04 s & 0.04 s & 0.03 s & 0.08 s & 0.11 s \\
+        & Misestimated & 0.02 s & 0.01 s & 0.06 s & 0.12 s & 0.05 s & 0.04 s & 0.11 s & 0.15 s \\
+    \hline
+    \multirow{2}{*}{DPconv}
+        & Exact & 0.02 s & 0.01 s & 0.09 s & 0.10 s & 0.04 s & 0.04 s & 0.09 s & 0.11 s \\
+        & Misestimated & 0.03 s & 0.01 s & 0.11 s & 0.14 s & 0.46 s & 0.05 s & 0.23 s & 2.07 s \\
+    \hline
+    \multirow{2}{*}{UnionDP}
+        & Exact & 0.03 s & 0.01 s & 0.10 s & 0.11 s & 0.05 s & 0.04 s & 0.10 s & 0.12 s \\
+        & Misestimated & 0.03 s & 0.01 s & 0.11 s & 0.14 s & 0.48 s & 0.05 s & 0.22 s & 1.86 s \\
+    \hline
+\end{tabular}
+
+    \end{footnotesize}
+    % \vspace{-0.2em}
+    \caption{Query execution time when optimized with exact vs misestimated cardinalities}
+    % \vspace{-1.4em}
+    \label{tab:misestimation}
+\end{table}

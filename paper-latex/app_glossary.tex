@@ -1,0 +1,33 @@
+\section{Glossary of Frequently-Used Terms and Notations in the Paper}
+\label{app:glossary}
+\cref{tab:glossary} gives a glossary of frequently-used terms and notations in the paper, each with a brief intuitive explanation.
+\begin{small}
+\begin{table}[H]
+    \centering
+    \begin{tabular}{>{\raggedright\arraybackslash}p{3.5cm}>{\raggedright\arraybackslash}p{9.5cm}}
+        \hline
+        {\bf Term / Notation} & {\bf Explanation} \\ \hline
+        $f(S)$ on a set $S$ of elements & Set of all $f(a)$ for all elements $a$ in $S$. \\ \hline
+        $\cup S$ on a set $S$ of sets & Union of all sets in $S$. \\ \hline
+        Conjunctive query & A query with joins, with selection and projection involving only attributes in base relations. \\ \hline
+        Full (conjunctive) query & Conjunctive query where no attribute is projected out. \\ \hline
+        Boolean (conjunctive) query & Conjunctive query whose output contains no attribute, but only a Boolean value indicating whether there exists any tuple satisfying all predicates. \\ \hline
+        Relation-dominated query & Conjunctive query in which all output attributes are present in some single relation. \\ \hline
+        Hypergraph $H(Q)$ associated with query $Q$ & Hypergraph where each vertex is an attribute, and each hyperedge corresponds to a relation, containing all attributes in the relation. \\ \hline
+        $\lambda$-label $\lambda(p)$ & In a hypertree decomposition or meta-decomposition, maps each tree vertex $p$ to a set of hyperedges (relations). Non-empty in hypertree decompositions, possibly empty in minor nodes of meta-decompositions. \\ \hline
+        $\chi$-label $\chi(p)$ & In a hypertree decomposition or meta-decomposition, maps each tree vertex $p$ to a set of hypergraph vertices (attributes). Subset of vertices in the $\lambda$-label. \\ \hline
+        $\kappa$-label $\kappa(p)$ & In a meta-decomposition, maps each tree vertex to the ``interface'', i.e., hypergraph vertices in the intersection between $p$ and other tree vertices not on the subtree rooted at $p$. \\ \hline
+        $T_p$, subtree of $T$ rooted at $p$ & Subtree of $T$ containing $p$ and its descendants. \\ \hline
+        $T_{p \to q}$ & If $q$ is a child of $p$, same as $T_q$. If $q$ is a parent of $p$, the subtree of $T$ with all vertices except those in $T_p$. \\ \hline
+        Fan-out $f(p)$, $f(T)$ & For a tree vertex $p$, the number of children. For a tree $T$, the maximum number of children per vertex. \\ \hline
+        Induced query $Q(p)$ & For vertices $p$ on a join tree or query plan, the join of all relations on the subtree rooted at $p$, with appropriate selection and projection applied. \\ \hline
+        Interface $I(p)$ & For a vertex $p$ on a meta-decomposition or query plan, the intersection (of vertices) between $p$ and other vertices not in the subtree rooted at $p$. \\ \hline
+        Width $w(p)$, $w(\mathcal{P})$ of (vertex on) query plan & For a vertex $p$ on a query plan, the number of relations needed to cover the attributes in the interface. \newline For an entire query plan $\mathcal{P}$, the maximum number of relations needed to cover the attributes in the interface of any intermediate step. \\ \hline
+        Width $w(p)$, $w(\mathcal{T})$ of (vertex on) hypertree decomposition & For a vertex $p$ on a hypertree decomposition, the number of hyperedges / relations in the $\lambda$-label. \newline For a hypertree decomposition $\mathcal{T}$, the maximum number of hyperedges / relations in the $\lambda$-label of a single vertex. \\ \hline
+        Ear, reducible hyperedge/relation & In GYO reduction on an acyclic hypergraph/query, a hyperedge/relation whose intersection (hypergraph vertices / query attributes) with the rest of the hyperedges/relations is covered by some other single hyperedge/relation. \\ \hline
+        $o(e, H)$ & Set of overlapping vertices of hyperedge $e$ and the remaining hyperedges $E(H) \setminus \set{e}$. \\ \hline
+    \end{tabular}
+    \caption{Glossary of frequently-used terms and notations in the paper}
+    \label{tab:glossary}
+\end{table}
+\end{small}

@@ -1,0 +1,456 @@
+
+\section{Omitted Details in Section~\ref{sec:meta}}
+\label{app:meta}
+
+\subsection{Omitted Details on \cref{alg:enum}}
+\label{app:enum}
+
+\subsubsection{Detailed Version of \cref{alg:enum}}
+A more detailed version of \cref{alg:enum} is shown in \cref{alg:enum-full}. It shows in particular the detailed steps to construct join trees from sub--join trees. Some functions being used are detailed in the following subsections.
+
+\begin{algorithm}
+\small
+\caption{Enumerating all join trees based on a meta-decomposition} \label{alg:enum-full}
+\SetInd{0.5em}{0.6em}
+\SetKwInOut{Input}{input}
+\SetKwInOut{Output}{output}
+\SetKwInOut{Known}{known}
+\SetKwProg{Fn}{Function}{:}{}
+\SetKwFunction{enumRec}{$\mathsf{enumRec}$}
+\Input{A meta-decomposition $M = (V(M), r(M), E(M), \lambda, \chi, \kappa)$}
+\Output{All join trees of the hypergraph induced by $M$}
+
+\Fn{\enumRec{$v$: a node on $M$}}{
+
+$\mathcal{C} \gets $ set of children $c$ of $v$ on $M$, sorted by partial order $\supseteq$ on $\kappa(c)$ \;
+\ForEach{$c \in C$} {
+    $\mathcal{T}_c \gets \bigcup_{T \in \mathsf{enumRec}(c)} \mathsf{rerootings}(T, \emptyset, \kappa(c))$ \label{alg-line:enum-subtrees} \;
+}
+\If(\tcp*[f]{minor node}){$\lambda(v) = \emptyset$ \label{alg-line:enum-minor-cond}} { % virtual node
+    $\mathcal{C}_{\sf origin} \gets \{ c \in \mathcal{C} \mid \kappa(c) = \chi(v) \}$ \tcp*[r]{they can be found at the head of the sorted $\mathcal{C}$}
+    \If{$\kappa(v) = \chi(v)$}{
+        $\mathcal{T}_P \gets \textsf{enumerateTrees}(\mathcal{C}_{\sf origin} \cup \{ v \})$, all rerooted to $v$ %, where $d$ is an additional dummy vertex
+        \label{alg-line:enum-minor-dummy}
+        \tcp*[r]{All non-isomorphic trees with vertices $\mathcal{C}_{\sf origin} \cup \{ v \}$. The minor node $v$ will eventually be replaced 
+        on \cref{alg-line:enum-dummy-replace}
+        by the parent of $r$.
+        }
+    } \Else(\tcp*[f]{$\kappa(v) \neq \chi(v)$, the parent should not participate}) {
+        $\mathcal{T}_P \gets \textsf{enumerateTrees}(S)$ \label{alg-line:enum-minor-no-dummy} \;
+    }
+        \ForEach(\tcp*[f]{A skeleton of a way to connect subtrees}){$T_P \in \mathcal{T}_P$ \label{alg-line:enum-minor-origin-start}} {
+            \ForEach {$c \in V(T_P)$} {
+                \If {$c$ is a leaf node} {
+                    $\mathcal{T}_c' \gets \mathcal{T}_c$ \;
+                } \Else {
+                    $\mathcal{T}_c' \gets \emptyset$ \;
+                }
+            }
+            \ForEach {non-leaf $c \in V(T_P)$, in bottom-up order,
+                $T_c \in \mathcal{T}_c$,
+                    child $d$ of $c$ on $T_P$,
+                        $T_d \in \bigcup_{T_d \in \mathcal{T}_d}\mathsf{rerootings}(T_d, \emptyset, \kappa(d))$,
+                            $u \in V(T_c)$ such that $\kappa(d) \subseteq \chi(u)$}{
+                                $T_c' \gets T_c$, with $T_c$ added as a child of $u$ \;
+                                Add $T_c'$ to $\mathcal{T}_c'$ \;
+                            }
+            $\mathcal{T} \gets \mathcal{T} \cup \mathcal{T}_{r(T_P)}'$ \; \label{alg-line:enum-minor-origin-end}
+        }
+    % } 
+    
+    $\mathcal{C}_{\sf proper} \gets \mathcal{C} \setminus \mathcal{C}_{\sf origin}$, preserving the order \;
+} \Else {
+    $\mathcal{T} \gets $ a set of one tree with one vertex $v$ only \label{alg-line:enum-physical-root} \;
+    $\mathcal{C}_{\sf proper} \gets \mathcal{C}$, preserving the order \;
+}
+\ForEach {child $c \in \mathcal{C}_{\sf proper}$ in order \label{alg-line:enum-children-start}}{
+    $\mathcal{T}' \gets \emptyset$ \;
+    \ForEach{$T_c \in \mathcal{T}_c$, $T \in \mathcal{T}$} {
+        \tcp*[l]{Enumerate all possible $v$ in some $T$ which $T_c$ can be attached to}
+        \If(\tcp*[f]{The root of $T_c$ would be a minor node from \cref{alg-line:enum-minor-dummy}. We find a parent of each of its children.}){$\lambda(c) = \emptyset$ and $\kappa(c) = \chi(c)$}{
+            \ForEach {child $d$ of the root of $T_c$}{
+                $\mathcal{T}'' \gets \emptyset$ \;
+                \ForEach{$T' \in \mathcal{T}'$, $u \in T'$ such that $\kappa(d) \subseteq \chi(u)$} {
+                    $T'' \gets T'$ with $T_d$ attached as a child of $u$ \label{alg-line:enum-dummy-replace} \;
+                    Add $T''$ to $\mathcal{T}''$ \;
+                }
+                $\mathcal{T}' \gets \mathcal{T}''$ \;
+            }
+        } \Else {
+            \ForEach{$u \in T$ such that $\kappa(c) \subseteq \chi(u)$}{
+                $T' \gets T$ with $T_c$ added as a child of $u$ \label{alg-line:enum-attach-subtree} \;
+                Add $T'$ to $\mathcal{T}'$
+            }
+        }
+    }
+    $\mathcal{T} \gets \mathcal{T}'$ \label{alg-line:enum-children-end}
+}
+
+\Return{$\mathcal{T}$} \;
+    
+}
+
+\Return{$\bigcup_{T \in \mathsf{enumRec}(r)} \mathsf{rerootings}(T, \emptyset, \emptyset)$ } \;
+\end{algorithm}
+
+\subsubsection{Enumeration of Non-Isomorphic Trees Based on \prufer{} Sequences}
+
+For minor nodes $p$, as is illustrated by \cref{ex:star}, all of its neighbors $q$ for which $\kappa(q) = \chi(p)$ can be connected in an arbitrary tree structure with these neighbors being vertices. In order to enumerate all such possibilities without repetition, we (1) enumerate all non-isomorphic trees up to rerooting and (2) enumerate all rerootings for each tree enumerated in step (1).
+We start with the enumeration of non-isomorphic trees up to rerooting---namely, if two trees are simply rerootings of each other, they are treated as the same and only one of them will be enumerated. This can be done based on \prufer{} sequences~\cite{prufer_neuer_1918}. A \prufer{} sequence is a sequence of $|V| - 2$ numbers, each of which is an integer between $1$ and $|V|$, inclusive. It can be shown that each sequence bijectively encodes one tree (up to rerooting) of size $|V|$, with vertices labeled by integers ranging from $1$ to $|V|$, inclusive. Therefore, we use \cref{alg:prufer} which simply enumerates all such numeric sequences and converts each sequence into a tree.
+
+\begin{algorithm}[H]
+\caption{$\textsf{enumerateTrees}(V)$: Enumerate all non-homomorphic trees, up to rerooting, with vertices $V$, using \prufer{} sequences}\label{alg:prufer}
+\SetKwInOut{Input}{input}
+\SetKwInOut{Output}{output}
+\SetKwInOut{Known}{known}
+\Input{Set of vertices $V$}
+\Output{A set $\mathcal{T}$ of all non-isomorphic trees with vertices $V$}
+
+Arbitrarily order the vertices in $V$ and let $v_i$ be the $i$-th vertex in $V$ under this ordering \;
+
+$\mathcal{T} \gets \emptyset$ \;
+
+\ForEach{sequence $P = p_1, \dots, p_{|V| - 2}$ of $|V|-2$ integers, each with value in range $[1, |V|]$}{
+    \ForEach{$i = 1, \dots, |V|$}{
+        $d(i) \gets 1$ \;
+    }
+    $S \gets [1, |V|]$ \tcp*[r]{maintains the set of indices $i$ with $d(v_i) = 1$, in increasing order}
+    \ForEach{$i = 1, \dots, |V| - 2$}{
+        $d(s_i) \gets d(p_i) + 1$ \;
+        $S \gets S \setminus \{i\}$ \;
+    }
+    Initialize a tree $T$ with set of vertices $V$ and no edge \;
+    \ForEach{$i = 1, \dots, |V| - 2$}{ % the parent
+        $j \gets$ remove the least element in $S$ \; % the child
+        $d(i) \gets d(i) - 1$ \;
+        $d(j) \gets d(j) - 1$ \;
+        \If{$d(i) = 1$}{
+            Add $i$ into $S$ \;
+        }
+        In $T$, add $v_j$ as a child of $v_i$ \;
+    }
+    $i, j \gets $ the remaining two elements in $S$ \;
+    In $T$, add $v_j$ as a child of $v_i$ \tcp*[r]{the direction does not matter}
+    $\mathcal{T} \gets \mathcal{T} \cup \{ T \}$
+}
+\Return{$\mathcal{T}$} \;
+\end{algorithm}
+
+
+\subsubsection{Enumeration of Rerootings}
+
+We then recursively enumerate all possible rerootings of a tree $T$ such that the new root $r'$ has $\kappa \subseteq \chi(r')$, where $\kappa$ is the set of keys as required by the original \cref{alg:enum-full}. This can be done as shown in \cref{alg:reroot}.
+
+\begin{algorithm}[H]
+\caption{$\mathsf{rerootings}(T, p, \kappa)$: Enumerate all valid rerootings of a tree $T$ such that the new root $r'$ has $\kappa \subseteq \chi(r')$}
+\label{alg:reroot}
+\SetKwInOut{Input}{input}
+\SetKwInOut{Output}{output}
+\SetKwInOut{Known}{known}
+\Input{A tree $T$, optionally the previous parent $p$ of the root $r$ of $T$ before the previous rotation, the expected key $\kappa$}
+\Output{A set $\mathcal{T}$ of all valid rerootings of $T$ such that the new root $r'$ has $\kappa \subseteq \chi(r')$}
+
+$\mathcal{T} \gets \emptyset$ \;
+\ForEach{child $c$ of the root $r$ of $T$}{
+    \If{$\kappa \subseteq \chi(c)$ and $c \neq p$ \label{alg-line:reroot-kappa-cond}}{
+        $T' \gets T$ rerooted to $c$ \;
+        $\mathcal{T} \gets \mathcal{T} \cup \{ T' \} \cup \textsf{rerootings}(T', r, \kappa)$ \;
+    }
+}
+\Return{$\mathcal{T}$} \;
+\end{algorithm}
+
+\subsection{Proof of \cref{lem:add-back-minor}}
+
+We start with the following lemma:
+
+\begin{lemma} \label{lem:minor-overlap}
+    Given an acyclic hypergraph $H$, if there exist two ears $e_1, e_2 \in E(H)$ such that $o(e_1, H) = o(e_2, H)$, then $o(e_1, H) = o(e_2, H) = e_1 \cap e_2$.
+\end{lemma}
+
+\begin{proof}
+    ($\subseteq$): $o(e_1, H) = e_1 \cap (\cup (E(H) \setminus \{ e_1 \})) \subseteq e_1$, and, similarly, $o(e_2, H) \subseteq e_2$. So it follows that $o(e_1, H) = o(e_2, H) \subseteq e_1 \cap e_2$.
+
+    ($\supseteq$): Since $e_1 \in E(H) \setminus \{ e_2 \}$, we have $o(e_1, H) = o(e_2, H) = e_2 \cap (\cup (E(H) \setminus \{ e_2 \})) \supseteq e_1 \cap e_2$.
+\end{proof}
+
+% \begin{proof}
+    A hypergraph is acyclic if and only if it has a join tree, satisfying conditions \ref{H1}--\ref{H3}.
+    Since $e_1$ and $e_2$ are ears in $H$ such that $o(e_1, H) = o(e_2, H) \subseteq e_2$, in the GYO algorithm for $H$, $e_1$ can already be removed, with $e_2$ being its witness.
+    Therefore, there exists a join tree $T$ of $H$ where there is a leaf node $p_1$ with $\lambda(p_1) = \{ e_1 \}$, and its parent $p_2$ has $\lambda(p_2) = \{ e_2 \}$. We construct a tree $T'$ that is exactly the same as $T$ except that $p_1$ and $p_2$ are merged into a single node $m$ with $\lambda(m) = \{ o(e_1, H) \}$ and $\chi(m) = o(e_1, H)$, and we show that $T'$ is a valid join tree of $H'$.
+    \ref{H1} and \ref{H3} are satisfied by construction.
+    It remains to show that $T'$ satisfies \ref{H2}.
+    Suppose by way of contradiction that this is not the case.
+    By \ref{H2} on the join tree $T$, this means, on $T'$, either (1) there exist $s, t \in V(T')$ such that $m$ is on the path between $s$ and $t$, and $\chi(s) \cap \chi(t) \not\subseteq \chi(m)$, or (2) there exists $s \in V(T')$ and $t$ on the path between $s$ and $m$, such that $\chi(s) \cap \chi(m) \not\subseteq \chi(t)$.
+    
+    For case (1), since, by \cref{lem:minor-overlap}, $\chi(m) = o(e_1, H) = e_1 \cap e_2 = \chi(p_1) \cap \chi(p_2)$,
+    if $\chi(s) \cap \chi(t) \not\subseteq \chi(m)$,
+    this means either $\chi(s) \cap \chi(t) \not\subseteq \chi(p_1)$
+    or $\chi(p) \cap \chi(q) \not\subseteq \chi(p_2)$.
+    On $T$, since $p_1$ is a leaf node, $p_2$ should be on the path between $s$ and $t$.
+    By \ref{H2} for $T$, we have $\chi(s) \cap \chi(t) \subseteq \chi(p_2)$.
+    So it can only be that $\chi(s) \cap \chi(t) \not\subseteq \chi(p_1)$, i.e., there exists some $v \in \chi(s) \cap \chi(t) \subseteq \chi(p_2)$ such that $v \not\in \chi(p_1)$.
+    But then, $v \in o(e_2, H)$ but $v \not\in o(e_1, H)$, contradicting $o(e_1, H) = o(e_2, H)$.
+    
+    For case (2), we first note that $\chi(s) \cap o(e_1, H) = \chi(s) \cap e_1$. This is because ($\subseteq$) $o(e_1, H) = e_1 \cap (\cup (E(H) \setminus \{ e_1 \})) \subseteq e_1$, and ($\supseteq$) $\chi(s) \cap e_1 \subseteq (\cup (E(H) \setminus \{e_1 \})) \cap e_1 = o(e_1, H)$. Then, $\chi(s) \cap \chi(m) = \chi(s) \cap o(e_1, H) = \chi(s) \cap e_1 = \chi(s) \cap \chi(p_1)$. So, $\chi(s) \cap \chi(p_1) = \chi(s) \cap \chi(m) \not\subseteq \chi(p_2)$. Since $p_1$ is a leaf and $p_2$ is the parent of $p_1$ in $T$, $p_2$ must be on the path between $s$ and $p_1$, so this contradicts \ref{H2} for $T$.
+% \end{proof}
+
+\subsection{Proof of \cref{thm:meta-complexity}}
+
+    We start by considering the while-loop (\cref{alg:meta-while}). At the start of each iteration, an ear must exist because the hypergraph $H'$ must be acyclic, as guaranteed by \cref{lem:add-back-minor}. Furthermore, $E(H')$ always decreases in size by at least 1 in each iteration, because we only remove ears from $E(H')$, except when we have mutually reducible ears, in which case we remove all (at least 2) those ears sharing the same intersection but add only one special hyperedge $e_m$ to $E(H')$.
+    Therefore, the body of the while loop is executed at most $|E(H)|$ times.
+    
+    For each iteration of the while-loop, all sets $S$ (\cref{alg-line:meta-minor-origins-sets}) can be enumerated in $O(|E(H')|)$, if we maintain two hash maps: (1) $T_1$, which maps each $o \subseteq V(H')$ to all hyperedges $e \in E(H')$ such that $o(e, H') = o$, and (2) $T_2$, which maps each $v \in V(H')$ to the number of hyperedges $e \in E(H')$ such that $v \in e$.
+    Each time a hyperedge $e$ is added or removed from $E(H')$, we update $T_2$ for each $v \in e$, and then update $T_1$ if some $v \in e$ is/was covered by exactly one hyperedge. These updates can be done in $O(|E(H')|)$, which is $O(|E(H)|)$.
+    
+    With these observations, the runtime $O(|E(H)|^3)$ can be obtained by following the control flow.
+
+\subsection{Proof of \cref{thm:meta-correct}}
+We show that $M$ output by the algorithm satisfies \ref{H1}--\ref{H5}.
+
+\paragraph{\ref{H1}.} For each $e \in E(H)$, the algorithm has to remove $e$ from $E(H')$ on \cref{alg-line:meta-origin-remove} or \cref{alg-line:meta-ear-remove} before it terminates. In any of these cases, the algorithm will create a node $p$ in $M$ with $\lambda(p) = \{ e \}$, on \cref{alg-line:meta-origin-node} or \cref{alg-line:meta-ear-node}.
+
+Before proceeding with \ref{H2}, we have the following lemmas:
+
+\begin{lemma} \label{lem:meta-alg-edge-correct}
+    For each edge $(q, p) \in E(M)$, where $\chi(p) = \{ e_p \}$ and $\chi(q) = \{ e_q \}$, we have either
+    \begin{enumerate}
+        \item $e_p$ is removed as ear by the algorithm before $e_q$ is, \emph{or}
+        \item $\lambda(q) = \emptyset$ and $\kappa(q) = \chi(q)$
+    \end{enumerate}
+    Additionally, $\kappa(p) = \chi(p) \cap \chi(q)$.
+\end{lemma}
+
+\begin{proof}
+    We first have $\kappa(p) \subseteq \chi(p)$ by definition on Lines~\ref{alg-line:meta-origin-node}, \ref{alg-line:meta-ear-node}, and \ref{alg-line:no-minor-create}.
+    Since the algorithm adds the edge $(q, p)$, by Lines~\ref{alg-line:minor-origin-edge-cond} and \ref{alg-line:phys-find-parent}, we have $\kappa(p) \subseteq \chi(q)$.
+    Therefore, $\kappa(p) \subseteq \chi(p) \cap \chi(q)$.
+    
+    We then consider the relative order in which $e_p$ and $e_q$ are removed from $E(H')$ in the algorithm.
+    
+    (1) If $e_p$ is removed before $e_q$ is, then at the time $e_p$ is removed, $e_q \in E(H')$, and therefore $\chi(p) \cap \chi(q) = e_p \cap e_q \subseteq e_p \cap (\cup (E(H') \setminus \{ e_p \})) = \kappa(p)$. Since also $\kappa(p) \subseteq \chi(p) \cap \chi(q)$, we have $\kappa(p) = \chi(p) \cap \chi(q)$.
+    
+    (2) If $e_p$ is removed after $e_q$ is, then, symmetric to case (1), we have $\chi(p) \cap \chi(q) \subseteq \kappa(q)$. Then, since we have shown that $\kappa(p) \subseteq \chi(p) \cap \chi(q)$, we have $\kappa(p) \subseteq \chi(p) \cap \chi(q) \subseteq \kappa(q)$.
+    By \cref{alg-line:minor-origin-edge-cond} and \cref{alg-line:phys-find-parent}, this is only possible if $\lambda(q) = \emptyset$ and $\kappa(p) = \chi(q)$.
+    Since $\kappa(p) \subseteq \chi(p)$ and $\kappa(p) = \chi(q)$, it is true that $\kappa(p) = \chi(p) \cap \chi(q)$.
+\end{proof}
+
+It follows that
+
+\begin{corollary} \label{cor:descendent-removed-before}
+    $p$ is a descendant of $q$ on $M$ if and only if $e_p$ is removed as ear by the algorithm before $e_q$ is.
+\end{corollary}
+
+\paragraph{\ref{H2}.} 
+The algorithm iteratively adds edges $(q, p)$ to attach a connected subtree $M_p$ rooted at $p$ to a connected subtree $M^q$ that contains $q$.
+Suppose by way of contradiction that \ref{H2} is violated at the end, and
+suppose it is when processing $p \in V(M)$, that the addition of edge $(q, p)$ violates this condition for the first time.
+Namely, $M_p$ and $M^q$ each satisfies \ref{H2}, but the resulting $M$ violates \ref{H2}, i.e., for some $s, t \in V(M)$, there exists $u$ on the path betwween $s$ and $t$ such that $\chi(s) \cap \chi(t) \not\subseteq \chi(u)$.
+Without loss of generality, we take the shortest possible path from $s$ to $t$ where the condition is violated, where $u$ is the node immediately before $t$ on the path. Then, $\kappa(t) = \chi(t) \cap \chi(u)$.
+
+Since $M_p$ and $M^q$ each satisfies \ref{H2}, the only way it can be violated is if $s \in V(M_p)$, i.e., $s$ is a descendent of $p$, $t \in M^q$, and thus $p$ and $q$ are on the path between $s$ and $t$.
+For the purpose of the proof, we think of the subtree $M_p$ as being added to the subtree $M^q$ one node at a time, in a top-down order, starting from the root $p$. We then show that each time a node is added, the connectedness condition is preserved.
+Let $\lambda(p) = \{ e_p \}$ and $\lambda(t) = \{ e_t \}$.
+
+As the base case, when $p$ is added as a child of $q$, we consider two cases on the relative order in which $e_p$ and $e_t$ are removed from $E(H')$ by the algorithm.
+
+(1) If $e_p$ is removed as the ear by the algorithm before $e_t$ is, then $\chi(p) \cap \chi(t) = e_p \cap e_t \subseteq \kappa(p) \subseteq \chi(q)$. And, for all $u$ between $q$ and $t$ on the path between $p$ and $t$, we have $\chi(p) \cap \chi(t) = \chi(p) \cap \chi(t) \cap \chi(t) \subseteq \chi(q) \cap \chi(t) \subseteq \chi(u)$, by the connectedness condition on $M^q$.
+
+(2) If $e_t$ is removed as the ear by the algorithm before $e_p$ is, then $\chi(p) \cap \chi(t) = e_p \cap e_t \subseteq \kappa(t)$.
+By \cref{cor:descendent-removed-before}, $t$ is a descendant of $q$, and so the parent $u$ of $t$ is on the path between $p$ and $t$.
+Then, $\chi(p) \cap \chi(t) \subseteq \kappa(t) = \chi(t) \cap \chi(u) \subseteq \chi(u)$
+
+
+As the induction step, assuming that the condition holds for the connected subtree with nodes in $M^q$ and all $p'$ that are added before $s$. Following a similar argument as for the base case, substituting $q$ with the parent of $s$, we can also derive that $\chi(s) \cap \chi(t) \subseteq \chi(u)$ for all $u$.
+
+\paragraph{\ref{H3'}.} This is guaranteed by construction on Lines~\ref{alg-line:meta-origin-node}, \ref{alg-line:meta-ear-node}, and \ref{alg-line:no-minor-create}.
+
+\paragraph{\ref{H4}(a).}
+By \cref{lem:meta-alg-edge-correct}, for each $p \in V(M)$ and its parent $q$, we have $\kappa(p) = \chi(p) \cap \chi(q)$.
+($\subseteq$): $\kappa(p) = \chi(p) \cap \chi(q) \subseteq \chi(q)$.
+($\supseteq$): For all $s \in V(M) \setminus V(M_p)$, since $q$ is the parent of $p$, $q$ has to be on the path between $p$ and $s$. Then, by the connectedness condition \ref{H2} on $M$, we have $\chi(p) \cap \chi(s) \subseteq \chi(q)$. Therefore, $\kappa(p) = \chi(p) \cap \chi(q) \supseteq \chi(p) \cap \left( \bigcup_{s \in V(M) \setminus V(M_p)} \chi(s) \right) = \chi(p) \cap \chi(V(M) \setminus V(M_p))$.
+
+\paragraph{\ref{H4}(b).} This is guaranteed by Lines~\ref{alg-line:minor-origin-edge-cond} and \ref{alg-line:phys-find-parent}.
+
+\paragraph{\ref{H5}.} Lines~\ref{alg-line:meta-minor-origins-sets}--\ref{alg-line:meta-add-special-edge} and Lines~\ref{alg-line:no-minor-check}--\ref{alg-line:no-minor-create} create such minor nodes when necessary. 
+The condition when creating a minor node on \cref{alg-line:meta-origin-node}, \cref{alg-line:meta-ear-node}, and \cref{alg-line:no-minor-create} ensures there are no duplicate minor nodes.
+
+\subsection{Proof of \cref{thm:meta-size}}
+
+    Vertices $V(M)$ of $M$ are either physical nodes or minor nodes. Let $V^P(M)$ be the set of physical nodes and $V^M(M)$ be the set of minor nodes, such that $V(M) = V^P(M) \cup V^M(M)$.
+    Each time we create a physical node $p$ with $\lambda(p) = \{ e \}$ (Lines~\ref{alg-line:meta-origin-node} and \ref{alg-line:meta-ear-node}), we remove $e$ from $E(H')$ (Lines~\ref{alg-line:meta-origin-remove} and \ref{alg-line:meta-ear-remove}).
+    So there are at most $|E(H)|$ physical nodes, i.e., $|V^P(M)| \leq |E(H)|$.
+    Now let us consider the number of minor nodes, $|V^M(M)|$.
+    Note that each minor node $m \in V^M(M)$ must have at least two children (see \cref{alg-line:meta-minor-origins-sets} and \cref{alg-line:no-minor-check}), i.e., the fanout $f(m) \geq 2$.
+    Then, the total number of vertices
+    \begin{align*}
+        |V(M)| &= |V^P(M)| + |V^M(M)| = |E(M)| + 1 \\
+        & = 1 + \sum_{p \in V(M)} f(p)
+        > 1 + \sum_{m \in V^M(M)} f(m) \geq 1 + \sum_{m \in V^M(M)} 2 = 2|V^M(M)| + 1.
+    \end{align*}
+    Then, $|V^P(M)| + |V^M(M)| > 2|V^M(M)| + 1$, so $|V^M(M)| < |V^P(M)| - 1 = |E(H)| - 1$.
+    So, $|V(M)| = |V^P(M)| + |V^M(M)| < |E(H)| + |E(H)| - 1 = 2|E(H)| - 1$.
+    And $|E(M)| = |V(M)| - 1 \leq 2|E(H)| - 2$.
+
+\subsection{Proof of \cref{the:correctness}}
+
+    We prove by showing that all trees $T$ output by \cref{alg:enum} satisfy \ref{H1}, \ref{H2}, and \ref{H3}.
+
+    For \ref{H1}, note that this condition must already hold for the meta-decomposition $M$. In \cref{alg:enum}, all physical nodes, for which $\lambda(r) \neq \emptyset$, will be kept in $\mathcal{T}$, on \cref{alg-line:enum-physical-root}.
+    Minor nodes, for which $\lambda(r) = \emptyset$, will no longer exist in the output. If $\kappa(r) \neq \chi(r)$, trees in $\mathcal{T}_p$, and thus $\mathcal{T}$, will not contain minor nodes (\cref{alg-line:enum-minor-no-dummy}) but only nodes in the subtrees rooted at the children of $r$ (Lines~\ref{alg-line:enum-minor-origin-start}--\ref{alg-line:enum-minor-origin-end}). If $\kappa(r) = \chi(r)$, the minor node $r$ on \cref{alg-line:enum-minor-dummy} will eventually be removed and replaced by $v$ on \cref{alg-line:enum-dummy-replace}. Therefore, the trees output by \cref{alg:enum} contain only physical nodes. \ref{H3} then follows, by \ref{H3'} for $M$.
+
+    It now remains to show \ref{H2}, the connectedness condition.
+    We prove by structural induction on vertices $v \in V(M)$, i.e., for each $v \in V(M)$, all trees $T$ returned by the function $\mathsf{enumRec}$ satisfy \ref{H2}.
+    In the base case, for all leaf nodes $v$, $v$ has to be physical, and the function simply returns a tree with one single node, so these conditions hold.
+    For non-leaf nodes $v$, we assume as induction hypothesis that for all children $c$ of $v$, all trees returned by the function call $\mathsf{enumRec}(c)$ satisfy \ref{H2}. And we now show that it remains satisfied throughout the operations in $\mathsf{enumRec}(v)$.
+    
+    We start with the trees in $\mathcal{T}$ constructed on Lines~\ref{alg-line:enum-minor-cond}--\ref{alg-line:enum-physical-root}.
+    If $\lambda(v) \neq \emptyset$, this vacuously holds as there is only one tree with one vertex $r$ in $\mathcal{T}$ (\cref{alg-line:enum-physical-root}).
+    If $\lambda(v) = \emptyset$, we will show that it still holds for all $T_c'$ (constructed on Lines~\ref{alg-line:enum-minor-origin-start}--\ref{alg-line:enum-minor-origin-end}), assuming that it holds for $T_c \in \mathcal{T}_c$ from the previous iteration. 
+    It suffices to show that, for each $(T_P, c, T_c, d, T_d, u)$ processed in the loop,
+    for all $p \in T_c$ and $q \in T_d$, all $s$ on the path between $p$ and $q$ has $\chi(p) \cap \chi(q) \subseteq \chi(s)$.
+    Let the root of $T_c$ be $r_c$ and the root of $T_d$ be $r_d$.
+    The path from $p$ to $q$ needs to go through $u$ then $r_d$.
+    For $s$ on the path between $p$ and $u$, we have $\chi(p) \cap \chi(q) \subseteq \chi(v) = \kappa(d) \subseteq \chi(u)$.
+    Since $T_c$ satisfies \ref{H2}, we have $\chi(p) \cap \chi(q) \subseteq (\chi(p) \cap \chi(q)) \cap \chi(q) \subseteq \chi(u) \cap \chi(q) \subseteq \chi(s)$.
+    For $s$ on the path between $r_d$ and $q$, we have $\chi(p) \cap \chi(q) \subseteq \chi(v) = \kappa(d) \subseteq \chi(r_d)$.
+    Since $T_d$ satisfies \ref{H2}, we have $\chi(p) \cap \chi(q) \subseteq (\chi(p) \cap \chi(q)) \cap \chi(q) \subseteq \chi(r_d) \cap \chi(q) \subseteq \chi(s)$.
+    
+    We now continue to show that lines~\cref{alg-line:enum-children-start}--\cref{alg-line:enum-children-end} preserve the condition \ref{H2} for all $T \in \mathcal{T}$, by showing that the condition is preserved for all $T' \in \mathcal{T}'$ after each child $c \in X$ is processed, assuming that all the previous $T \in \mathcal{T}$ satisfy \ref{H2}.
+    
+    Let the root of $T_c$ be $r_c$.
+    By the connectedness condition on $M$, we have $\chi(p) \cap \chi(q) \subseteq \chi(v)$, and $\chi(p) \cap \chi(q) \subseteq \chi(c)$. Since $c$ is a child of $v$, $\chi(p) \cap \chi(q) \subseteq \chi(v) \cap \chi(c) = \kappa(c)$.
+    
+    (1) If $\lambda(c) \neq \emptyset$ or $\kappa(c) \neq \chi(c)$, $T_c$ is added directly as a child of $u$ on $T'$ (\cref{alg-line:enum-attach-subtree}).
+    For all $p \in V(T')$ and $q \in V(T_c)$, the path from $p$ to $q$ needs to go through $u$ then $r_c$.
+    For $s$ on the path between $p$ and $u$, we have $\chi(p) \cap \chi(q) \subseteq \kappa(c) \subseteq \chi(u)$.
+    Since $T'$ satisfies \ref{H2}, we have $\chi(p) \cap \chi(q) \subseteq (\chi(p) \cap \chi(q)) \cap \chi(q) \subseteq \chi(u) \cap \chi(q) \subseteq \chi(s)$.
+    For $s$ on the path between $r_c$ and $q$, we have $\chi(p) \cap \chi(q) \subseteq \kappa(c) \subseteq \chi(r_c)$.
+    Since $T_c$ satisfies \ref{H2}, we have $\chi(p) \cap \chi(q) \subseteq (\chi(p) \cap \chi(q)) \cap \chi(q) \subseteq \chi(r_c) \cap \chi(q) \subseteq \chi(s)$.
+    
+    (2) If $\lambda(c) = \emptyset$ and $\kappa(c) \neq \chi(c)$, for each child $d$ of the root of $T_c$, we attach $T_d$ as a child of $u$. Let the root of $T_d$ be $r_d$. Then, $\kappa(d) \subseteq \chi(r_d)$ and $\kappa(d) \subseteq \chi(u)$.
+    For all $p \in V(T')$ and $q \in V(T_d)$, the path from $p$ to $q$ needs to go through $u$ then $r_d$.
+    For $s$ on the path between $p$ and $u$, we have $\chi(p) \cap \chi(q) \subseteq \kappa(c) = \kappa(d) \subseteq \chi(u)$.
+    Since $T'$ satisfies \ref{H2}, we have $\chi(p) \cap \chi(q) \subseteq (\chi(p) \cap \chi(q)) \cap \chi(q) \subseteq \chi(u) \cap \chi(q) \subseteq \chi(s)$.
+    For $s$ on the path between $r_c$ and $q$, we have $\chi(p) \cap \chi(q) \subseteq \kappa(c) = \kappa(d) \subseteq \chi(r_d)$.
+    Since $T_c$ satisfies \ref{H2}, we have $\chi(p) \cap \chi(q) \subseteq (\chi(p) \cap \chi(q)) \cap \chi(q) \subseteq \chi(r_d) \cap \chi(q) \subseteq \chi(s)$.
+    
+\subsection{Proof of \cref{thm:enum-complete}}
+
+We start from a few lemmas:
+
+\begin{lemma} \label{lem:kappa}
+    For any non-root node $p$ on a meta-decomposition $M$ with parent $q$, $\kappa(p) = \chi(p) \cap \chi(q)$.
+\end{lemma}
+
+\begin{proof}
+\textbf{($\supseteq$)}: Since $q \in V(M) \setminus V(M_p)$, $\chi(p) \cap \chi(q) \subseteq \chi(p) \cap \chi(V(M) \setminus V(M_p)) = \kappa(p)$.
+\textbf{($\subseteq$)}: For any $v \in \kappa(p) = \chi(p) \cap \chi(V(M) \setminus V(M_p))$, i.e., any $v \in \chi(p) \cap \chi(s)$ for some $s \in V(M) \setminus V(M_p)$, the parent $q$ of $p$ lies on the path on $M$ between $p$ and $s$. Then, by the connectedness condition \ref{H2} for $M$, $v \in \chi(q)$.
+\end{proof}
+
+\begin{lemma} \label{lem:minor-all-origin}
+    For all $p \in V(M)$ with $\lambda(p) = \emptyset$ and $\kappa(p) = \chi(p)$, all children $c$ of $p$ satisfy $\kappa(c) = \chi(p)$.
+\end{lemma}
+\begin{proof}
+    Suppose by way of contradiction that there exists such a $p \in V(T)$ with child $c$ such that $\kappa(c) \neq \chi(p)$. By \cref{lem:kappa}, we have $\kappa(c) = \chi(c) \cap \chi(p) \subseteq \chi(p)$. Since $\kappa(p) = \chi(p) \neq \emptyset$, $p$ is not the root of $M$ and thus has a parent $q$. Again by \cref{lem:kappa}, we have $\kappa(p) = \chi(p) \cap \chi(q) \subseteq \chi(q)$. But then, $\kappa(c) \subseteq \chi(p) = \kappa(p) \subseteq \chi(q)$, contradicting \ref{H4}(b) since $\kappa(c) \neq \chi(p)$ but $q \in V(T) \setminus V(T_p)$.
+\end{proof}
+
+
+\begin{lemma} \label{lem:no-consec-special-minor}
+    Given a meta-decomposition $M$, if some non-root node $p \in V(M)$ has $\lambda(p) = \emptyset$ and $\kappa(p) = \chi(p)$, then its parent $q$ has either $\lambda(q) \neq \emptyset$ or $\kappa(q) \neq \chi(q)$.
+\end{lemma}
+
+\begin{proof}
+    Suppose by way of contradiction that, on a meta-decomposition $M$, there is $p \in V(M)$ such that $\lambda(p) = \emptyset$ and $\kappa(p) = \chi(p)$, and its parent $q$ has $\lambda(q) = \emptyset$ and $\kappa(q) = \chi(q)$.
+    Then, $\kappa(p) \subseteq \chi(q) = \kappa(q)$. Since $\kappa(q) = \chi(q) \neq \emptyset$, $q$ has a parent as well. Let the parent of $q$ be $s$. Then, $\kappa(q) = \chi(q) \cap \chi(s) \subseteq \chi(s)$. So, $\kappa(p) \subseteq \kappa(q) \subseteq \chi(s)$. By \ref{H5}, $\kappa(p) \neq \kappa(q) = \chi(q)$, contradicting \ref{H4}(b).
+\end{proof}
+
+\begin{lemma} \label{lem:subtree-in-jt}
+    Given a meta-decomposition $M$ of an acyclic hypergraph $H$, for all $v \in V(M)$,
+    \begin{enumerate}[leftmargin=*]
+        \item if $\lambda(v) = \emptyset$ and $\kappa(v) = \chi(v)$, then, for each join tree $T$ of $H$, there exists some $S = \{ p \in V(M) \mid \lambda(p) \neq \emptyset, \chi(v) \subseteq \chi(p) \}$ such that the set $V_v^P = \{ p \in V(M_{v}) \mid \lambda(p) \neq \emptyset \} \cup S$ induces a connected subtree $T_v$ of $T$;
+        \item if $\lambda(v) \neq \emptyset$ or $\kappa(v) \neq \chi(v)$, then, for each join tree $T$ of $H$, the set $V_v^P = \{ p \in V(M_v) \mid \lambda(p)  \neq \emptyset \}$, i.e., physical nodes on the subtree $M_v$ rooted at $v$, induces a connected subtree $T_v$ of $T$.
+    \end{enumerate}
+\end{lemma}
+
+
+
+\begin{proof}
+    We prove by structural induction on $M$.
+    In the base case, for leaf nodes $v \in V(M)$, there is only one node on the subtree $M_v$, so the statement is vacuously true.
+    For non-leaf nodes $v \in V(M)$, we assume as induction hypothesis that the statement is true for all children $c$ of $v$.
+    Let $c$ and $d$ be the children of $v$ such that $p \in V(M_c)$ and $q \in V(M_d)$.
+    We now consider two cases of $v$.
+    
+    (1) If $\lambda(v) = \emptyset$ and $\kappa(v) = \chi(v)$, then, for any $s$ on the path between $p$ and $q$ on $T$ such that $s \notin M_v$, we have $\chi(p) \cap \chi(q) \subseteq \chi(s)$ by the connectedness condition on $T$.
+    By (the contrapositive of) \cref{lem:no-consec-special-minor}, $\lambda(c) \neq \emptyset$ or $\kappa(c) \neq \chi(c)$, so by the inductive hypothesis, $V_c^P$ induces a connected subtree $T_c$ of $T$. Similarly, $V_d^P$ induces a connected subtree $T_d$ of $T$.
+    If $c = d$, then $p$ and $q$ are in the same subtree rooted at the same child of $v$, and the statement would hold.
+    If $c \neq d$,
+    on the path from $p$ to $q$ on $T$, let the last node on $T_c$ be $x$ and the first node on $T_d$ be $y$. $s$ is between $x$ and $y$.
+    Then, the path from $c$ and $d$ has to go through $x$ and $y$, and hence also $s$.
+    Therefore, $\chi(c) \cap \chi(d) \subseteq \chi(s)$.
+    By \cref{lem:minor-all-origin}, in this case, $\kappa(v) = \kappa(c) = \kappa(d) = \chi(c) \cap \chi(d) \subseteq \chi(s)$.
+
+    (2) If $\lambda(v) \neq \emptyset$ or $\kappa(v) \neq \chi(v)$, we would like to show that for any $s$ on the path between $p$ and $q$ on $T$, $s \in V(M_v)$.
+    Suppose by way of contradiction that this is not the case, i.e., there exists some $s$ on the path between $p$ and $q$ on $T$, but $s \in V(M) \setminus V(M_v)$. By the connectedness condition on $T$, we have $\chi(p) \cap \chi(q) \subseteq \chi(s)$. Furthermore, on $M$, $\chi(p) \cap \chi(s) \subseteq \chi(v)$ and $\chi(q) \cap \chi(s) \subseteq \chi(v)$, so $\chi(p) \cap \chi(q) = \chi(p) \cap \chi(q) \cap \chi(s) \subseteq \chi(v)$.
+    Let the parent of $p$ on $M$ be $t$.
+    Then, $\chi(t) \cap \chi(s) \subseteq \chi(v)$. Then, $\kappa(p) = \kappa(p) \cap \chi(s) = \chi(p) \cap \chi(t) \cap \chi(s) = (\chi(p) \cap \chi(s)) \cap (\chi(t) \cap \chi(s)) \subseteq \chi(v) \cap \chi(v) = \chi(v)$.
+    But, by \ref{H4}, this means either $t = v$ or $t$ is a minor node with $\kappa(t) = \chi(t)$.
+    In either case, we have $\chi(t) \cap \chi(q) \subseteq \chi(v)$, because
+    (i) if $t = v$, $\chi(t) \cap \chi(q) = \chi(v) \cap \chi(q) \subseteq \chi(v)$, and
+    (ii) if $t$ is a minor node with $\kappa(t) = \chi(t)$, then $\chi(t) \cap \chi(q) = \kappa(t) \cap \chi(q) = \kappa(p) \cap \chi(q) \subseteq \chi(p) \cap \chi(q) \subseteq \chi(v)$.
+    Also, we have $\kappa(t) = \chi(p) \cap \chi(t) \subseteq \chi(q)$, because either $t$ is on the path between $p$ and $q$, or $p$ is on the path between $t$ and $q$.
+    Let the parent of $v$ be $u$. Then, we have $\kappa(t) = \kappa(t) \cap \chi(q) = \chi(t) \cap \chi(q) = (\chi(t) \cap \chi(q)) \cap (\kappa(p) \cap \chi(q)) \subseteq (\chi(t) \cap \chi(q)) \cap (\chi(p) \cap \chi(q)) \subseteq \chi(v) \cap \chi(s) \subseteq \chi(u)$.
+    But, since it cannot be that $\kappa(v) = \chi(v)$ in this case, this violates \ref{H4}, contradiction.
+\end{proof}
+
+
+
+\begin{lemma} \label{lem:enum-complete}
+    Given a meta-decomposition $M$ of hypergraph $H$, for all $v \in V(M)$, let $V_v^P = \{ p \in V(M_v) \mid \lambda(p) \neq \emptyset \}$. Then,
+    \begin{enumerate}[leftmargin=*]
+        \item if $\lambda(v) = \emptyset$ and $\kappa(v) = \chi(v)$, then \cref{alg:enum} enumerates all join trees of the hypergraph $H_v$ with $E(H_v) = \lambda(V_v^P) \cup \{ \chi(v) \}$ and $V(H_v) = \cup E(H_v)$;
+        \item if $\lambda(v) \neq \emptyset$ or $\kappa(v) \neq \chi(v)$, then \cref{alg:enum} enumerates all join trees of the hypergrpah $H_v$ with $E(H_v) = \lambda(V_v^P)$ and $V(H_v) = \cup E(H_v)$.
+    \end{enumerate}
+\end{lemma}
+
+\begin{proof}
+    We will show that each join tree $T$ of $H$ can be enumerated by the algorithm based on the meta-decomposition $M$ of $H$.
+    We prove by structural induction on vertices $v \in V(M)$. If $v$ is a leaf node, there is only one node in the subtree $M_v$, so this statement is vacuously true. If $v$ is a non-leaf node, consider the following cases.
+    
+    (1) If $\lambda(v) = \emptyset$ and $\kappa(v) = \chi(v)$, by \cref{lem:no-consec-special-minor}, all children $c$ of $v$ have either $\lambda(c) \neq \emptyset$ or $\kappa(c) \neq \chi(c)$, so, by the induction hypothesis, \cref{alg:enum} enumerates all join trees of hypergraph $H_c$ with $E(H_c) = \bigcup_{p \in V_c^P} \lambda(p)$ and $V(H_c) = \bigcup_{e \in E(H_c)} e$.
+    Also, note that it is possible to obtain a meta-decomposition $M_v'$ of the hypergraph $H_v$ from $M_v$ by simply replacing $v$ by a physical node $v'$ with $\lambda(v') = \{ \chi(v) \}$, $\chi(v') = \chi(v)$, and $\kappa(v') = \emptyset$.
+    By \cref{lem:subtree-in-jt}, for each child $c$ of $v$, on any join tree $T_c$ of hypergraph $H_c$, $V_c^P$ induces a connected subtree $T_c$ of $T$.
+    Furthermore, $T_c$ is a join tree of the meta-decomposition $M_c$, and can hence be enumerated on \cref{alg-line:enum-subtrees}.
+    So it remains to show that the algorithm enumerates all possible ways to combine these subtrees along with $v$.
+    For each possible join tree $T_v$ of $H_v$, without loss of generality, assume that $T_v$ is rooted at $v'$.
+    $T_v$ can be constructed from the algorithm as follows.
+    We first construct a tree $T_P$,
+    by a top-down traversal of $T_v$, where, for each node $p$,
+    if (i) $\chi(v) \subseteq \chi(p)$, (ii) $p \in M_c$, i.e., in the subtree $M_c$ rooted at some child $c$ of $v$, and (iii) its parent $q$ is in a different subtree $M_d$ rooted at some child $d \neq c$ of $v$, then we add an edge from $d$ to $c$.
+    If $p = v$, and its parent $q \in V(M_d)$ for some child $d$ of $v$, we add an edge from $d$ to $v$.
+    If $p \in V(M_c)$ for some child $c$ of $v$, and its parent $q = v$, we add an edge from $v$ to $c$.
+    Note that, for all pairs of $c$ and $d$ where we add edges, $\kappa(c) = \kappa(d) = \chi(v)$.
+    Now, this tree $T_P$ is a spanning tree of the clique with vertices $C \cup \{ v \}$, where $C$ is the set of all children of $v$, so it can be enumerated by the \prufer{} sequence on \cref{alg-line:enum-minor-dummy}.
+    For each child $c$ of $v$, by \cref{lem:subtree-in-jt}, $V_c^P$ induces a connected subtree $T_c$ of $T_v$.
+    We traverse the vertices $c \in V(T_P)$ in bottom-up order.
+    For each $c$ and each child $d$ of $c$ on $T_P$, %, let the parent of $c$ in $T$ be $u$.
+    let $r_d$ be the root of the connected subtrees $T_d$ of $T_v$ induced by $V_d^P$, and $u$ be the parent of $r_d$ on $T_v$.
+    The algorithm will be able to reroot $T_d$ to $r_d$, find $u$ (since $\kappa(d) = \kappa(v) = \chi(v) = \chi(c) \subseteq \chi(u)$), and attach $T_d$ as a child of $u$.
+    Finally, by \cref{lem:minor-all-origin}, in this case, $S = C$ and $X = \emptyset$, so the second part will not be executed at all.
+
+    (2) If $\lambda(v) = \emptyset$ and $\kappa(v) \neq \chi(v)$, starting from Lines~\ref{alg-line:enum-minor-origin-start}--\ref{alg-line:enum-minor-origin-end}, note that it is not possible to have a child $c \in C$ such that $\kappa(c) = \chi(c)$, because if that is the case, $\kappa(c) = \chi(c) = \chi(v)$, violating the uniqueness condition \ref{H5}. Therefore, for all $c \in C$, we have $\lambda(c) \neq \emptyset$ or $\lambda(c) \neq \chi(c)$.
+    Furthermore, we claim that the vertices $V_C^P = \bigcup_{c \in C} V_c^P$ induces a connected subtree $T_C$ on any join tree $T_v$ of $M_v$. This is because, if this is not the case, i.e., if there is some $s$ on the path between some $p \in V_c^P$ and $q \in V_d^P$, where $c$ and $d$ are children of $v$ with $\kappa(c) = \kappa(d) = \chi(v)$, such that $\kappa(s) \subsetneq \chi(v)$, then $\chi(p) \cap \chi(q) = \chi(v) \not\subseteq \kappa(s)$, violating the connectedness condition \ref{H2}.
+    Therefore, we can follow the same method as in case (1) to construct $T_P$ with vertices $C$ and show that, at the end of this part, it is possible to obtain a partial join tree $T$ with vertices in $V_C^P$.
+    
+    Now consider all children $c \in X = \{ c \in C \mid \kappa(c) \subsetneq \chi(v) \}$.
+
+    (i) If $\lambda(c) = \emptyset$ and $\kappa(c) = \chi(c)$, by \cref{lem:no-consec-special-minor}, all children $d$ of $c$ has either $\lambda(d) \neq \emptyset$ or $\kappa(d) \neq \chi(d)$, so, by \cref{lem:subtree-in-jt}, $V_d^P$ induces a connected subtree in any join tree. We build a tree $T_c$ by (a) collecting all maximal connected subtrees of the join tree with nodes $p \in V_c^P$ and (b) adding a common parent $c$ as the root node. This is a valid join tree of the hypergraph $H_c$ with $E(H_c) = \left( \bigcup_{p \in V_c^P} \lambda(p) \right) \cup \{ \chi(c) \}$ and $V(H_c) = \bigcup_{e \in E(H_c)} e$, and, by our inductive hypothesis, can be enumerated. For each child $d$ of $c$ on $T_c$, let the parent of $d$ on $T$ be $u$. The algorithm will be able to find such $u$ to attach $T_d$, because $\kappa(d) = \chi(d) \cap \chi(c) \subseteq \chi(u)$, by the connectedness condition on $T$.
+
+    (ii) If $\lambda(c) \neq \emptyset$ or $\kappa(c) \neq \chi(c)$, similarly to case (i), by \cref{lem:subtree-in-jt}, $V_c^P$ induces a connected subtree on $T$, which, by our inductive hypothesis, can be enumerated. Then, the algorithm will be able to find such $u$ to attach $T_c$, because $\kappa(c) = \chi(c) \cap \chi(v) \subseteq \chi(u)$, by the connectedness condition on $T$.
+
+    (3) If $\lambda(v) \neq \emptyset$, we can follow a similar argument for the children $c \in X$ in case (2).
+\end{proof}
+
+Finally, based on \cref{lem:enum-complete}, taking $v = r$, the root of $M$ (for which $\kappa(r) = \emptyset \neq \chi(r)$), we finish the proof of completeness for the algorithm.
+\vfill

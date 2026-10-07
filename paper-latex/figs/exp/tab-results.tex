@@ -1,0 +1,63 @@
+
+% \afterpage{%
+    % \clearpage% Flush earlier floats (otherwise order might not be correct)
+    % \thispagestyle{empty}% empty page style (?)
+    % \begin{landscape}% Landscape page
+    % \centering
+\begin{table}
+    \begin{tiny}
+        \renewcommand{\arraystretch}{1.1}
+        \setlength\tabcolsep{0.3pt}
+        
+\begin{tabular}{cr|rrrr|rrrr|rrrr|rrrr}
+    \hline
+    \multicolumn{2}{r|}{\textbf{Benchmark $\rightarrow$}}
+        & \multicolumn{4}{c|}{\textbf{DSB}} & \multicolumn{4}{c|}{\textbf{JOB}} & \multicolumn{4}{c|}{\textbf{Musicbrainz}} & \multicolumn{4}{c}{\textbf{JOBLarge}} \\
+    \textbf{Metric $\downarrow$} & \textbf{Method $\downarrow$}
+        & Mean & Med. & 95th & 99th & Mean & Med. & 95th & 99th & Mean & Med. & 95th & 99th & Mean & Med. & 95th & 99th \\
+    \hline
+    \multirow{7}{*}{\bf\rotatebox[origin=c]{90}{Optimization time}}
+        & \sys{}  & 0.15 ms & 0.10 ms & 0.32 ms & 1.01 ms & 0.38 ms & 0.26 ms & 0.94 ms & 1.04 ms & 2.62 ms & 0.37 ms & 10.45 ms & 45.05 ms & 0.59 ms & 0.37 ms & 1.67 ms & 4.17 ms \\
+        & DPconv  & 0.08 ms & 0.03 ms & 0.36 ms & 0.37 ms & 8.32 ms & 0.16 ms & 38.22 ms & 45.08 ms & 7.37 s & 0.30 ms & 14.62 s & 244.44 s & 42.17 s & 1.26 s & $>$ 5 min & $>$ 5 min \\
+        & DuckDB  & 0.32 ms & 0.12 ms & 1.83 ms & 1.87 ms & 1.13 ms & 0.32 ms & 5.58 ms & 8.43 ms & 1.89 ms & 0.47 ms & 11.34 ms & 18.59 ms & 0.62 ms & 0.55 ms & 1.23 ms & 3.81 ms \\
+        & UnionDP  & 0.01 ms & 0.007 ms & 0.04 ms & 0.04 ms & 0.10 ms & 0.03 ms & 0.38 ms & 0.45 ms & 0.25 ms & 0.11 ms & 0.64 ms & 0.77 ms & 0.29 ms & 0.24 ms & 0.77 ms & 1.18 ms \\
+        & Yannakakis$^+$  & 0.78 ms & 0.70 ms & 1.48 ms & 1.50 ms & 1.44 ms & 1.37 ms & 3.78 ms & 4.59 ms & 2.29 ms & 1.72 ms & 6.43 ms & 8.15 ms & 3.55 ms & 3.27 ms & 6.53 ms & 10.89 ms \\
+        & LearnedRew.  & 0.89 s & 0.95 s & 1.03 s & 1.06 s & 0.96 s & 0.94 s & 1.13 s & 1.30 s & 1.11 s & 1.00 s & 1.78 s & 2.14 s & 1.09 s & 1.10 s & 1.29 s & 1.42 s \\
+        & LLM-R$^2$  & 3.03 s & 2.92 s & 3.66 s & 4.71 s & 3.75 s & 2.99 s & 3.98 s & 24.96 s & 3.11 s & 3.03 s & 3.57 s & 6.10 s & 3.40 s & 3.11 s & 5.72 s & 6.84 s \\
+    \hline
+    \multirow{7}{*}{\bf\rotatebox[origin=c]{90}{Execution time}}
+        & \sys{}  & 0.01 s & 0.01 s & 0.04 s & 0.04 s & 0.04 s & 0.03 s & 0.08 s & 0.11 s & 1.08 s & 0.52 s & 2.56 s & 13.75 s & 1.02 s & 0.17 s & 2.31 s & 23.84 s \\
+        & DPconv  & 0.02 s & 0.01 s & 0.09 s & 0.10 s & 0.04 s & 0.04 s & 0.09 s & 0.11 s & 1.42 s & 0.50 s & 2.65 s & 28.27 s & 17.50 s & 0.24 s & 89.05 s & $>$ 5 min \\
+        & DuckDB  & 23.85 s & 0.01 s & $>$ 5 min & $>$ 5 min & 0.04 s & 0.04 s & 0.09 s & 0.13 s & 95.92 s & 0.52 s & $>$ 5 min & $>$ 5 min & 22.46 s & 0.13 s & $>$ 5 min & $>$ 5 min \\
+        & UnionDP  & 0.03 s & 0.01 s & 0.10 s & 0.11 s & 0.05 s & 0.04 s & 0.10 s & 0.12 s & 58.75 s & 0.28 s & $>$ 5 min & $>$ 5 min & 25.04 s & 0.15 s & $>$ 5 min & $>$ 5 min \\
+        & Yannakakis$^+$  & 0.03 s & 0.02 s & 0.08 s & 0.08 s & 0.06 s & 0.06 s & 0.12 s & 0.15 s & 13.63 s & 0.41 s & 34.61 s & $>$ 5 min & 5.11 s & 0.13 s & 1.52 s & 232.60 s \\
+        & LearnedRew.  & 23.95 s & 0.05 s & $>$ 5 min & $>$ 5 min & 26.91 s & 0.15 s & $>$ 5 min & $>$ 5 min & 42.47 s & 0.42 s & $>$ 5 min & $>$ 5 min & 42.03 s & 0.14 s & $>$ 5 min & $>$ 5 min \\
+        & LLM-R$^2$  & 23.79 s & 0.01 s & $>$ 5 min & $>$ 5 min & 0.04 s & 0.04 s & 0.10 s & 0.14 s & 96.32 s & 0.53 s & $>$ 5 min & $>$ 5 min & 29.94 s & 0.12 s & $>$ 5 min & $>$ 5 min \\
+    \hline
+    \multirow{7}{*}{\bf\rotatebox[origin=c]{90}{\shortstack[c]{Overall evaluation\\time}}}
+        & \sys{}  & 0.01 s & 0.01 s & 0.04 s & 0.04 s & 0.04 s & 0.03 s & 0.08 s & 0.11 s & 1.09 s & 0.52 s & 2.65 s & 13.75 s & 1.02 s & 0.17 s & 2.31 s & 23.84 s \\
+        & DPconv  & 0.02 s & 0.01 s & 0.09 s & 0.10 s & 0.05 s & 0.04 s & 0.10 s & 0.12 s & 8.78 s & 0.51 s & 26.36 s & 246.63 s & 58.26 s & 4.32 s & $>$ 5 min & $>$ 5 min \\
+        & DuckDB  & 23.85 s & 0.01 s & $>$ 5 min & $>$ 5 min & 0.04 s & 0.04 s & 0.09 s & 0.13 s & 95.93 s & 0.52 s & $>$ 5 min & $>$ 5 min & 22.46 s & 0.13 s & $>$ 5 min & $>$ 5 min \\
+        & UnionDP  & 0.03 s & 0.01 s & 0.10 s & 0.11 s & 0.05 s & 0.04 s & 0.10 s & 0.12 s & 58.75 s & 0.28 s & $>$ 5 min & $>$ 5 min & 25.04 s & 0.15 s & $>$ 5 min & $>$ 5 min \\
+        & Yannakakis$^+$  & 0.03 s & 0.02 s & 0.08 s & 0.08 s & 0.06 s & 0.06 s & 0.13 s & 0.15 s & 13.63 s & 0.41 s & 34.61 s & $>$ 5 min & 5.11 s & 0.13 s & 1.52 s & 232.60 s \\
+        & LearnedRew.  & 24.84 s & 1.01 s & $>$ 5 min & $>$ 5 min & 27.87 s & 1.12 s & $>$ 5 min & $>$ 5 min & 54.93 s & 1.43 s & $>$ 5 min & $>$ 5 min & 43.12 s & 1.28 s & $>$ 5 min & $>$ 5 min \\
+        & LLM-R$^2$  & 26.82 s & 3.03 s & $>$ 5 min & $>$ 5 min & 3.79 s & 3.05 s & 4.01 s & 24.99 s & 99.43 s & 4.06 s & $>$ 5 min & $>$ 5 min & 33.34 s & 3.41 s & $>$ 5 min & $>$ 5 min \\
+    \hline
+    \multirow{6}{*}{\bf\rotatebox[origin=c]{90}{\shortstack[c]{Overall speedup\\[-2pt]of metaDecomp\\[-2pt]over ...}}}
+        & DPconv  & 1.22x & 0.99x & 2.90x & 3.29x & 1.18x & 1.08x & 2.77x & 3.11x & 1.34x & 0.99x & 15.49x & 138.59x & 27.61x & 21.23x & 2308.55x & 5014.14x \\
+        & DuckDB  & 2.75x & 0.97x & 16938.94x & 18945.33x & 1.11x & 1.07x & 2.03x & 3.53x & 6.39x & 1.86x & 238.77x & 901.19x & 1.46x & 0.82x & 118.01x & 1872.97x \\
+        & UnionDP  & 1.28x & 1.03x & 3.38x & 6.57x & 1.12x & 1.04x & 2.09x & 3.01x & 2.67x & 0.94x & 293.61x & 844.52x & 1.91x & 0.94x & 606.52x & 2328.21x \\
+        & Yannakakis$^+$  & 1.83x & 1.91x & 2.77x & 7.03x & 1.61x & 1.50x & 3.75x & 5.07x & 1.07x & 0.72x & 47.66x & 656.33x & 0.76x & 0.73x & 2.13x & 22.05x \\
+        & LearnedRew.  & 142.29x & 123.70x & 16993.51x & 19006.30x & 59.91x & 38.45x & 7958.89x & 11031.32x & 14.49x & 11.44x & 442.62x & 967.06x & 13.65x & 8.85x & 2444.33x & 7240.85x \\
+        & LLM-R$^2$  & 379.88x & 282.20x & 17095.75x & 19117.48x & 103.68x & 98.29x & 484.18x & 832.41x & 65.93x & 78.95x & 927.52x & 2488.64x & 23.98x & 21.60x & 174.23x & 3632.91x \\
+    \hline
+\end{tabular}
+
+    \end{tiny}
+    \caption{Statistics of query evaluation time. The "mean" values are arithmetic mean for time and geometric mean for speedup factors.}
+    \vspace{-1\baselineskip}
+    \label{tab:stats-new}
+\end{table}
+    % \end{landscape}
+    % \clearpage% Flush page
+% }

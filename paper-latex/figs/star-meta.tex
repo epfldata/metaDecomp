@@ -1,0 +1,17 @@
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \small
+    \begin{tikzpicture}[
+        level distance=1.25cm,
+        level 1/.style={sibling distance=1.75cm},
+    ]
+    \node[align=center] { $\lambda: \emptyset$, $\chi: \{ x_1 \}$, $\kappa: \emptyset$} 
+        child { node [align=center] {$\lambda: \{ R_1 \}$ \\ $\chi: \{ x_1, x_2 \}$ \\ $\kappa: \{ x_1 \}$ } edge from parent[-] }
+        child { node [align=center] { $\lambda: \{ R_2 \}$ \\ $\chi: \{ x_1, x_3 \}$ \\ $\kappa: \{ x_1 \}$ } edge from parent[-] }
+        child { node [align=center] { $\lambda: \{ R_3 \}$ \\ $\chi: \{ x_1, x_4 \}$ \\ $\kappa: \{ x_1 \}$ } edge from parent[-] }
+        child { node [align=center] { $\lambda: \{ R_4 \}$ \\ $\chi: \{ x_1, x_5 \}$ \\ $\kappa: \{ x_1 \}$ } edge from parent[-] }
+    ;
+    \end{tikzpicture}
+    \captionof{figure}{Meta-decomposition of the query $Q_{\ref{ex:star}}$}
+    \label{fig:star-meta}
+\end{minipage}

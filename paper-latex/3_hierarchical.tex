@@ -1,0 +1,132 @@
+\section{Widths of Query Plans and Width-1 Query Plans}
+\label{sec:hierarchical-query-plan}
+
+In this section, we begin by introducing our notion of widths for query plans, which connects a plan's structure to the potential sizes of its intermediate results.  
+We consider the ``interface'' of each intermediate step in the query plan, i.e., the set of attributes that serve as join keys with the remaining relations.
+Intuitively, the width of a query plan shows the number of relations needed to cover the interface of each step in the query plan.
+This measure helps quantify the sizes of intermediate results and the complexity of a query plan before looking at the specific database~instance.  
+% In this paper, we focus on width-1 query plans, which we show must exist for acyclic queries.
+\input{figs/hierarchical}
+\begin{example} \label{ex:hierarchical}
+    Consider the query 
+    \[Q_{\ref{ex:hierarchical}} \gets \pi_\emptyset(R_1[x_1, x_2, x_3] \bowtie R_2[x_1, x_4, x_5] \bowtie R_3[x_5, x_6] \bowtie R_4[x_3, x_7]). \]
+    Its hypergraph is shown in \cref{fig:hierarchical-hg} and a join tree in \cref{fig:hierarchical-jt}.
+    Given this join tree, \cref{fig:hierarchical-plan} is an example of a valid width-1 query plan.
+    After joining $R_1$ and $R_4$, $x_1$ is the only attribute in the intersection with the remaining relations $R_2$ and $R_3$, and it can be covered by only one relation $R_1$.
+    Similarly, at the step that joins $R_2$ and $R_3$, $x_1$ is the only attribute in the interface.
+    A width of 1 implies that, if the size of any one single relation is bounded by $N$, then the size of each intermediate step can be bounded by $N$, as it is at most the size of the relation that covers the interface.
+    
+    On the contrary, \cref{fig:non-hierarchical-plan} shows a query plan that is width-2: When we join $R_1$ and $R_2$, the interface contains $x_5$ and $x_3$, which are needed to join $R_3$ and $R_4$, respectively.
+    But there is no single relation that can cover both $x_5$ and $x_3$, so the intermediate sizes can be as high as $N^2$, instead of $N$ as in the width-1 plan in \cref{fig:hierarchical-plan}.
+\end{example}
+
+
+More formally, given a query plan $\mathcal{P} = (V(\mathcal{P}), r(\mathcal{P}), E(\mathcal{P}))$, for any node $p \in V(\mathcal{P})$, let $H_p = (V(H_p), E(H_p))$ be the hypergraph induced by the relations being joined in the subtree rooted at $p$, and let the induced query $Q(p) = \mathop{\Join}_{e \in E(H_p)} e$. Let $\overline H_p = (V(\overline H_p), E(\overline H_p))$ be the \emph{residual hypergraph} with relations that are not yet joined in the subtree rooted at $p$, i.e., $E(\overline H_p) = E(H) \setminus E(H_p)$, and $V(\overline H_p) = \cup(E(\overline H_p))$.  We define the \emph{interface} $I(p) = V(H_p) \cap V(\overline H_p)$, i.e., the set of attributes that will serve as join keys with the remaining relations. 
+% We then define 
+% \[
+%     Q'(p) \gets \pi_{I(p)} Q(p),
+% \]
+% which captures the minimal set of attributes that need to be kept in the intermediate result at node $p$, because this intermediate result must then be joined with the results from the rest of the query.  
+% The set of join attributes is precisely the interface $I(p)$.  
+The \emph{width of node} $p$ is the smallest number of relations needed to cover this interface, i.e.,
+\[
+    w(p) = \min \left\{ |S| : S \subseteq E(H_p) \text{ and } I(p) \subseteq \cup S \right\}.
+\]
+The width of the query plan $\mathcal{P}$ is the maximum width over all nodes.
+% , i.e.,
+% \[
+    % w(P) = \max_{p \in V(\mathcal{P})} w(p).
+% \]
+
+The width of a query plan indicates an upper bound on the minimal intermediate results over all nodes $p$ during evaluation.
+
+\begin{theorem} \label{thm:w1plan-size-bound}
+Given a Boolean conjunctive query $Q$ and a query plan $\mathcal{P}$ for the query, the maximum intermediate result size, i.e.,
+% \[
+    $\max_{p \in V(H_p)} |\pi_{I(p)} Q(p)|,$
+% \]
+is upper-bounded by $O(N^{w(\mathcal{P})})$ in the worst case, where $N$ is the maximum cardinality of any base relation.
+\end{theorem}
+
+This notation of width has a direct connection with join trees: %, as we can show the following theorem:
+
+\begin{example}
+    We revisit the query $Q_{\ref{ex:hierarchical}}$ from \cref{ex:hierarchical}.
+    Take $p$ as the node of the join tree with $R_2$, as an example. The induced query $Q(p) = R_2 \bowtie R_3$. In the width-1 query plan in \cref{fig:hierarchical-plan}, the right child of the root node, which we denote by $q$, induces exactly $Q(p) = R_2 \bowtie R_3$.
+    In the other direction, for the node $q$ of the query plan, we consider its children $u$ and $v$ (which correspond to the leaf nodes with $R_2$ and $R_3$ respectively). $u$ has interface $I(u) = \{ x_1, x_5 \}$, which can be covered by a single relation $R_2$. And $v$ has interface $I(v) = \{ x_5 \}$, which can be covered by $R_3$.
+    However, for the width-2 query plan in \cref{fig:non-hierarchical-plan}, there is no such $q$ of the query plan such that $Q(p) = Q(q) = R_2 \bowtie R_3$.
+\end{example}
+
+We formally define this correspondence as follows:
+
+\begin{definition} \label{def:w1plan-induced-by-jt}
+    We say a query plan $\mathcal{P}$ is \emph{induced by} a join tree $T$~if
+    \begin{enumerate}[leftmargin=*]
+        \item for each node $p \in V(T)$, there exists $q \in V(\mathcal{P})$ with $Q(p) = Q(q)$,
+        i.e., the induced query of node $p$ in the join tree is exactly the induced query of node $q$ in the query plan; and
+        \item for each non-leaf node $q \in V(\mathcal{P})$ with two children $u$ and $v$, there exists some $s \in E(H_u)$ and $t \in E(H_v)$ such that $I(u) \subseteq s$, $I(v) \subseteq t$, and there exists an edge between $s$ and $t$ in $E(T)$.
+    \end{enumerate}
+\end{definition}
+
+Under this definition, we have that
+
+\begin{theorem} \label{thm:w1plan-jt}
+    Given a query plan $\mathcal{P}$ for a query $Q$, the width $w(\mathcal{P}) = 1$ if and only if there exists a join tree $T$ of $Q$ that induces $\mathcal{P}$.
+\end{theorem}
+
+Theorem~\ref{thm:w1plan-jt} directly leads to the relationship between width-1 query plans and acyclic queries:
+
+\begin{theorem}\label{thm:acyclicwidth}
+    A conjunctive query $Q$ has width-1 query plans if and only if $Q$ is acyclic.
+\end{theorem}
+
+
+Width-1 query plans are closely related to structure-based query evaluation methods. Such methods follow a similar pattern: given a join tree, they apply a series of reductions from the leaves upwards until only a single node remains.  
+% The selected join tree heavily influences the efficiency of the execution plan produced by these methods.
+Width-1 query plans exploit the join tree structure in a similar way, evaluating the query bottom-up: each node $p\in V(T)$ completes all its internal joins with its child subtrees before joining with its parent. Such a strategy provides several benefits.
+
+
+\paragraph{Limiting intermediate result sizes.}
+We have seen that, by projecting out attributes that are neither part of the final output nor in the interface at each step, we limit the sizes of intermediate results, as shown by \cref{thm:w1plan-size-bound}.
+Although this approach excludes some alternative plans with higher widths, the excluded ones do not preserve such a theoretical guarantee.
+    Taking again \cref{ex:hierarchical}, 
+    if we choose the width-2 query plan in \cref{fig:non-hierarchical-plan}, $x_3$ has to be kept in all intermediate results before $R_4$ is joined at the very end, whereas, in the width-1 query plan in \cref{fig:hierarchical-plan}, it can already be projected out after completing $R_1 \bowtie R_4$.
+
+\paragraph{Local optimization.}  Instead of searching in a vast space of arbitrary join orders for all relations, we can locally optimize the join order at each node of the join tree. For each node $p \in V(T)$ with children $c_1, \cdots, c_{f(p)}$ in the join tree, we only need to determine the optimal join order between $p$ and $Q(c_1), \dots, Q(c_{f(p)})$. The order in which these joins are performed can be optimized independently at each node, without considering other parts of the query. Such an approach, therefore, significantly prunes the search space for optimization, making plan selection much more tractable, and can yield near-optimal performance for most practical queries. In the experiments~(\cref{sec:exp}), we show in \cref{tab:query-props} that the fan-out $f(T)$ tends to be very low in real benchmarks.
+
+\begin{example}
+    Consider again the join tree in \cref{fig:hierarchical-jt} for the query $Q_{\ref{ex:hierarchical}}$. For width-1 query plans induced by this join tree, there must exist a subtree with $R_2 \bowtie R_3$, as required by \cref{def:w1plan-induced-by-jt}(1). It therefore remains only to optimize the order to join $R_1$, $(R_2 \bowtie R_3)$, and $R_4$, which is the local optimization problem at the root node $R_1$ of the join tree. If the cardinalities $|R_1 \bowtie R_4| < |(R_2 \bowtie R_3) \bowtie R_1|$, then the optimal plan in our cost model is the one in \cref{fig:hierarchical-plan}.
+\end{example}
+
+With only local search needed, assuming a low fan-out, finding the optimal width-1 query plans induced by a join tree can be done more efficiently than through a global search:
+
+\begin{theorem} \label{thm:opt-hierarchical-time}
+    Given a join tree $T$, the optimal width-1 query plan induced by $T$ can be found in time $O(f(T)2^{f(T)} |Q|)$.
+\end{theorem}
+
+\paragraph{Structure-guided query evaluation.} An additional advantage of width-1 query plans is that they naturally accommodate structure-guided query evaluation methods. For example, we can simulate the Yannakakis algorithm for evaluating \emph{relation-dominated} conjunctive queries \cite{wang_yannakakis_2025} by following a width-1 query plan. A conjunctive query is relation-dominated if it is acyclic and there exists a relation $R_i[\bar{x}_i]$ that contains all the output attributes, i.e., $\bar{y} \subseteq \bar{x}_i$.  It shall be noted that an acyclic Boolean query is also a relation-dominated query, since $\bar{y} = \emptyset$.
+For this type of query, we have the following guarantee of evaluation time:
+
+\begin{theorem}
+    \label{thm:rel-dom}
+    A relation-dominated conjunctive query can be evaluated in $O(|db|)$ time using a width-1 query plan, where $|db|$ represents the size of the database.
+\end{theorem}
+
+To create a linear-time width-1 query plan for evaluating a relation-dominated query, let $R_i$ denote the relation containing all output attributes. One can construct the query plan using any join tree with $R_i$ as the root. The width-1 query plan will then evaluate the query bottom-up. Because all output attributes are located at the root of the join tree and at the end of the query plan, when the query plan is evaluating node $p$, all attributes in $T_p$ but not in $p$ are removed from the query, guaranteeing linear running time.  
+
+% \begin{example} \label{ex:123-12-13-23}
+%     Consider again the query in \cref{ex:123-12-13-23-intro}, along with the hypergraph, a join tree, and two query plans, as shown in \cref{fig:123-12-13-23}.
+%     Assume that it is evaluated over a database instance with $R_1 = \{ (i, i, i, i) \mid 1 \leq i \leq n \}$, $R_2 = R_3 = R_4 = \{ (i, j, j) \mid 1 \leq i, j \leq n \}$ for some $n > 1$.
+%     The query plan shown in \cref{fig:123-12-13-23-hierarchical-plan} has width 1, as the interface of the node $p$ that induces the query $Q(p) = R_1 \bowtie R_2$ is $I(p) = \{ x_1, x_2, x_3 \}$, which can be covered by only one hyperedge, $R_1$. The case is similar for the subquery $(R_1 \bowtie R_2) \bowtie R_3$, whose interface $\{ x_2, x_3 \}$ can be covered by $R_1$.
+%     In this case, \emph{any width-1 query plan can give a linear runtime}, as we can start from $R_1$, apply a series of semi-joins, and the intermediate sizes will always be at most the size of $|R_1|$.
+%     On the contrary, the query plan in \cref{fig:123-12-13-23-non-hierarchical-plan} has width 2 because the interface of $q$ that induces the query $Q(q) = R_2 \bowtie R_3$ is $I(q) = \{ x_1, x_2, x_3 \}$, which cannot be covered by any single hyperedge $e \in \{ R_2, R_3 \}$.
+%     % \begin{align*}
+%         % Q = \pi_{\emptyset} (& R_1(x_1, x_2, x_3, x_4) \bowtie R_2(x_1, x_2, x_5) \bowtie R_3(x_1, x_3, x_6) \\ & \bowtie R_4(x_2, x_3, x_6))
+%     % \end{align*}
+%     % 
+%     % This is an acyclic Boolean query. The hypergraph is as shown in \cref{fig:123-12-13-23-hg} and a join tree in \cref{fig:123-12-13-23-meta}. In this case, any width-1 query plan can give a linear runtime, with \cref{fig:123-12-13-23-hierarchical-plan} as one of those width-1 query plans, as we can start from $R_1$, apply a series of semi-joins, and the intermediate sizes will always be at most the size of $|R_1|$.  On the contrary, if the query plan is not a width-1 query plan, e.g., we first join $R_2$ and $R_3$, as shown in \cref{fig:123-12-13-23-non-hierarchical-plan}, 
+%     \emph{This would cause a quadratic blowup of the intermediate result size}, as each tuple $(i, j, j) \in R_2$ can be joined with $n$ tuples $(i, j', j')$ with $1 \leq j' \leq n$ from $R_3$.
+%     % \input{figs/123-12-13-23}
+% \end{example}
+
+To conclude this section, we highlight some important distinctions between our definition of width-1 query plans and Yannakakis-style query plans~\cite{yannakakis_algorithms_1981,wang_yannakakis_2025}. Although they both evaluate queries by traversing join trees, width-1 query plans do not use full reductions via semi-joins as in Yannakakis-style algorithms. We have shown, nevertheless, that these plans, by appropriate projections of irrelevant attributes, still preserve favorable theoretical guarantees of asymptotic complexity for Boolean conjunctive queries (\cref{thm:w1plan-size-bound}) and relation-dominated queries (\cref{thm:rel-dom}). In \cref{sec:exp}, we will experimentally show that these plans, in practice, are indeed highly efficient. Furthermore, without the need for full reductions, width-1 query plans are much easier to integrate into the query execution frameworks of current database systems, enabling more efficient cost-based optimization, as we will discuss in the remainder of the paper.

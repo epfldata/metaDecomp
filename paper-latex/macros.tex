@@ -1,0 +1,161 @@
+%%%%%%%%%%%%%%%%%%
+% General notation
+
+\DeclarePairedDelimiter{\set}{\lbrace}{\rbrace}
+\DeclarePairedDelimiter{\card}{\lvert}{\rvert}
+
+\DeclareMathOperator{\dom}{dom}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Hypergraph and hypertree related notions
+
+\newcommand*{\vertices}[2][]{V#1(#2#1)}
+%\newcommand*{\edges}[2][]{E#1(#2#1)}
+
+\newcommand*{\primal}[1]{\underline{#1}}    % Primal graph for a hypergraph
+
+\newcommand*{\HT}{\mathcal T}               % Hypertree
+\newcommand*{\HTC}{\mathsf T}
+
+\newcommand*{\ghd}{GHD}                     % Generalized hypertree decomposition
+\newcommand*{\hd}{HD}                       % Hypertree decomposition
+\newcommand*{\qd}{QD}                       % Query decomposition
+\newcommand*{\hqd}{HQD}                     % H-query decomposition
+\newcommand*{\pfhd}{PFHD}                   % Projection-free hypertree decomposition
+\newcommand*{\pfnf}{PFNF}       % Projection-free hypertree decomposition in normal form
+\newcommand*{\pfnfhd}{PFNF decomposition}       % Projection-free hypertree decomposition in normal form
+\newcommand*{\pfnfhdr}{PFHD${}\sp{*}\sb{1}$}       % Projection-free hypertree decomposition in normal form, closed under rerooting
+\newcommand*{\rnf}{RNF}                       % "Our class"
+\newcommand*{\rhtd}{\rnf{} decomposition}
+
+\DeclareMathOperator*{\hw}{hw}				% Hypertree width
+\DeclareMathOperator*{\ghw}{ghw}			% Generalized hypertree width
+\DeclareMathOperator*{\qw}{qw}				% Query width
+\DeclareMathOperator*{\hqw}{hqw}			% H-query width
+\DeclareMathOperator*{\pfhw}{pfhw}          % Projection-free hypertree width
+\DeclareMathOperator*{\pfnfhw}{pfnfhw}  % Projection-free normal form hypertree width
+\DeclareMathOperator*{\rhw}{rhw}            % Projection-free normal form hypertree width
+
+\newcommand*{\RMk}[1][k]{\ensuremath{\mathrm{RM}_{#1}}}
+                                            % Robber and Marshals game for k marshals
+
+
+% Complexity classes
+\let\P\relax
+\newcommand*{\P}{\ensuremath{\mathsf{P}}}
+\newcommand*{\NP}{\ensuremath{\mathsf{NP}}}
+\newcommand*{\LogCFL}{\ensuremath{\mathsf{LogCFL}}}
+
+
+\newcommand*{\res}{\ensuremath{\mathtt{res}}}
+\newcommand*{\edges}{\operatorname{edges}}
+\newcommand*{\var}{\operatorname{var}}
+
+\newcommand*{\Sep}{\mathsf{Sep}}
+\newcommand*{\Comp}{\mathsf{Comp}}
+\newcommand*{\List}{\mathsf{List}}
+\newcommand*{\append}{\mathsf{append}}
+
+
+\newcommand*{\True}{\mathsf{True}}
+\newcommand*{\False}{\mathsf{False}}
+\newcommand*{\prufer}{Pr\"ufer}
+\newcommand*{\co}{\mathsf{cost}}
+\newcommand*{\coLD}{\mathsf{costLD}}
+
+%\newcommand*{\ACCEPT}{\ensuremath{\mathtt{ACCEPT}}}
+%\newcommand*{\REJECT}{\ensuremath{\mathtt{REJECT}}}
+\newcommand*{\GUESS}{\ensuremath{\mathbf{GUESS}}}
+\newcommand*{\CHECK}{\ensuremath{\mathbf{CHECK}}}
+
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Added theorem environments
+
+\AtEndPreamble{%
+	\theoremstyle{acmplain}
+	\newtheorem{proviso}[theorem]{Proviso}
+	\newtheorem{remark}[theorem]{Remark}
+	\newtheorem{fact}[theorem]{Fact}
+	\newtheorem{note}[theorem]{Note}
+	\newtheorem{question}[theorem]{Question}
+}
+\newenvironment{sketch}{\begin{proof}[Proof sketch]}{\end{proof}}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%
+% Algorithm2e
+\DontPrintSemicolon
+\SetKwInOut{Input}{input}
+% \SetKwInOut{Parameter}{parameter}
+\SetKwInOut{Output}{output}
+\SetKwProg{Fn}{Function}{:}{}
+\SetKw{Accept}{accept}
+\SetKw{Reject}{reject}
+\SetKw{ACCEPT}{accept}
+\SetKw{REJECT}{reject}
+\newcommand{\commentfont}[1]{\small\sffamily\textcolor{gray}{#1}}
+\SetCommentSty{commentfont}
+
+\newcommand{\change}[1]{\textcolor{red}{#1}}
+
+\newcommand{\sys}{metaDecomp}
+\usepackage{rotating}
+\usepackage{pdflscape}
+\usepackage{crossreftools}
+
+
+\widowpenalty=10
+\clubpenalty=10
+\displaywidowpenalty=10
+\brokenpenalty=10
+\predisplaypenalty=10
+\postdisplaypenalty=10
+\interlinepenalty=10
+\floatingpenalty=10
+
+\setlength{\intextsep}{0.5\baselineskip}
+\setlength{\floatsep}{0.5\baselineskip}
+\setlength{\textfloatsep}{0.5\baselineskip}
+\setlength{\dblfloatsep}{0.5\baselineskip}
+\setlength{\dbltextfloatsep}{0.5\baselineskip}
+
+\apptocmd\normalsize{%
+   \setlength{\abovedisplayskip}{2pt}
+   \setlength{\belowdisplayskip}{2pt}
+   \setlength{\abovedisplayshortskip}{2pt}
+   \setlength{\belowdisplayshortskip}{2pt}
+}{}{}
+
+\widowpenalty=10000
+\clubpenalty=10000
+
+
+
+\usepackage{marginnote}
+
+\newcommand*\blackbox[1]{%
+  \begingroup
+  \setlength{\fboxsep}{0pt}%
+  \vspace{-\baselineskip}
+  \tikz[baseline=(char.base)]{\node[shape=rectangle,fill=black,inner sep=2.5pt,outer sep=0pt,text depth=1pt,align=left,text=white,font=\rm\bfseries](char){#1};}%
+  \endgroup
+}
+\newcommand*\margintag[1]{\marginnote{\blackbox{#1}}}
+
+\setlength{\marginparsep}{2.5mm}
+
+\usepackage{xcolor}
+
+\definecolor{ricolor}{RGB}{86,180,233}
+\definecolor{riicolor}{RGB}{230,159,0}
+\definecolor{riiicolor}{RGB}{0,158,115}
+
+\newcommand{\ri}[1]{{\color{ricolor}#1}}
+\newcommand{\rii}[1]{{\color{riicolor}#1}}
+\newcommand{\riii}[1]{{\color{riiicolor}#1}}

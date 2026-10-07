@@ -1,0 +1,160 @@
+\documentclass[acmsmall,authorversion,dvipsnames]{acmart}
+\usepackage[ruled,noend,linesnumbered]{algorithm2e}
+\usepackage{mathtools}
+\usepackage{enumitem}
+\usepackage{subcaption}
+\usepackage{soul}
+\usepackage{csquotes}
+% \usepackage[dvipsnames]{xcolor}
+\usepackage{tikz}
+\usepackage{bm}
+\usetikzlibrary{calc}
+\usetikzlibrary{topaths}
+\usetikzlibrary{backgrounds}
+\usetikzlibrary{graphs}
+\usepackage{dashbox}
+\usepackage{float}
+\usepackage{multirow}
+\usepackage{afterpage}
+\usepackage{makecell}
+\usepackage{xassoccnt}
+\usepackage{multicol}
+\usepackage{float}
+
+\SetAlFnt{\small}
+
+
+\tikzset{vertex/.style={minimum width=4pt,inner sep=0pt,circle,fill=black}}
+\tikzset{hyperedge/.style={thick}}
+\tikzset{hypergraph/.style={every label/.style={
+% font=\scriptsize,
+circle,inner sep=1pt}}}
+\tikzset{subtle/.style={on background layer,every path/.append style={lightgray!50!white}}}
+
+\usepackage[capitalise]{cleveref}
+
+
+
+\input{macros}
+
+\renewcommand{\change}[1]{\textcolor{black}{#1}}
+
+\newcommand{\arxivorappendix}{appendix}
+
+\setcopyright{cc}
+\setcctype{by}
+% See YOUR completed rightsreview form confirmation email for the exact code to be used for setcopyright and setcctype code strings, these are unique for every paper.
+\acmJournal{PACMMOD}
+\acmYear{2026} \acmVolume{4}
+\acmNumber{3 (SIGMOD)} \acmArticle{240}
+% XXX is your article id# -- be sure to use exact code from ACM rightsreview, do not use the v10pmc prefix)
+\acmMonth{6} % \acmPrice{}
+\acmDOI{10.1145/3802117}
+% See YOUR completed rightsreview form confirmation email for the assigned DOI to your article -- this is where the article will live when published in the ACM DL.
+
+\received{October 2025}
+\received[revised]{January 2026}
+\received[accepted]{February 2026}
+
+
+\begin{document}
+\title{Succinct Structure Representations for Efficient Query Optimization}
+\author{Zhekai Jiang}
+\authornote{Both authors contributed equally to this research.}
+\affiliation{
+  \institution{EPFL}
+  \city{Lausanne}
+  \state{Vaud}
+  \country{Switzerland}
+}
+\email{zhekai.jiang@epfl.ch}
+\orcid{0009-0001-0989-5926}
+
+\author{Qichen Wang}
+\authornotemark[1]
+\affiliation{
+  \institution{Nanyang Technological University}
+  % \city{Singapore}
+  \country{Singapore}
+}
+\email{qichen.wang@ntu.edu.sg}
+\orcid{0000-0002-0959-5536}
+
+\author{Christoph Koch}
+\affiliation{
+  \institution{EPFL}
+  \city{Lausanne}
+  \state{Vaud}
+  \country{Switzerland}
+}
+\email{christoph.koch@epfl.ch}
+\orcid{0000-0002-9130-7205}
+
+\input{0_abstract}
+
+\begin{CCSXML}
+<ccs2012>
+   <concept>
+       <concept_id>10003752.10010070.10010111.10011711</concept_id>
+       <concept_desc>Theory of computation~Database query processing and optimization (theory)</concept_desc>
+       <concept_significance>500</concept_significance>
+       </concept>
+   <concept>
+       <concept_id>10002951.10002952.10003190.10003192.10003210</concept_id>
+       <concept_desc>Information systems~Query optimization</concept_desc>
+       <concept_significance>500</concept_significance>
+       </concept>
+   <concept>
+       <concept_id>10002951.10002952.10003190.10003192.10003425</concept_id>
+       <concept_desc>Information systems~Query planning</concept_desc>
+       <concept_significance>500</concept_significance>
+       </concept>
+   <concept>
+       <concept_id>10002951.10002952.10003190.10003192.10003426</concept_id>
+       <concept_desc>Information systems~Join algorithms</concept_desc>
+       <concept_significance>500</concept_significance>
+       </concept>
+ </ccs2012>
+\end{CCSXML}
+
+\ccsdesc[500]{Theory of computation~Database query processing and optimization (theory)}
+\ccsdesc[500]{Information systems~Query optimization}
+\ccsdesc[500]{Information systems~Query planning}
+\ccsdesc[500]{Information systems~Join algorithms}
+
+%%
+%% Keywords. The author(s) should pick words that accurately describe
+%% the work being presented. Separate the keywords with commas.
+\keywords{Conjunctive queries; Plan enumeration; Cost-based optimization}
+
+\maketitle
+\sloppy
+
+\input{1_introduction}
+\input{2_preliminaries}
+\input{3_hierarchical}
+\input{4_meta-representation}
+\input{5_cost}
+\input{6_experiments}
+\input{7_conclusions}
+
+\begin{acks}
+Qichen Wang is supported by the Ministry of Education, Singapore, through the Academic Research Fund Tier 1 grant (RS32/25), and by the Nanyang Technological University Startup Grant. Part of this work was completed while Qichen Wang was at EPFL. 
+\end{acks}
+
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{references.bib}
+
+% \UseHook{enddocument}
+
+\clearpage
+\SuspendCounters{TotPages}
+\newpage
+\appendix
+\input{app_glossary}
+\input{app_hierarchical}
+\input{app_meta}
+\input{app_cost}
+\input{app_exp}
+
+\end{document}
