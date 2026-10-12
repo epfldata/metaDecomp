@@ -195,7 +195,7 @@ We use the code from the authors of LLM-R2, which contains the models and script
 First download the code:
 ```
 # Remember to change back to the root of the project repository
-wget "https://drive.usercontent.google.com/download?id=1z4pPsONM99HoVmpSSOyugVf62MslEUbE&export=download&authuser=0&confirm=t&uuid=e3209971-f046-41d9-80b5-1e3b083e31bf&at=AGN2oQ1V7RFhqf15WVor24ve7tBj:1773678735707" -O "llm-r2.zip"
+wget "https://drive.usercontent.google.com/download?id=1z4pPsONM99HoVmpSSOyugVf62MslEUbE&export=download&confirm=t" -O "llm-r2.zip"
 mkdir llm-r2
 unzip "llm-r2.zip" -d llm-r2
 rm llm-r2.zip
