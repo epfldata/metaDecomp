@@ -47,7 +47,10 @@ for BENCHMARK in "${BENCHMARKS[@]}"; do
   tmp_file=$(mktemp)
   
   # Loop over all SQL files
-  for SQL_FILE in $SQL_FILES; do
+  while IFS= read -r SQL_FILE; do
+    if [[ -z "$SQL_FILE" ]]; then
+      continue
+    fi
     if [[ ! "$(basename "$SQL_FILE")" =~ $QUERY_REGEX ]]; then
       continue
     fi
@@ -110,6 +113,6 @@ for BENCHMARK in "${BENCHMARKS[@]}"; do
       echo "$query_name,$num_rels,$num_join_trees,$median" >> "$OUTPUT_CSV"
     fi
 
-  done
+  done <<< "$SQL_FILES"
 
 done
