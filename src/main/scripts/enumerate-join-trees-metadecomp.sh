@@ -114,5 +114,6 @@ for BENCHMARK in "${BENCHMARKS[@]}"; do
     fi
 
   done <<< "$SQL_FILES"
+  rm -f "$tmp_file"
 
 done
