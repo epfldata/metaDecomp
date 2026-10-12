@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import os
 
 root_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
-results_path = os.path.abspath(os.path.join(root_path, "experiment-results"))
+results_path = os.path.abspath(os.environ.get("RESULTS_DIR", os.path.join(root_path, "experiment-results")))
 figures_path = os.path.abspath(os.path.join(results_path, "figures"))
 
 benchmarks = ['dsb', 'job-original', 'musicbrainz', 'job-large']

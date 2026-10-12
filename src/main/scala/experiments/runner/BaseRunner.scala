@@ -24,7 +24,7 @@ trait BaseRunner {
 		readOnlyProperty.setProperty("duckdb.read_only", "true");
 		conn = DriverManager.getConnection(dataSource(benchmark), readOnlyProperty)
 		val stmt: Statement = conn.createStatement()
-		stmt.execute("SET memory_limit = '40GB';")
+		stmt.execute(s"SET memory_limit = '$duckdbMemory';")
 		stmt.execute("SET temp_directory = '';") // Disable spilling to disk, just let it crash
 		// stmt.execute("SET max_temp_directory_size = '10GB';")
 		stmt.close()

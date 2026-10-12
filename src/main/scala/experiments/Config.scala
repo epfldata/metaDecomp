@@ -24,9 +24,11 @@ case object Config {
 	}
 	def dataSource(benchmark: String): String = s"jdbc:duckdb:${dbFilePath(benchmark)}"
 
-	val resultsDir = s"$projectRootPath/experiment-results"
+	val resultsDir = sys.env.getOrElse("RESULTS_DIR", s"$projectRootPath/experiment-results")
 
-	val repeatTimes = 10
+	val repeatTimes = sys.env.getOrElse("REPEAT_TIMES", "10").toInt
+	require(repeatTimes > 0)
+	val duckdbMemory = sys.env.getOrElse("DUCKDB_MEMORY", "40GB")
 	val timeout: Duration = 300.seconds
 
 	def sqlFilesInBenchmark(benchmark: String): Array[File] =

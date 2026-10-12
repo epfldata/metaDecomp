@@ -192,6 +192,14 @@ sbt -mem 32000 "runMain experiments.runner.MetaDecompRunner job-original 01[ab][
 
 The other optimization/execution runners support the same arguments. For UnionDP, keep `UnionDP` before the benchmark name.
 
+You can override `REPEAT_TIMES` (default: 10), `DUCKDB_MEMORY` (default: `40GB`), and `RESULTS_DIR` (default: `experiment-results`). For example, run one repetition of a query with a smaller memory limit and separate results:
+
+```bash
+mkdir -p experiment-results/smoke/join-trees
+RESULTS_DIR="$PWD/experiment-results/smoke" REPEAT_TIMES=1 DUCKDB_MEMORY=4GB \
+  sbt -mem 4096 "runMain experiments.runner.MetaDecompRunner job-original 01a[.]sql"
+```
+
 The results are stored in `experiment-results/metadecomp-opt-{dsb, job-original, musicbrainz, job-large}-<timestamp>.csv`
 
 #### DPConv

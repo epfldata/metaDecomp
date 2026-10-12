@@ -74,7 +74,7 @@ object DuckDBYanPlusRunner extends BaseRunner {
 
 	def runQueryInCommandLine(sql: String, dbFilePath: String): Double = {
 		val executionTime = (for (i <- 0 until repeatTimes) yield {
-			val execCommand = Seq("./DuckDBYanPlus/build/release/duckdb", "-readonly", dbFilePath, "-c", "SET memory_limit = '40GB'", "-c", "SET temp_directory = ''", "-c", ".timer on", "-c", sql)
+			val execCommand = Seq("./DuckDBYanPlus/build/release/duckdb", "-readonly", dbFilePath, "-c", s"SET memory_limit = '$duckdbMemory'", "-c", "SET temp_directory = ''", "-c", ".timer on", "-c", sql)
 
 			val output = mutable.ListBuffer[String]()
 			val error = mutable.ListBuffer[String]()
