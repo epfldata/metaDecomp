@@ -35,6 +35,13 @@ for (baseline, baseline_label, subfigure) in [('dpconv', 'DPconv', 'a'), ('duckd
         meta_df[benchmark] = pd.read_csv(os.path.join(results_path, f'metadecomp-opt-{benchmark}.csv'), dtype={'query': str})
         base_df[benchmark] = pd.read_csv(os.path.join(results_path, f'{baseline}{f"" if baseline == "duckdb" else "-opt"}-{benchmark}.csv'), dtype={'query': str})
 
+        common = sorted(set(meta_df[benchmark]['query']) & set(base_df[benchmark]['query']) &
+                        set(duckdb_df[benchmark]['query']) & set(dpconv_df[benchmark]['query']))
+        meta_df[benchmark] = meta_df[benchmark].set_index('query').loc[common].reset_index()
+        base_df[benchmark] = base_df[benchmark].set_index('query').loc[common].reset_index()
+        duckdb_df[benchmark] = duckdb_df[benchmark].set_index('query').loc[common].reset_index()
+        dpconv_df[benchmark] = dpconv_df[benchmark].set_index('query').loc[common].reset_index()
+
         diff = np.abs(base_df[benchmark]['total_time'] - meta_df[benchmark]['total_time']) / base_df[benchmark]['total_time']
         duckdb_df[benchmark] = duckdb_df[benchmark][diff > 0.1]
         dpconv_df[benchmark] = dpconv_df[benchmark][diff > 0.1]

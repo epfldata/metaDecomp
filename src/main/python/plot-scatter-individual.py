@@ -21,6 +21,13 @@ for (baseline, baseline_full_name) in [('dpconv', 'DPconv'), ('duckdb', 'DuckDB'
         duckdb_df = pd.read_csv(os.path.join(results_path, f'duckdb-{benchmark}.csv'), dtype={'query': str})
         dpconv_df = pd.read_csv(os.path.join(results_path, f'dpconv-opt-{benchmark}.csv'), dtype={'query': str})
 
+        common = sorted(set(meta_df['query']) & set(base_df['query']) &
+                        set(duckdb_df['query']) & set(dpconv_df['query']))
+        meta_df = meta_df.set_index('query').loc[common].reset_index()
+        base_df = base_df.set_index('query').loc[common].reset_index()
+        duckdb_df = duckdb_df.set_index('query').loc[common].reset_index()
+        dpconv_df = dpconv_df.set_index('query').loc[common].reset_index()
+
         if (benchmark == 'job-large'):
 
             small = duckdb_df['total_time'] < 5e4
