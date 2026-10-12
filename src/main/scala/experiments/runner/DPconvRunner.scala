@@ -14,7 +14,7 @@ import scala.io.Source
 import experiments.parseSubqueryTables
 
 object DPconvRunner extends BaseRunner {
-	private val dpConvBasePath = s"$projectRootPath/DPConv"
+	private val dpConvBasePath = s"$projectRootPath/DPconv"
 
 	private val optTimeout = 5.minutes
 
