@@ -19,7 +19,7 @@ object DuckDBYanPlusRunner extends BaseRunner {
 		for (benchmark <- if args.size >= 1 then List(args(0)) else benchmarks) {
 			connect(benchmark)
 
-			val resultsPath = Paths.get(resultsDir, s"yanplus-$benchmark-$getTimestamp.csv")
+			val resultsPath = Paths.get(resultsDir, s"yanplus-opt-$benchmark-$getTimestamp.csv")
 
 			Files.write(
 				resultsPath,
