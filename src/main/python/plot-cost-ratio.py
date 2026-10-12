@@ -9,7 +9,7 @@ from config import results_path, figures_path, green_color, dark_green_color
 
 plt.rcParams['font.size'] = 31
 
-save_path = os.path.join(figures_path, 'cost-ratios')
+save_path = os.path.join(figures_path, 'cost-ratio')
 
 if not os.path.exists(save_path):
     os.makedirs(save_path)

@@ -149,7 +149,7 @@ for benchmark in benchmarks:
             # Show the plot
             plt.tight_layout(pad=0)
 
-            save_path = os.path.join(figures_path, 'exec-speedup' if metric == 'exec_time' else 'overall-speedup-individual')
+            save_path = os.path.join(figures_path, 'exec-speedup' if metric == 'exec_time' else 'overall-speedups-individual')
 
             if not os.path.exists(save_path):
                 os.makedirs(save_path)
