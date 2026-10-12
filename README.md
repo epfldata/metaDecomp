@@ -48,7 +48,7 @@ docker compose run --rm artifact
 
 The script sets up data and systems, runs experiments, organizes CSVs, generates figures, and compiles `main-full.pdf`. It prints progress and copyable commands to resume individual system/benchmark runs. Results are stored in `experiment-results/runs/<timestamp>/`, including `pipeline.log`, CSVs, `figures/`, and `paper/main-full.pdf`.
 
-Note that, for LLM-R2 and LearnedRewrite, by default, `REWRITE_MODE=saved` uses the downloaded SQL and optimization timings, and measures execution times anew. To regenerate both rewrites and optimization timings, use `REWRITE_MODE=fresh`. Before running, set your OpenAI API key in the same shell. Note that this makes API calls to ChatGPT and may incur costs. Make sure you have enough quota and are aware of the costs before running the script. Our experience is that one run costs approximately 3 USD.
+Note that, for LLM-R2 and LearnedRewrite, by default, `REWRITE_MODE=saved` uses the existing SQL and optimization timings in `llm-r2`, and measures execution times anew. To regenerate both rewrites and optimization timings, use `REWRITE_MODE=fresh`. Before running, set your OpenAI API key in the same shell. Note that this makes API calls to ChatGPT and may incur costs. Make sure you have enough quota and are aware of the costs before running the script. Our experience is that one run costs approximately 3 USD.
 
 ```bash
 export OPENAI_API_KEY="your-api-key"
@@ -62,7 +62,7 @@ export OPENAI_API_KEY="your-api-key"
 REWRITE_MODE=fresh docker compose run --rm artifact
 ```
 
-Fresh mode installs the rewrite dependencies, uses the included trained checkpoint and Java rewriter, and downloads `all-MiniLM-L6-v2` on first use. LLM-R2 calls the OpenAI API and incurs API charges; LearnedRewrite does not need an API key. Fresh rewrites are stored under `RESULTS_DIR/rewrites/`, keeping the downloaded measurements intact. The benchmark/query selection also applies to rewrite generation. Restart commands retain `REWRITE_MODE`.
+Fresh mode installs the rewrite dependencies, uses the included trained checkpoint and Java rewriter, and downloads `all-MiniLM-L6-v2` on first use. LLM-R2 calls the OpenAI API and incurs API charges; LearnedRewrite does not need an API key. Fresh runs replace the corresponding SQL and optimization timings in `llm-r2`; unselected queries retain their previous values. To restore the saved measurements, extract the downloaded ZIP again. The benchmark/query selection also applies to rewrite generation. Restart commands retain `REWRITE_MODE`.
 
 To run stages individually, reuse one result directory:
 
@@ -333,7 +333,7 @@ export OPENAI_API_KEY="your-api-key"
 (cd llm-r2 && venv/bin/python -u llm_r2_rewriter_pg.py)
 ```
 
-Optionally append a benchmark, such as `job-original`, to the Python command; omitting it runs all four. This replaces the corresponding downloaded rewrite and timing CSVs. To preserve the saved CSVs or select queries by regex, use the master script with `REWRITE_MODE=fresh` instead.
+Optionally append a benchmark and query filename regex, such as `job-original '32a[.]sql'`, to the Python command. Omitting the benchmark runs all four; omitting the regex runs all queries. Selected queries replace their downloaded rewrites and optimization timings in the CSVs; unselected queries retain their previous values.
 
 Then measure execution times from the repository root (no API key is needed for this step):
 
@@ -351,7 +351,7 @@ The Scala runner below uses the downloaded rewrites and optimization timings by 
 (cd llm-r2 && venv/bin/python -u learned_rewriter_pg.py)
 ```
 
-The optional benchmark argument and CSV replacement behavior are the same as for LLM-R2. LearnedRewrite does not require an API key. Use the master script with `REWRITE_MODE=fresh` to preserve the saved CSVs or select queries by regex.
+The optional benchmark/query arguments and CSV replacement behavior are the same as for LLM-R2. LearnedRewrite does not require an API key.
 
 Then measure execution times from the repository root:
 
