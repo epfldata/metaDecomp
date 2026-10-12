@@ -282,7 +282,15 @@ The results are stored in `experiment-results/sparksqlplus-enum-{dsb, job-origin
 
 After obtaining experiment results, the figures in the paper can be reproduced as follows. All figures will be stored in subdirectories under `experiment-results/figures` as PDF files.
 
-Before executing the scripts below, please remove timestamps from generated csv files. For example, rename `experiment-results/metadecomp-opt-dsb-2025-10-16T17-24-04.csv` to `experiment-results/metadecomp-opt-dsb.csv`.
+Before executing the scripts below, please remove timestamps from generated CSV files. For example, rename `experiment-results/metadecomp-opt-dsb-2025-10-16T17-24-04.csv` to `experiment-results/metadecomp-opt-dsb.csv`.
+
+Alternatively, use the script below to copy results to the filenames expected by the plots. It keeps the original files and selects the latest timestamp for each system and benchmark:
+
+```bash
+python3 src/main/python/organize-results.py
+```
+
+Set `RESULTS_DIR` to organize results in a different directory.
 
 ### Optimization time – Figure 8
 
