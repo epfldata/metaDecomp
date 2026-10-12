@@ -1,14 +1,17 @@
 #!/bin/bash
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+RESULTS_DIR=${RESULTS_DIR:-$PROJECT_ROOT/experiment-results}
+JVM_MEMORY_GB=${JVM_MEMORY_GB:-40}
+mkdir -p "$RESULTS_DIR"
 QUERY_REGEX="^(${2:-.*})$"
 BENCHMARKS=(dsb job-original musicbrainz job-large)
 if (( $# >= 1 )); then BENCHMARKS=("$1"); fi
 
 # --- Configuration ---
 API_URL="http://localhost:8848/api/v1/parse"
-TIMEOUT_SECONDS=3600 # 1 hour
-REPEAT_TIMES=10
+TIMEOUT_SECONDS=${ENUM_TIMEOUT_SECONDS:-3600} # 1 hour
+REPEAT_TIMES=${REPEAT_TIMES:-10}
 
 # --- Pre-flight Checks ---
 
@@ -26,7 +29,7 @@ APP_LOG="$PROJECT_ROOT/SparkSQLPlus/app.log"
 APP_PID_FILE="$PROJECT_ROOT/SparkSQLPlus/app.pid"
 
 # Start the application in the background and redirect output to a log file
-java -Xms256m -Xmx40g -jar "$APP_JAR" > "$APP_LOG" 2>&1 &
+java -Xms256m "-Xmx${JVM_MEMORY_GB}g" -jar "$APP_JAR" > "$APP_LOG" 2>&1 &
 APP_PID=$!
 echo $APP_PID > "$APP_PID_FILE"
 
@@ -49,7 +52,7 @@ restart_app() {
     # Clear the log file
     > "$APP_LOG"
 
-    java -Xms256m -Xmx40g -jar "$APP_JAR" > "$APP_LOG" 2>&1 &
+    java -Xms256m "-Xmx${JVM_MEMORY_GB}g" -jar "$APP_JAR" > "$APP_LOG" 2>&1 &
     APP_PID=$!
     echo $APP_PID > "$APP_PID_FILE"
 
@@ -103,7 +106,7 @@ for BENCHMARK in "${BENCHMARKS[@]}"; do
     ddl_content=$(cat "$DDL_FILE" | sed 's/"/\\"/g' | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n/\\n/g')
 
     timestamp=$(date +"%Y-%m-%dT%H-%M-%S")
-    output_csv_file="$PROJECT_ROOT/experiment-results/sparksqlplus-enum-$BENCHMARK-${timestamp}.csv"
+    output_csv_file="$RESULTS_DIR/sparksqlplus-enum-$BENCHMARK-${timestamp}.csv"
     echo "query,time_ms" > $output_csv_file
 
     # Loop through all .sql files in the current directory
