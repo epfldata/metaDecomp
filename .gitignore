@@ -17,3 +17,10 @@ src/main/scala/*/.scala-build
 /SparkSQLPlus
 experiment-results
 src/main/python/__pycache__
+
+/duckdb
+/DuckDBYanPlus
+/llm-r2
+/DPconv
+/benchmarks.zip
+src/main/python/venv
