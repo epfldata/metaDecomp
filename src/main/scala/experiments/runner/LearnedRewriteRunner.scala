@@ -8,7 +8,7 @@ import scala.util.Using
 
 object LearnedRewriteRunner extends BaseRunner {
   def main(args: Array[String]): Unit = {
-    for (benchmark <- benchmarks) {
+    for (benchmark <- if args.size >= 1 then List(args(0)) else benchmarks) {
       connect(benchmark)
 
       val timestamp = getTimestamp
@@ -54,7 +54,7 @@ object LearnedRewriteRunner extends BaseRunner {
 
       val limit = Seq(queryIds.size, rewrittenSqls.size, rewriteTimesUs.size).min
 
-      for (i <- 0 until limit) {
+      for (i <- 0 until limit if args.size < 2 || (queryIds(i) + ".sql").matches(args(1))) {
         val qid = queryIds(i)
         val sql = rewrittenSqls(i)
         val optTimeUs = rewriteTimesUs(i)

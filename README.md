@@ -183,6 +183,15 @@ sbt -mem 32000 "runMain experiments.runner.MetaDecompRunner"
 ```
 (`-mem 32000` indicates a limit of 32,000 MB of memory for the JVM. This can be adjusted based on the amount of available memory in your system. For certain queries in JOBLarge, such a large memory may be required due to need to load the cardinality estimation of a very large number of possible intermediate results.)
 
+Optionally select a benchmark and then a query filename regex. Omitting the benchmark runs all benchmarks; omitting the regex runs all queries in the selected benchmark. The regex matches the entire filename, including `.sql`:
+
+```bash
+sbt -mem 32000 "runMain experiments.runner.MetaDecompRunner job-original"
+sbt -mem 32000 "runMain experiments.runner.MetaDecompRunner job-original 01[ab][.]sql"
+```
+
+The other optimization/execution runners support the same arguments. For UnionDP, keep `UnionDP` before the benchmark name.
+
 The results are stored in `experiment-results/metadecomp-opt-{dsb, job-original, musicbrainz, job-large}-<timestamp>.csv`
 
 #### DPConv

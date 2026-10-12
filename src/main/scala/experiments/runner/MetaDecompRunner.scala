@@ -13,7 +13,7 @@ import experiments.getTimestamp
 
 object MetaDecompRunner extends BaseRunner {
 	def main(args: Array[String]): Unit = {
-		for (benchmark <- benchmarks) {
+		for (benchmark <- if args.size >= 1 then List(args(0)) else benchmarks) {
 			connect(benchmark)
 
 			val benchmarkPath = s"$benchmarksPath/$benchmark"
@@ -25,7 +25,7 @@ object MetaDecompRunner extends BaseRunner {
 			)
 
 
-			sqlFilesInBenchmark(benchmark).foreach(sqlFile =>
+			sqlFilesInBenchmark(benchmark).filter(f => if args.size >= 2 then f.getName.matches(args(1)) else true).foreach(sqlFile =>
 				val queryName = sqlFile.getName.stripSuffix(".sql")
 
 				if (Files.exists(Paths.get(benchmarkPath, "cardinalities", s"${queryName}.csv"))) {

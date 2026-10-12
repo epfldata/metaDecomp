@@ -16,7 +16,7 @@ import java.sql.SQLTimeoutException
 
 object DuckDBYanPlusRunner extends BaseRunner {
 	def main(args: Array[String]): Unit = {
-		for (benchmark <- benchmarks) {
+		for (benchmark <- if args.size >= 1 then List(args(0)) else benchmarks) {
 			connect(benchmark)
 
 			val resultsPath = Paths.get(resultsDir, s"yanplus-$benchmark-$getTimestamp.csv")
@@ -28,7 +28,7 @@ object DuckDBYanPlusRunner extends BaseRunner {
 			)
 
 
-			sqlFilesInBenchmark(benchmark).filter(f => {
+			sqlFilesInBenchmark(benchmark).filter(f => if args.size >= 2 then f.getName.matches(args(1)) else true).filter(f => {
 				Files.exists(Paths.get(s"$benchmarksPath/$benchmark/cardinalities/${f.getName.stripSuffix(".sql")}.csv"))
 			}).foreach(sqlFile =>
 				println("\n-----------------------------------")

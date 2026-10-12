@@ -8,7 +8,7 @@ import scala.util.Using
 
 object LLMR2Runner extends BaseRunner {
   def main(args: Array[String]): Unit = {
-    for (benchmark <- benchmarks) {
+    for (benchmark <- if args.size >= 1 then List(args(0)) else benchmarks) {
       connect(benchmark)
 
       val timestamp = getTimestamp
@@ -86,7 +86,7 @@ object LLMR2Runner extends BaseRunner {
         val optTimeUs = optTimes(i)
 
 
-        if (!qid.matches("""([0-9][0-9][a-z][a-z]|0|1[0-4]|15[0-3]).*""")) {
+        if (args.size < 2 || (qid + ".sql").matches(args(1))) {
           println(s"Processing query $qid")
 
           // Clean up SQL if necessary (remove quotes if CSV parser kept them?) 

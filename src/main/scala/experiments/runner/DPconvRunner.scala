@@ -20,8 +20,9 @@ object DPconvRunner extends BaseRunner {
 
 	def main(args: Array[String]): Unit = {
 		val runUnionDP = args.contains("UnionDP")
+		val runnerArgs = args.filterNot(_ == "UnionDP")
 
-		for (benchmark <- benchmarks) {
+		for (benchmark <- if runnerArgs.size >= 1 then List(runnerArgs(0)) else benchmarks) {
 			connect(benchmark)
 
 			implicit val benchmarkPath: String = s"$benchmarksPath/$benchmark"
@@ -34,7 +35,7 @@ object DPconvRunner extends BaseRunner {
 				StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING
 			)
 
-			sqlFilesInBenchmark(benchmark).foreach(sqlFile => {
+			sqlFilesInBenchmark(benchmark).filter(f => if runnerArgs.size >= 2 then f.getName.matches(runnerArgs(1)) else true).foreach(sqlFile => {
 				val queryName = sqlFile.getName.stripSuffix(".sql")
 				val queryCsvPath = s"$benchmarkPath/cardinalities/$queryName.csv"
 
