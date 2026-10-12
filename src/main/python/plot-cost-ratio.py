@@ -21,11 +21,11 @@ for benchmark in ['dsb', 'job-original', 'musicbrainz', 'job-large']:
     dpconv_path = os.path.join(results_path, f'dpconv-opt-{benchmark}.csv')
 
     # Read the CSV files
-    meta_df = pd.read_csv(metadecomp_path)
-    dpconv_df = pd.read_csv(dpconv_path)
+    meta_df = pd.read_csv(metadecomp_path, dtype={'query': str})
+    dpconv_df = pd.read_csv(dpconv_path, dtype={'query': str})
 
     # Load the CSV files
-    duckdb_df = pd.read_csv(os.path.join(results_path, f'duckdb-{benchmark}.csv'))
+    duckdb_df = pd.read_csv(os.path.join(results_path, f'duckdb-{benchmark}.csv'), dtype={'query': str})
 
     # Merge on 'query'
     merged = pd.merge(meta_df, dpconv_df, on='query', suffixes=('_meta', '_dpconv'))

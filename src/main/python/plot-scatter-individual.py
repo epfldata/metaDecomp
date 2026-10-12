@@ -16,10 +16,10 @@ for (baseline, baseline_full_name) in [('dpconv', 'DPconv'), ('duckdb', 'DuckDB'
     for benchmark in ['dsb', 'job-original', 'musicbrainz', 'job-large']:
 
         # Load the CSV files
-        meta_df = pd.read_csv(os.path.join(results_path, f'metadecomp-opt-{benchmark}.csv'))
-        base_df = pd.read_csv(os.path.join(results_path, f'{baseline}{"" if baseline == "duckdb" else "-opt"}-{benchmark}.csv'))
-        duckdb_df = pd.read_csv(os.path.join(results_path, f'duckdb-{benchmark}.csv'))
-        dpconv_df = pd.read_csv(os.path.join(results_path, f'dpconv-opt-{benchmark}.csv'))
+        meta_df = pd.read_csv(os.path.join(results_path, f'metadecomp-opt-{benchmark}.csv'), dtype={'query': str})
+        base_df = pd.read_csv(os.path.join(results_path, f'{baseline}{"" if baseline == "duckdb" else "-opt"}-{benchmark}.csv'), dtype={'query': str})
+        duckdb_df = pd.read_csv(os.path.join(results_path, f'duckdb-{benchmark}.csv'), dtype={'query': str})
+        dpconv_df = pd.read_csv(os.path.join(results_path, f'dpconv-opt-{benchmark}.csv'), dtype={'query': str})
 
         if (benchmark == 'job-large'):
 

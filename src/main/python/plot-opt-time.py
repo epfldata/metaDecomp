@@ -107,7 +107,7 @@ for series in benchmarks_to_plot:
         print(f"Skipping {series}: metaDecomp file not found at {meta_path}")
         continue
     
-    meta_df_raw = pd.read_csv(meta_path)
+    meta_df_raw = pd.read_csv(meta_path, dtype={'query': str})
     if 'query' in meta_df_raw.columns:
         meta_df_raw['query'] = meta_df_raw['query'].astype(str)
     query_to_num_rels = meta_df_raw.set_index('query')['num_rels'].to_dict()
@@ -118,7 +118,7 @@ for series in benchmarks_to_plot:
             df_map[method_name] = None
             continue
             
-        df = pd.read_csv(file_path)
+        df = pd.read_csv(file_path, dtype={'query': str})
         if 'query' not in df.columns or config['col'] not in df.columns:
             df_map[method_name] = None
             continue

@@ -29,9 +29,9 @@ for (baseline, baseline_label, subfigure) in [('dpconv', 'DPconv', 'a'), ('duckd
     speedups = {}
     for benchmark in benchmarks:
         # Load the CSV files
-        meta_df[benchmark] = pd.read_csv(os.path.join(results_path, f'metadecomp-opt-{benchmark}.csv'))
-        base_df[benchmark] = pd.read_csv(os.path.join(results_path, f'{baseline}{"" if baseline=="duckdb" else "-opt"}-{benchmark}.csv'))
-        duckdb_df[benchmark] = pd.read_csv(os.path.join(results_path, f'duckdb-{benchmark}.csv'))
+        meta_df[benchmark] = pd.read_csv(os.path.join(results_path, f'metadecomp-opt-{benchmark}.csv'), dtype={'query': str})
+        base_df[benchmark] = pd.read_csv(os.path.join(results_path, f'{baseline}{"" if baseline=="duckdb" else "-opt"}-{benchmark}.csv'), dtype={'query': str})
+        duckdb_df[benchmark] = pd.read_csv(os.path.join(results_path, f'duckdb-{benchmark}.csv'), dtype={'query': str})
 
         # Cap the values at 3e8
         meta[benchmark] = np.clip(meta_df[benchmark]["total_time"], None, 3e8)

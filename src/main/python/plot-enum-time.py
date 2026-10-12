@@ -21,7 +21,7 @@ if not os.path.exists(save_path):
 for benchmark in ['dsb', 'job-original', 'musicbrainz', 'job-large']:
 
     # Load the CSV file
-    meta = pd.read_csv(os.path.join(results_path, f'metadecomp-enum-{benchmark}.csv'))
+    meta = pd.read_csv(os.path.join(results_path, f'metadecomp-enum-{benchmark}.csv'), dtype={'query': str})
     meta = meta[meta['num_join_trees'] > 0]
     # Ensure num_join_trees is numeric, dropping non-numeric values
     meta['num_join_trees'] = pd.to_numeric(meta['num_join_trees'], errors='coerce')
@@ -30,7 +30,7 @@ for benchmark in ['dsb', 'job-original', 'musicbrainz', 'job-large']:
     meta['num_join_trees'] = meta['num_join_trees'].astype(int)
 
     # Load the CSV file
-    ssp = pd.read_csv(os.path.join(results_path, f'sparksqlplus-enum-{benchmark}.csv'))
+    ssp = pd.read_csv(os.path.join(results_path, f'sparksqlplus-enum-{benchmark}.csv'), dtype={'query': str})
 
     # Filter meta_data to keep only rows with 'query' values that exist in ssp_data
     # meta_data = meta_data[meta_data['query'].isin(ssp_data['query'])]

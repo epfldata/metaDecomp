@@ -13,9 +13,9 @@ for benchmark in benchmarks:
     for baseline in ['dpconv', 'duckdb', 'uniondp', 'yanplus', 'learned-rewrite', 'llm-r2']:
         for metric in ['exec_time', 'total_time'] if baseline == 'dpconv' else ['total_time']:
             # Load the CSV files
-            meta_df = pd.read_csv(os.path.join(results_path, f'metadecomp-opt-{benchmark}.csv'))
-            base_df = pd.read_csv(os.path.join(results_path, f'{baseline}{"" if baseline=="duckdb" else "-opt"}-{benchmark}.csv'))
-            duckdb_df = pd.read_csv(os.path.join(results_path, f'duckdb-{benchmark}.csv'))
+            meta_df = pd.read_csv(os.path.join(results_path, f'metadecomp-opt-{benchmark}.csv'), dtype={'query': str})
+            base_df = pd.read_csv(os.path.join(results_path, f'{baseline}{"" if baseline=="duckdb" else "-opt"}-{benchmark}.csv'), dtype={'query': str})
+            duckdb_df = pd.read_csv(os.path.join(results_path, f'duckdb-{benchmark}.csv'), dtype={'query': str})
 
             # Cap the values at 3e8
             meta = np.clip(meta_df[metric], None, 3e8)

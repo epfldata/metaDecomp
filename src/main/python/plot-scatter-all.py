@@ -30,10 +30,10 @@ for (baseline, baseline_label, subfigure) in [('dpconv', 'DPconv', 'a'), ('duckd
     for benchmark in ['dsb', 'job-original', 'musicbrainz', 'job-large']:
 
         # Load the CSV files
-        duckdb_df[benchmark] = pd.read_csv(os.path.join(results_path, f'duckdb-{benchmark}.csv'))
-        dpconv_df[benchmark] = pd.read_csv(os.path.join(results_path, f'dpconv-opt-{benchmark}.csv'))
-        meta_df[benchmark] = pd.read_csv(os.path.join(results_path, f'metadecomp-opt-{benchmark}.csv'))
-        base_df[benchmark] = pd.read_csv(os.path.join(results_path, f'{baseline}{f"" if baseline == "duckdb" else "-opt"}-{benchmark}.csv'))
+        duckdb_df[benchmark] = pd.read_csv(os.path.join(results_path, f'duckdb-{benchmark}.csv'), dtype={'query': str})
+        dpconv_df[benchmark] = pd.read_csv(os.path.join(results_path, f'dpconv-opt-{benchmark}.csv'), dtype={'query': str})
+        meta_df[benchmark] = pd.read_csv(os.path.join(results_path, f'metadecomp-opt-{benchmark}.csv'), dtype={'query': str})
+        base_df[benchmark] = pd.read_csv(os.path.join(results_path, f'{baseline}{f"" if baseline == "duckdb" else "-opt"}-{benchmark}.csv'), dtype={'query': str})
 
         diff = np.abs(base_df[benchmark]['total_time'] - meta_df[benchmark]['total_time']) / base_df[benchmark]['total_time']
         duckdb_df[benchmark] = duckdb_df[benchmark][diff > 0.1]
