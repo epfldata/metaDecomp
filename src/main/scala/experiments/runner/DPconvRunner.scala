@@ -96,7 +96,7 @@ object DPconvRunner extends BaseRunner {
 
 	private def runDPConv(queryCsvPath: String, capped: Boolean = true, runUnionDP: Boolean = false): (String, Long, Double) = {
 		val command = Seq(
-			"gtimeout", s"${optTimeout.toSeconds}s", "bash", "-c", 
+			timeoutCommand, s"${optTimeout.toSeconds}s", "bash", "-c",
 			if !runUnionDP then
 				s"$dpConvBasePath/src/build/bench $queryCsvPath ${if capped then 1 else 0}"
 			else

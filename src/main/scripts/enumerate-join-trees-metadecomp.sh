@@ -22,6 +22,8 @@ sbt clean stage
 # Paths
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+TIMEOUT_COMMAND=timeout
+if [[ "$(uname)" == Darwin ]]; then TIMEOUT_COMMAND=gtimeout; fi
 REPEAT_TIMES=10
 TIMEOUT_SECONDS=3600 # Timeout in seconds
 
@@ -53,7 +55,7 @@ for BENCHMARK in "dsb" "job-original" "musicbrainz" "job-large"; do
     for ((i=1; i<=REPEAT_TIMES; i++)); do
       echo "Run $i for $query_name..."
       # Run the Scala program with a timeout
-      gtimeout "$TIMEOUT_SECONDS"s "$PROJECT_ROOT/target/universal/stage/bin/join-tree-enumeration-runner" "-J-Xms512m" "-J-Xmx40g" "$SQL_FILE" > "$tmp_file" 2>&1 &
+      "$TIMEOUT_COMMAND" "$TIMEOUT_SECONDS"s "$PROJECT_ROOT/target/universal/stage/bin/join-tree-enumeration-runner" "-J-Xms512m" "-J-Xmx40g" "$SQL_FILE" > "$tmp_file" 2>&1 &
       TIMEOUT_PID=$!
       wait "$TIMEOUT_PID"
       exit_code=$?
