@@ -1,4 +1,3 @@
-from duckdb import df
 from matplotlib.ticker import PercentFormatter
 import pandas as pd
 import matplotlib.pyplot as plt
