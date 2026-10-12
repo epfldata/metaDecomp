@@ -16,22 +16,59 @@ Full technical report available at [technical-report.pdf](technical-report.pdf) 
 
 Please execute all the following commands from the root directory of the repository. **The experiment results reported in the paper were measured on macOS.** The commands and scripts were written on macOS Tahoe 26.0.1 with zsh 5.9 / GNU bash 3.2.57(1). On other operating systems, adapt the commands and scripts as needed or use the supplied Docker image.
 
-## Setup
-
-### Docker (optional)
+## Setting up Docker (Optional)
 
 Follow this section only if you want to run the workflow in Docker. For native setup, skip to the dataset and system setup instructions below.
 
-With Docker and Docker Compose installed, run from the repository root:
+With Docker and Docker Compose installed, build the image from the repository root:
 
 ```bash
 docker compose build
-docker compose run --rm artifact
 ```
 
 The container defaults to 48 GB of memory, with JVM and DuckDB memory limits of 40 GB each. These limits share the container's memory; they are not reserved allocations. On Docker Desktop, give its VM at least 48 GB of memory for a full run. Set `DOCKER_MEMORY`, `JVM_MEMORY_GB`, and `DUCKDB_MEMORY` to adjust the limits.
 
 The repository is mounted at `/workspace`, so results and datasets persist on the host. Named volumes keep Linux builds and caches separate from native host builds. Docker uses the host's ARM64 or x86-64 architecture by default.
+
+## One-click reproduction of the paper
+
+For native execution (without using Docker), install the prerequisites above and run from the repository root:
+
+```bash
+bash reproduce.sh
+```
+
+For Docker execution, build the image as described above, then run:
+
+```bash
+docker compose run --rm artifact
+```
+
+The script sets up data and systems, runs experiments, organizes CSVs, generates figures, and compiles `main-full.pdf`. It prints progress and copyable commands to resume individual system/benchmark runs. Results are stored in `experiment-results/runs/<timestamp>/`, including `pipeline.log`, CSVs, `figures/`, and `paper/main-full.pdf`.
+
+To run stages individually, reuse one result directory:
+
+```bash
+export RESULTS_DIR="$PWD/experiment-results/<subfolder-name>"
+bash reproduce.sh setup
+bash reproduce.sh experiments
+bash reproduce.sh figures
+bash reproduce.sh paper
+```
+
+If you need to run only a subset of experiments instead of all (e.g., for preliminary testing or debugging purposes):
+
+```bash
+REPEAT_TIMES=1 bash reproduce.sh experiments job-original '01[ab][.]sql'
+```
+
+Use the variable `SYSTEMS` to select systems, for example `SYSTEMS=metadecomp`. Figures require results for all four benchmarks to be present. In Docker, use `docker compose run --rm artifact` in place of `bash reproduce.sh`. Set `RESULTS_DIR` to a container path such as `/workspace/experiment-results/<subfolder-name>`.
+
+## Manual workflow
+
+The following sections remain available for individual setup and experiment steps instead of the one-click master script.
+
+## Setup
 
 ### Datasets, benchmark queries, cardinality estimation, folder structures
 
