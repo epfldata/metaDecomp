@@ -35,6 +35,10 @@ echo $APP_PID > "$APP_PID_FILE"
 
 # Wait for the application to start
 while ! grep -q "Started Application in" "$APP_LOG"; do
+    if ! kill -0 "$APP_PID" 2>/dev/null; then
+        cat "$APP_LOG"
+        exit 1
+    fi
     sleep 1
 done
 
@@ -58,6 +62,10 @@ restart_app() {
 
     # Wait for the application to start
     while ! grep -q "Started Application in" "$APP_LOG"; do
+        if ! kill -0 "$APP_PID" 2>/dev/null; then
+            cat "$APP_LOG"
+            exit 1
+        fi
         if grep -q "Web server failed to start" "$APP_LOG"; then
             restart_app
             return
