@@ -22,12 +22,15 @@ sbt clean stage
 # Paths
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+QUERY_REGEX="^(${2:-.*})$"
+BENCHMARKS=(dsb job-original musicbrainz job-large)
+if (( $# >= 1 )); then BENCHMARKS=("$1"); fi
 TIMEOUT_COMMAND=timeout
 if [[ "$(uname)" == Darwin ]]; then TIMEOUT_COMMAND=gtimeout; fi
 REPEAT_TIMES=10
 TIMEOUT_SECONDS=3600 # Timeout in seconds
 
-for BENCHMARK in "dsb" "job-original" "musicbrainz" "job-large"; do
+for BENCHMARK in "${BENCHMARKS[@]}"; do
 
   QUERIES_PATH="$PROJECT_ROOT/benchmarks/$BENCHMARK/queries"
   SQL_FILES=$(find "$QUERIES_PATH" -type f -maxdepth 1 -name "*.sql" | sort)
@@ -42,6 +45,9 @@ for BENCHMARK in "dsb" "job-original" "musicbrainz" "job-large"; do
   
   # Loop over all SQL files
   for SQL_FILE in $SQL_FILES; do
+    if [[ ! "$(basename "$SQL_FILE")" =~ $QUERY_REGEX ]]; then
+      continue
+    fi
 
     echo "Processing $SQL_FILE..."
 

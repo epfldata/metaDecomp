@@ -1,6 +1,9 @@
 #!/bin/bash
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+QUERY_REGEX="^(${2:-.*})$"
+BENCHMARKS=(dsb job-original musicbrainz job-large)
+if (( $# >= 1 )); then BENCHMARKS=("$1"); fi
 
 # --- Configuration ---
 API_URL="http://localhost:8848/api/v1/parse"
@@ -77,7 +80,7 @@ trap cleanup SIGINT
 # Read the content of the DDL file once
 # Escapes newlines and double quotes for JSON compatibility
 
-for BENCHMARK in "dsb" "job-original" "musicbrainz" "job-large"; do
+for BENCHMARK in "${BENCHMARKS[@]}"; do
 
     if [ "$BENCHMARK" == "job-original" ] || [ "$BENCHMARK" == "job-large" ]; then
         DDL_FILE="$PROJECT_ROOT/supplementary-files/SparkSQLPlus/imdb-scheme.sql"
@@ -105,9 +108,8 @@ for BENCHMARK in "dsb" "job-original" "musicbrainz" "job-large"; do
 
     # Loop through all .sql files in the current directory
     for query_name in $(find "$PROJECT_ROOT/benchmarks/$BENCHMARK/queries" -maxdepth 1 -type f \( -name "*.sql" \) -exec basename {} .sql \; | sort); do
-        # Skip musicbrainz 01-16
-        if [ $BENCHMARK == "musicbrainz" ] && [[ "$query_name" =~ ^[0-1][0-9]|2[0-1] ]]; then
-            continue
+        if [[ ! "$query_name.sql" =~ $QUERY_REGEX ]]; then
+          continue
         fi
 
         sql_file="$PROJECT_ROOT/benchmarks/$BENCHMARK/queries/$query_name.sql"

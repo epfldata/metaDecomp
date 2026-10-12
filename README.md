@@ -254,9 +254,17 @@ The results are stored in `experiment-results/learned-rewrite-opt-{dsb, job-orig
 
 #### metaDecomp
 
-```
+```bash
 bash src/main/scripts/enumerate-join-trees-metadecomp.sh
 ```
+
+Alternatively, select a benchmark and queries:
+
+```bash
+bash src/main/scripts/enumerate-join-trees-metadecomp.sh job-original '01[ab][.]sql'
+```
+
+Both enumeration scripts accept `[benchmark] [query filename regex]`, like the optimization runners. Omitting the benchmark runs all benchmarks; the regex matches the entire filename, including `.sql`.
 
 The results are stored in `experiment-results/metadecomp-enum-{dsb, job-original, musicbrainz, job-large}.csv`
 
