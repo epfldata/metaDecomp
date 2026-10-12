@@ -13,6 +13,8 @@ Full technical report available at [technical-report.pdf](technical-report.pdf) 
 * For [DPconv](https://github.com/utndatasystems/DPconv/tree/dc56bdc52c452bf86b3ac5c224b0176148c38757), [DuckDB](https://github.com/duckdb/duckdb/tree/7c039464e452ddc3330e2691d3fa6d305521d09b), and [Yannakakis+](https://github.com/ChampionNan/DuckDBYanPlus/tree/38d165ee6dac9db621616121b09bb591fdd67065): CMake 4.0.3, GNU Make 3.81, clang 20.1.3
 * For join tree enumeration with traditional GYO algorithms (implemented by [SparkSQL+](https://github.com/hkustDB/SparkSQLPlus/tree/f22188bba4e971da6defb97c983e06e18e66fd7a)): Maven 3.8.6
 * For LearnedRewrite, LLM-R2, and reproducing the figures: Python 3.10.1
+* For enumeration: curl, jq, and GNU timeout (`brew install coreutils` on macOS supplies `gtimeout`)
+* For paper compilation: latexmk and TeX Live with plain generic, science, publishers, LaTeX extra, and extra fonts packages
 
 Please execute all the following commands from the root directory of the repository. **The experiment results reported in the paper were measured on macOS.** The commands and scripts were written on macOS Tahoe 26.0.1 with zsh 5.9 / GNU bash 3.2.57(1). On other operating systems, adapt the commands and scripts as needed or use the supplied Docker image.
 
@@ -111,7 +113,7 @@ After setting up the datasets, use this script to set up all systems and plottin
 bash src/main/scripts/setup-systems.sh
 ```
 
-This requires Git, wget, unzip, Java 17, sbt, Maven, Python 3.12, a C++20 compiler, CMake, and Make. It clones the baseline revisions listed below, builds the required binaries, downloads LLM-R2, installs Python dependencies in `src/main/python/venv`, and stages Scala. Existing checkouts are retained, and build commands run each time so source adjustments are compiled. Set `BUILD_JOBS` (default: 2), `CXX`, or `JVM_MEMORY_GB` (default: 40) as needed.
+This requires Git, wget, unzip, Java 17 (Oracle GraalVM 17.0.12), sbt, Maven, Python 3.12, a C++20 compiler, CMake, and Make. It clones the baseline revisions listed below, builds the required binaries, downloads LLM-R2, installs Python dependencies in `src/main/python/venv`, and stages Scala. Existing checkouts are retained, and build commands run each time so source adjustments are compiled. Set `BUILD_JOBS` (default: 2), `CXX`, or `JVM_MEMORY_GB` (default: 40) as needed.
 
 The following sections describe how to set up each system manually.
 
