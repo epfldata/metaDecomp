@@ -50,6 +50,18 @@ The queries are generated using the code in https://github.com/Manciukic/postgre
 All cardinality information is formatted in the same way as in https://github.com/utndatasystems/DPconv.
 These files that we use in the experiment can all be downloaded using the setup script. No further action is required.
 
+### System setup
+
+After setting up the datasets, use this script to set up all systems and plotting dependencies:
+
+```bash
+bash src/main/scripts/setup-systems.sh
+```
+
+This requires Git, wget, unzip, Java 17, sbt, Maven, Python 3.12, a C++20 compiler, CMake, and Make. It clones the baseline revisions listed below, builds the required binaries, downloads LLM-R2, installs Python dependencies in `src/main/python/venv`, and stages Scala. Existing checkouts are retained, and build commands run each time so source adjustments are compiled. Set `BUILD_JOBS` (default: 2), `CXX`, or `JVM_MEMORY_GB` (default: 40) as needed.
+
+The following sections describe how to set up each system manually.
+
 ### DPconv (for both DPconv and UnionDP)
 
 We adapted the code of [DPconv](https://github.com/utndatasystems/DPconv/tree/dc56bdc52c452bf86b3ac5c224b0176148c38757) for us to use for our experiments. We also included an implementation of UnionDP on top of the code of DPconv. This adapted version is given in another repository, which is a fork of the original DPconv repository.
@@ -115,10 +127,10 @@ cd DuckDBYanPlus
 git checkout 38d165e
 ```
 
-This is implemented on top of the original DuckDB repository. As for DuckDB, simply run `make` to build the project:
-```
+This is implemented on top of DuckDB. The pinned checkout is missing optional test and Parquet files, so disable those components:
+```bash
 cd DuckDBYanPlus
-make
+make CMAKE_VARS="-DBUILD_UNITTESTS=OFF -DSKIP_EXTENSIONS=parquet"
 ```
 
 ### LLM-R2 (for LLM-R2 and LearnedRewrite)
