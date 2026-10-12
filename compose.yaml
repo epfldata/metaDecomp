@@ -13,6 +13,8 @@ services:
       BUILD_JOBS: ${BUILD_JOBS:-2}
       SYSTEMS: ${SYSTEMS:-metadecomp dpconv duckdb uniondp yanplus llm-r2 learned-rewrite enum-metadecomp enum-sparksqlplus}
       RESULTS_DIR: ${RESULTS_DIR:-}
+      REWRITE_MODE: ${REWRITE_MODE:-saved}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
     volumes:
       - .:/workspace
       # Keep Linux binaries, virtualenvs and caches separate from host builds.
@@ -25,6 +27,7 @@ services:
       - project-project-target:/workspace/project/project/target
       - project-project-project-target:/workspace/project/project/project/target
       - python-venv:/workspace/src/main/python/venv
+      - rewrite-venv:/workspace/llm-r2/venv
       - sbt-cache:/root/.sbt
       - ivy-cache:/root/.ivy2
       - maven-cache:/root/.m2
@@ -43,3 +46,4 @@ volumes:
   ivy-cache:
   maven-cache:
   coursier-cache:
+  rewrite-venv:
