@@ -18,6 +18,21 @@ Please execute all the following commands from the root directory of the reposit
 
 ## Setup
 
+### Docker (optional)
+
+Follow this section only if you want to run the workflow in Docker. For native setup, skip to the dataset and system setup instructions below.
+
+With Docker and Docker Compose installed, run from the repository root:
+
+```bash
+docker compose build
+docker compose run --rm artifact
+```
+
+The container defaults to 48 GB of memory, with JVM and DuckDB memory limits of 40 GB each. These limits share the container's memory; they are not reserved allocations. On Docker Desktop, give its VM at least 48 GB of memory for a full run. Set `DOCKER_MEMORY`, `JVM_MEMORY_GB`, and `DUCKDB_MEMORY` to adjust the limits.
+
+The repository is mounted at `/workspace`, so results and datasets persist on the host. Named volumes keep Linux builds and caches separate from native host builds. Docker uses the host's ARM64 or x86-64 architecture by default.
+
 ### Datasets, benchmark queries, cardinality estimation, folder structures
 
 Given the need to convert datasets to DuckDB and the large sizes of required files, we provide them all in a setup script. Please run the following script to set up the folder structures and download the files. Note that these files take approximately 26 GB of storage space in total.

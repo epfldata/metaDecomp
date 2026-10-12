@@ -1,0 +1,45 @@
+services:
+  artifact:
+    build: .
+    # JVM heap (40 GB) and DuckDB native memory (40 GB) share this budget.
+    mem_limit: ${DOCKER_MEMORY:-48g}
+    shm_size: 2g
+    environment:
+      JVM_MEMORY_GB: ${JVM_MEMORY_GB:-40}
+      DUCKDB_MEMORY: ${DUCKDB_MEMORY:-40GB}
+      REPEAT_TIMES: ${REPEAT_TIMES:-10}
+      DOCKER_MEMORY: ${DOCKER_MEMORY:-48g}
+      ENUM_TIMEOUT_SECONDS: ${ENUM_TIMEOUT_SECONDS:-3600}
+      BUILD_JOBS: ${BUILD_JOBS:-2}
+      SYSTEMS: ${SYSTEMS:-metadecomp dpconv duckdb uniondp yanplus llm-r2 learned-rewrite enum-metadecomp enum-sparksqlplus}
+      RESULTS_DIR: ${RESULTS_DIR:-}
+    volumes:
+      - .:/workspace
+      # Keep Linux binaries, virtualenvs and caches separate from host builds.
+      - dpconv:/workspace/DPconv
+      - duckdb:/workspace/duckdb
+      - yanplus:/workspace/DuckDBYanPlus
+      - sparksqlplus:/workspace/SparkSQLPlus
+      - target:/workspace/target
+      - project-target:/workspace/project/target
+      - project-project-target:/workspace/project/project/target
+      - project-project-project-target:/workspace/project/project/project/target
+      - python-venv:/workspace/src/main/python/venv
+      - sbt-cache:/root/.sbt
+      - ivy-cache:/root/.ivy2
+      - maven-cache:/root/.m2
+      - coursier-cache:/root/.cache/coursier
+volumes:
+  dpconv:
+  duckdb:
+  yanplus:
+  sparksqlplus:
+  target:
+  project-target:
+  project-project-target:
+  project-project-project-target:
+  python-venv:
+  sbt-cache:
+  ivy-cache:
+  maven-cache:
+  coursier-cache:
