@@ -22,6 +22,8 @@ export RESULTS_DIR
 export JVM_MEMORY_GB=${JVM_MEMORY_GB:-40}
 export DUCKDB_MEMORY=${DUCKDB_MEMORY:-40GB}
 export REPEAT_TIMES=${REPEAT_TIMES:-10}
+export REWRITE_MODE=${REWRITE_MODE:-saved}
+case "$REWRITE_MODE" in saved|fresh) ;; *) echo "Unknown REWRITE_MODE: $REWRITE_MODE" >&2; exit 1 ;; esac
 export MPLBACKEND=Agg
 PYTHON="$ROOT/src/main/python/venv/bin/python"
 # Save console output alongside measurements, including setup failures.
@@ -40,7 +42,7 @@ resume_command() {
   local stage=$1 system=${2:-} benchmark=${3:-$BENCHMARK}
   local command=(env "RESULTS_DIR=$RESULTS_DIR" "JVM_MEMORY_GB=$JVM_MEMORY_GB"
     "DUCKDB_MEMORY=$DUCKDB_MEMORY" "REPEAT_TIMES=$REPEAT_TIMES"
-    "BUILD_JOBS=${BUILD_JOBS:-2}" "ENUM_TIMEOUT_SECONDS=${ENUM_TIMEOUT_SECONDS:-3600}")
+    "REWRITE_MODE=$REWRITE_MODE" "BUILD_JOBS=${BUILD_JOBS:-2}" "ENUM_TIMEOUT_SECONDS=${ENUM_TIMEOUT_SECONDS:-3600}")
   if [[ "$stage" == experiments && -z "$system" ]]; then system="${SYSTEM_LIST[*]}"; fi
   if [[ -n "$system" ]]; then command+=("SYSTEMS=$system"); fi
   if [[ -f /.dockerenv ]]; then
@@ -83,6 +85,23 @@ run_experiments() {
   echo 'After the experiment units, generate figures and compile the paper:'
   resume_command figures; echo
   resume_command paper; echo
+  if [[ "$REWRITE_MODE" == fresh && ( " ${SYSTEM_LIST[*]} " == *" llm-r2 "* || " ${SYSTEM_LIST[*]} " == *" learned-rewrite "* ) ]]; then
+    if [[ " ${SYSTEM_LIST[*]} " == *" llm-r2 "* && -z "${OPENAI_API_KEY:-}" ]]; then
+      echo 'Set OPENAI_API_KEY to generate fresh LLM-R2 rewrites.' >&2
+      exit 1
+    fi
+    if [[ ! -f llm-r2/rewriter_java.jar ]]; then
+      echo 'Fresh rewrites need rewriter_java.jar from the updated LLM-R2 ZIP.' >&2
+      exit 1
+    fi
+    if [[ " ${SYSTEM_LIST[*]} " == *" llm-r2 "* && ! -f llm-r2/simcse_result/sup-train-42-8-0/pytorch_model.bin ]]; then
+      echo 'Fresh LLM-R2 rewrites need the trained checkpoint from the updated ZIP.' >&2
+      exit 1
+    fi
+    announce "Experiments: install rewrite dependencies" experiments
+    python3 -m venv llm-r2/venv
+    llm-r2/venv/bin/pip install -r llm-r2/requirements.txt
+  fi
   announce "Experiments: stage the Scala application" experiments
   sbt -mem "$((JVM_MEMORY_GB * 1024))" stage
   {
@@ -90,7 +109,7 @@ run_experiments() {
     uname -a
     java -version 2>&1
     echo "benchmark=$BENCHMARK query_regex=$QUERY_REGEX"
-    echo "REPEAT_TIMES=$REPEAT_TIMES JVM_MEMORY_GB=$JVM_MEMORY_GB DUCKDB_MEMORY=$DUCKDB_MEMORY"
+    echo "REPEAT_TIMES=$REPEAT_TIMES JVM_MEMORY_GB=$JVM_MEMORY_GB DUCKDB_MEMORY=$DUCKDB_MEMORY REWRITE_MODE=$REWRITE_MODE"
     if ! revision=$(git rev-parse HEAD 2>/dev/null); then
       revision=unavailable
     fi
@@ -120,6 +139,16 @@ run_experiments() {
       esac
       args=("$benchmark" "$QUERY_REGEX")
       if [[ "$system" == uniondp ]]; then args=(UnionDP "${args[@]}"); fi
+      # Fresh mode regenerates the selected SQL and optimization timings first.
+      # Saved mode reads the CSVs in the downloaded LLM-R2 directory.
+      if [[ "$REWRITE_MODE" == fresh && ( "$system" == llm-r2 || "$system" == learned-rewrite ) ]]; then
+        if [[ "$system" == llm-r2 ]]; then
+          script=llm_r2_rewriter_pg.py
+        else
+          script=learned_rewriter_pg.py
+        fi
+        (cd llm-r2 && venv/bin/python -u "$script" "$benchmark" "$QUERY_REGEX")
+      fi
       java -Xms512m "-Xmx${JVM_MEMORY_GB}g" -cp 'target/universal/stage/lib/*' "experiments.runner.$runner" "${args[@]}"
       echo "Completed: $system / $benchmark"
     done
