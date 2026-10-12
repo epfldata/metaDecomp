@@ -36,7 +36,7 @@ TIMEOUT_SECONDS=${ENUM_TIMEOUT_SECONDS:-3600} # Timeout in seconds
 for BENCHMARK in "${BENCHMARKS[@]}"; do
 
   QUERIES_PATH="$PROJECT_ROOT/benchmarks/$BENCHMARK/queries"
-  SQL_FILES=$(find "$QUERIES_PATH" -type f -maxdepth 1 -name "*.sql" | sort)
+  SQL_FILES=$(find "$QUERIES_PATH" -maxdepth 1 -type f -name "*.sql" | sort)
 
   timestamp=$(date +"%Y-%m-%dT%H-%M-%S")
   OUTPUT_CSV="$RESULTS_DIR/metadecomp-enum-${BENCHMARK}-${timestamp}.csv"
