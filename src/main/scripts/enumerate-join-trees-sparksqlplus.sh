@@ -75,16 +75,15 @@ restart_app() {
     echo "Spring Boot application restarted successfully."
 }
 
-# Exit the script on Ctrl+C
+# Stop the application when the script exits.
 cleanup() {
-    echo "Script terminated"
     if [ -f "$APP_PID_FILE" ]; then
         kill -9 $(cat "$APP_PID_FILE")
         rm "$APP_PID_FILE"
     fi
-    exit 1
 }
-trap cleanup SIGINT
+trap cleanup EXIT
+trap 'exit 1' SIGINT SIGTERM
 
 # --- Main Processing Loop ---
 
