@@ -33,13 +33,10 @@ for (baseline, baseline_label, subfigure) in [('dpconv', 'DPconv', 'a'), ('duckd
         base_df[benchmark] = pd.read_csv(os.path.join(results_path, f'{baseline}{"" if baseline=="duckdb" else "-opt"}-{benchmark}.csv'), dtype={'query': str})
         duckdb_df[benchmark] = pd.read_csv(os.path.join(results_path, f'duckdb-{benchmark}.csv'), dtype={'query': str})
 
-        # Cap the values at 3e8
-        meta[benchmark] = np.clip(meta_df[benchmark]["total_time"], None, 3e8)
-        base[benchmark] = np.clip(base_df[benchmark]["total_time"], None, 3e8)
-
-        size = min(len(meta[benchmark]), len(base[benchmark]))
-        meta[benchmark] = meta[benchmark][:size]
-        base[benchmark] = base[benchmark][:size]
+        paired = meta_df[benchmark][['query', 'total_time']].merge(
+            base_df[benchmark][['query', 'total_time']], on='query', suffixes=('_meta', '_base'))
+        meta[benchmark] = np.clip(paired['total_time_meta'], None, 3e8)
+        base[benchmark] = np.clip(paired['total_time_base'], None, 3e8)
 
         # Compute speedups
         speedups[benchmark] = 1.0 * base[benchmark] / meta[benchmark]

@@ -17,19 +17,15 @@ for benchmark in benchmarks:
             base_df = pd.read_csv(os.path.join(results_path, f'{baseline}{"" if baseline=="duckdb" else "-opt"}-{benchmark}.csv'), dtype={'query': str})
             duckdb_df = pd.read_csv(os.path.join(results_path, f'duckdb-{benchmark}.csv'), dtype={'query': str})
 
-            # Cap the values at 3e8
-            meta = np.clip(meta_df[metric], None, 3e8)
-            base = np.clip(base_df["opt_exec_time" if metric == "exec_time" else metric], None, 3e8)
-
+            base_metric = "opt_exec_time" if metric == "exec_time" else metric
+            paired = meta_df[['query', metric]].merge(
+                base_df[['query', base_metric]], on='query', suffixes=('_meta', '_base'))
+            meta_col = metric + '_meta' if metric == base_metric else metric
+            base_col = base_metric + '_base' if metric == base_metric else base_metric
             if metric == 'exec_time':
-                base_timeout = base_df['opt_exec_time'] == 0
-                duckdb_df = duckdb_df[~base_timeout]
-                meta_df = meta_df[~base_timeout]
-                base_df = base_df[~base_timeout]
-
-            size = min(len(meta), len(base))
-            meta = meta[:size]
-            base = base[:size]
+                paired = paired[paired[base_col] > 0]
+            meta = np.clip(paired[meta_col], None, 3e8)
+            base = np.clip(paired[base_col], None, 3e8)
 
             # Compute speedups
             speedups = 1.0 * base / meta
