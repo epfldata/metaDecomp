@@ -198,10 +198,12 @@ cd DuckDBYanPlus
 git checkout 38d165e
 ```
 
-This is implemented on top of DuckDB. The pinned checkout is missing optional test and Parquet files, so disable those components:
+This is implemented on top of DuckDB. The pinned checkout is missing optional test and Parquet files, so disable those components and build only the command-line shell:
 ```bash
-cd DuckDBYanPlus
-make CMAKE_VARS="-DBUILD_UNITTESTS=OFF -DSKIP_EXTENSIONS=parquet"
+mkdir -p build/release
+cd build/release
+cmake -DBUILD_UNITTESTS=OFF -DSKIP_EXTENSIONS=parquet ../..
+cmake --build . --target shell
 ```
 
 ### LLM-R2 (for LLM-R2 and LearnedRewrite)

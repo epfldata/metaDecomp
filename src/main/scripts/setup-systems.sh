@@ -38,8 +38,10 @@ mkdir -p DPconv/src/build
 echo "Building DuckDB..."
 make -C duckdb
 # The pinned Yannakakis+ checkout is missing optional test and Parquet files.
+# Build only the shell used by the experiments, avoiding SQLite-wrapper tests.
 echo "Building DuckDBYanPlus..."
-make -C DuckDBYanPlus CMAKE_VARS="-DBUILD_UNITTESTS=OFF -DSKIP_EXTENSIONS=parquet"
+mkdir -p DuckDBYanPlus/build/release
+(cd DuckDBYanPlus/build/release && cmake -DBUILD_UNITTESTS=OFF -DSKIP_EXTENSIONS=parquet ../.. && cmake --build . --target shell)
 echo "Building SparkSQLPlus..."
 (cd SparkSQLPlus && mvn clean package -DskipTests=true)
 
