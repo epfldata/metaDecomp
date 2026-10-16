@@ -46,7 +46,7 @@ For Docker execution, build the image as described above, then run:
 docker compose run --rm artifact
 ```
 
-The script sets up data and systems, runs experiments, organizes CSVs, generates figures, and compiles `main-full.pdf`. It prints progress and copyable commands to resume individual system/benchmark runs. Results are stored in `experiment-results/runs/<timestamp>/`, including `pipeline.log`, CSVs, `figures/`, and `paper/main-full.pdf`.
+The script sets up data and systems, runs experiments, organizes CSVs, generates figures and tables, and compiles `main-full.pdf`. It prints progress and copyable commands to resume individual system/benchmark runs. Results are stored in `experiment-results/runs/<timestamp>/`, including `pipeline.log`, CSVs, `figures/`, `tables/`, and `paper/main-full.pdf`.
 
 Note that, for LLM-R2 and LearnedRewrite, by default, `REWRITE_MODE=saved` uses the existing SQL and optimization timings in `llm-r2`, and measures execution times anew. To regenerate both rewrites and optimization timings, use `REWRITE_MODE=fresh`. Before running, set your OpenAI API key in the same shell. Note that this makes API calls to ChatGPT and may incur costs. Make sure you have enough quota and are aware of the costs before running the script. Our experience is that one run costs approximately 3 USD.
 
@@ -391,7 +391,7 @@ bash src/main/scripts/enumerate-join-trees-sparksqlplus.sh
 
 The results are stored in `experiment-results/sparksqlplus-enum-{dsb, job-original, musicbrainz, job-large}.csv`
 
-## Figures
+## Figures and tables
 
 After obtaining experiment results, the figures in the paper can be reproduced as follows. All figures will be stored in subdirectories under `experiment-results/figures` as PDF files.
 
@@ -434,4 +434,18 @@ python src/main/python/plot-scatter-individual.py
 
 ```
 python src/main/python/plot-enum-time.py
+```
+
+### Query evaluation statistics – Table 3
+
+```bash
+python src/main/python/generate_summary_table.py
+```
+
+This writes `experiment-results/tables/tab-results.tex` using all four acyclic benchmarks and seven methods. It reports arithmetic means for times and geometric means for speedups, plus medians and percentiles. It excludes queries where metaDecomp, DPconv, and DuckDB all time out. Set `RESULTS_DIR` to use another result directory. The `figures` stage generates this table automatically; the `paper` stage installs it with the figures before compiling `main-full.pdf`.
+
+To update the table in the checked-in paper sources after manual generation:
+
+```bash
+cp "${RESULTS_DIR:-experiment-results}/tables/tab-results.tex" paper-latex/figs/exp/tab-results.tex
 ```

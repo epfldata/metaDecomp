@@ -157,7 +157,7 @@ run_experiments() {
   python3 src/main/python/organize-results.py
 }
 
-# Normalize CSV filenames and generate every paper figure. Manual: bash reproduce.sh figures
+# Normalize CSV filenames and generate every paper figure and the summary table. Manual: bash reproduce.sh figures
 run_figures() {
   announce "Figures: organize CSV results" figures
   python3 src/main/python/organize-results.py
@@ -165,6 +165,8 @@ run_figures() {
     announce "Figures: $plot" figures
     "$PYTHON" "src/main/python/plot-$plot.py"
   done
+  announce "Figures: query evaluation summary table" figures
+  "$PYTHON" src/main/python/generate_summary_table.py
 }
 
 # Copy paper sources, install the generated figures, and compile. Manual: bash reproduce.sh paper
@@ -179,6 +181,10 @@ import os, re, shutil
 from pathlib import Path
 results = Path(os.environ['RESULTS_DIR'])
 paper = results / 'paper'
+table = results / 'tables/tab-results.tex'
+if not table.is_file():
+    raise FileNotFoundError(f'Missing reproduced table: {table}; run the figures stage first')
+shutil.copy2(table, paper / 'figs/exp/tab-results.tex')
 for source in (paper / '6_experiments.tex', paper / 'app_exp.tex'):
     for name in re.findall(r'\\includegraphics(?:\[[^]]*\])?\{figs/exp/([^}]+)\}', source.read_text()):
         figure = results / 'figures' / name
