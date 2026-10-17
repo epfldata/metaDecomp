@@ -11,7 +11,7 @@ services:
       DOCKER_MEMORY: ${DOCKER_MEMORY:-48g}
       ENUM_TIMEOUT_SECONDS: ${ENUM_TIMEOUT_SECONDS:-3600}
       BUILD_JOBS: ${BUILD_JOBS:-2}
-      SYSTEMS: ${SYSTEMS:-metadecomp dpconv duckdb uniondp yanplus llm-r2 learned-rewrite enum-metadecomp enum-sparksqlplus}
+      SYSTEMS: ${SYSTEMS:-metadecomp dpconv duckdb uniondp yanplus llm-r2 learned-rewrite enum-metadecomp enum-sparksqlplus metadecomp-misestimated dpconv-misestimated uniondp-misestimated}
       RESULTS_DIR: ${RESULTS_DIR:-}
       REWRITE_MODE: ${REWRITE_MODE:-saved}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}

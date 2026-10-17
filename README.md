@@ -363,6 +363,18 @@ sbt "runMain experiments.runner.LearnedRewriteRunner"
 
 The results are stored in `experiment-results/learned-rewrite-opt-{dsb, job-original, musicbrainz, job-large}-<timestamp>.csv`
 
+### Exact vs misestimated cardinalities
+
+The generated misestimated cardinalities are stored in `benchmarks/{dsb,job-original}/cardinalities/misestimated/`. To run the experiments with misestimated cardinalities, use the following command:
+
+```bash
+sbt "runMain experiments.runner.MetaDecompRunner misestimated job-original 16d[.]sql"
+sbt "runMain experiments.runner.DPconvRunner misestimated job-original 16d[.]sql"
+sbt "runMain experiments.runner.DPconvRunner UnionDP misestimated job-original 16d[.]sql"
+```
+
+The results are stored in `{metadecomp,dpconv,uniondp}-misestimated-<benchmark>-<timestamp>.csv`.
+
 ### Join tree enumeration
 
 #### metaDecomp
@@ -442,10 +454,24 @@ python src/main/python/plot-enum-time.py
 python src/main/python/generate_summary_table.py
 ```
 
-This writes `experiment-results/tables/tab-results.tex` using all four acyclic benchmarks and seven methods. It reports arithmetic means for times and geometric means for speedups, plus medians and percentiles. It excludes queries where metaDecomp, DPconv, and DuckDB all time out. Set `RESULTS_DIR` to use another result directory. The `figures` stage generates this table automatically; the `paper` stage installs it with the figures before compiling `main-full.pdf`.
+This writes `experiment-results/tables/tab-results.tex` using all four acyclic benchmarks and seven methods. Set `RESULTS_DIR` to use another result directory. The `figures` stage generates this table automatically; the `paper` stage installs it with the figures before compiling `main-full.pdf`.
 
 To update the table in the checked-in paper sources after manual generation:
 
 ```bash
 cp "${RESULTS_DIR:-experiment-results}/tables/tab-results.tex" paper-latex/figs/exp/tab-results.tex
+```
+
+### Exact vs misestimated cardinalities – Table 4
+
+```bash
+python src/main/python/generate_misestimation_table.py
+```
+
+This writes `experiment-results/tables/tab-misestimation.tex` from the normalized exact and misestimated CSVs for metaDecomp, DPconv, and UnionDP on DSB and JOB. Set `RESULTS_DIR` to use another result directory. The `figures` stage generates the table, and the `paper` stage installs it before compilation.
+
+To update the checked-in paper table after manual generation:
+
+```bash
+cp "${RESULTS_DIR:-experiment-results}/tables/tab-misestimation.tex" paper-latex/figs/exp/tab-misestimation.tex
 ```
