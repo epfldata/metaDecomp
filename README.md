@@ -28,7 +28,11 @@ With Docker and Docker Compose installed, build the image from the repository ro
 docker compose build
 ```
 
-The container defaults to 48 GB of memory, with JVM and DuckDB memory limits of 40 GB each. These limits share the container's memory; they are not reserved allocations. On Docker Desktop, give its VM at least 48 GB of memory for a full run. Set `DOCKER_MEMORY`, `JVM_MEMORY_GB`, and `DUCKDB_MEMORY` to adjust the limits.
+The container defaults to 48 GB of memory, with JVM and DuckDB memory limits of 40 GB each. These limits share the container's memory; they are not reserved allocations. On Docker Desktop, give its VM at least 48 GB of memory for a full run. Set `DOCKER_MEMORY`, `JVM_MEMORY`, and `DUCKDB_MEMORY` to adjust the limits. Each accepts a value with a unit, such as `48g`, `40g`, or `4096m` (`g` for gigabytes, `m` for megabytes). For example:
+
+```bash
+DOCKER_MEMORY=48g JVM_MEMORY=40g DUCKDB_MEMORY=40g docker compose run --rm artifact
+```
 
 The repository is mounted at `/workspace`, so results and datasets persist on the host. Named volumes keep Linux builds and caches separate from native host builds. Docker uses the host's ARM64 or x86-64 architecture by default.
 
@@ -129,7 +133,7 @@ After setting up the datasets, use this script to set up all systems and plottin
 bash src/main/scripts/setup-systems.sh
 ```
 
-This requires Git, wget, unzip, Java 17 (Oracle GraalVM 17.0.12), sbt, Maven, Python 3.12, a C++20 compiler, CMake, and Make. It clones the baseline revisions listed below, builds the required binaries, downloads LLM-R2, installs Python dependencies in `src/main/python/venv`, and stages Scala. Existing checkouts are retained, and build commands run each time so source adjustments are compiled. Set `BUILD_JOBS` (default: 2), `CXX`, or `JVM_MEMORY_GB` (default: 40) as needed.
+This requires Git, wget, unzip, Java 17 (Oracle GraalVM 17.0.12), sbt, Maven, Python 3.12, a C++20 compiler, CMake, and Make. It clones the baseline revisions listed below, builds the required binaries, downloads LLM-R2, installs Python dependencies in `src/main/python/venv`, and stages Scala. Existing checkouts are retained, and build commands run each time so source adjustments are compiled. Set `BUILD_JOBS` (default: 2), `CXX`, or `JVM_MEMORY` (default: `40g`) as needed.
 
 The following sections describe how to set up each system manually.
 
@@ -284,11 +288,11 @@ sbt -mem 32000 "runMain experiments.runner.MetaDecompRunner job-original 01[ab][
 
 The other optimization/execution runners support the same arguments. For UnionDP, keep `UnionDP` before the benchmark name.
 
-You can override `REPEAT_TIMES` (default: 10), `DUCKDB_MEMORY` (default: `40GB`), and `RESULTS_DIR` (default: `experiment-results`). For example, run one repetition of a query with a smaller memory limit and separate results:
+You can override `REPEAT_TIMES` (default: 10), `DUCKDB_MEMORY` (default: `40g`), and `RESULTS_DIR` (default: `experiment-results`). For example, run one repetition of a query with a smaller memory limit and separate results:
 
 ```bash
 mkdir -p experiment-results/smoke/join-trees
-RESULTS_DIR="$PWD/experiment-results/smoke" REPEAT_TIMES=1 DUCKDB_MEMORY=4GB \
+RESULTS_DIR="$PWD/experiment-results/smoke" REPEAT_TIMES=1 DUCKDB_MEMORY=4g \
   sbt -mem 4096 "runMain experiments.runner.MetaDecompRunner job-original 01a[.]sql"
 ```
 
@@ -379,7 +383,7 @@ bash src/main/scripts/enumerate-join-trees-metadecomp.sh job-original '01[ab][.]
 
 Both enumeration scripts accept `[benchmark] [query filename regex]`, like the optimization runners. Omitting the benchmark runs all benchmarks; the regex matches the entire filename, including `.sql`.
 
-Both scripts also accept environment variables `REPEAT_TIMES` (default: 10), `RESULTS_DIR` (default: `experiment-results`), `JVM_MEMORY_GB` (default: 40), and `ENUM_TIMEOUT_SECONDS` (default: 3600).
+Both scripts also accept environment variables `REPEAT_TIMES` (default: 10), `RESULTS_DIR` (default: `experiment-results`), `JVM_MEMORY` (default: `40g`), and `ENUM_TIMEOUT_SECONDS` (default: 3600).
 
 The results are stored in `experiment-results/metadecomp-enum-{dsb, job-original, musicbrainz, job-large}.csv`
 

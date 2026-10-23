@@ -59,5 +59,5 @@ echo "Installing Python dependencies..."
 python3 -m venv src/main/python/venv
 src/main/python/venv/bin/pip install -r src/main/python/requirements.txt
 echo "Staging the Scala application..."
-sbt -mem "$(( ${JVM_MEMORY_GB:-40} * 1024 ))" stage
+sbt "-J-Xmx${JVM_MEMORY:-40g}" stage
 echo "System setup complete."

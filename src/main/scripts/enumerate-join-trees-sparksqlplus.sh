@@ -2,7 +2,7 @@
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 RESULTS_DIR=${RESULTS_DIR:-$PROJECT_ROOT/experiment-results}
-JVM_MEMORY_GB=${JVM_MEMORY_GB:-40}
+JVM_MEMORY=${JVM_MEMORY:-40g}
 mkdir -p "$RESULTS_DIR"
 QUERY_REGEX="^(${2:-.*})$"
 BENCHMARKS=(dsb job-original musicbrainz job-large)
@@ -29,7 +29,7 @@ APP_LOG="$PROJECT_ROOT/SparkSQLPlus/app.log"
 APP_PID_FILE="$PROJECT_ROOT/SparkSQLPlus/app.pid"
 
 # Start the application in the background and redirect output to a log file
-java -Xms256m "-Xmx${JVM_MEMORY_GB}g" -jar "$APP_JAR" > "$APP_LOG" 2>&1 &
+java -Xms256m "-Xmx${JVM_MEMORY}" -jar "$APP_JAR" > "$APP_LOG" 2>&1 &
 APP_PID=$!
 echo $APP_PID > "$APP_PID_FILE"
 
@@ -56,7 +56,7 @@ restart_app() {
     # Clear the log file
     > "$APP_LOG"
 
-    java -Xms256m "-Xmx${JVM_MEMORY_GB}g" -jar "$APP_JAR" > "$APP_LOG" 2>&1 &
+    java -Xms256m "-Xmx${JVM_MEMORY}" -jar "$APP_JAR" > "$APP_LOG" 2>&1 &
     APP_PID=$!
     echo $APP_PID > "$APP_PID_FILE"
 

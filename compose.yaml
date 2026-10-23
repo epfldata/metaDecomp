@@ -5,8 +5,8 @@ services:
     mem_limit: ${DOCKER_MEMORY:-48g}
     shm_size: 2g
     environment:
-      JVM_MEMORY_GB: ${JVM_MEMORY_GB:-40}
-      DUCKDB_MEMORY: ${DUCKDB_MEMORY:-40GB}
+      JVM_MEMORY: ${JVM_MEMORY:-40g}
+      DUCKDB_MEMORY: ${DUCKDB_MEMORY:-40g}
       REPEAT_TIMES: ${REPEAT_TIMES:-10}
       DOCKER_MEMORY: ${DOCKER_MEMORY:-48g}
       ENUM_TIMEOUT_SECONDS: ${ENUM_TIMEOUT_SECONDS:-3600}

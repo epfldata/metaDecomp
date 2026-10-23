@@ -28,7 +28,7 @@ case object Config {
 
 	val repeatTimes = sys.env.getOrElse("REPEAT_TIMES", "10").toInt
 	require(repeatTimes > 0)
-	val duckdbMemory = sys.env.getOrElse("DUCKDB_MEMORY", "40GB")
+	val duckdbMemory = sys.env.getOrElse("DUCKDB_MEMORY", "40g")
 	val timeoutCommand = if (System.getProperty("os.name").startsWith("Mac")) "gtimeout" else "timeout"
 	val timeout: Duration = 300.seconds
 

@@ -19,8 +19,8 @@ export RESULTS_DIR=${RESULTS_DIR:-$ROOT/experiment-results/runs/$(date +%Y-%m-%d
 mkdir -p "$RESULTS_DIR/join-trees"
 RESULTS_DIR=$(cd "$RESULTS_DIR" && pwd)
 export RESULTS_DIR
-export JVM_MEMORY_GB=${JVM_MEMORY_GB:-40}
-export DUCKDB_MEMORY=${DUCKDB_MEMORY:-40GB}
+export JVM_MEMORY=${JVM_MEMORY:-40g}
+export DUCKDB_MEMORY=${DUCKDB_MEMORY:-40g}
 export REPEAT_TIMES=${REPEAT_TIMES:-10}
 export REWRITE_MODE=${REWRITE_MODE:-saved}
 case "$REWRITE_MODE" in saved|fresh) ;; *) echo "Unknown REWRITE_MODE: $REWRITE_MODE" >&2; exit 1 ;; esac
@@ -40,7 +40,7 @@ if [[ -n "$BENCHMARK" ]]; then BENCHMARK_LIST=("$BENCHMARK"); fi
 # In a container, print Docker Compose commands usable from the host checkout.
 resume_command() {
   local stage=$1 system=${2:-} benchmark=${3:-$BENCHMARK}
-  local command=(env "RESULTS_DIR=$RESULTS_DIR" "JVM_MEMORY_GB=$JVM_MEMORY_GB"
+  local command=(env "RESULTS_DIR=$RESULTS_DIR" "JVM_MEMORY=$JVM_MEMORY"
     "DUCKDB_MEMORY=$DUCKDB_MEMORY" "REPEAT_TIMES=$REPEAT_TIMES"
     "REWRITE_MODE=$REWRITE_MODE" "BUILD_JOBS=${BUILD_JOBS:-2}" "ENUM_TIMEOUT_SECONDS=${ENUM_TIMEOUT_SECONDS:-3600}")
   if [[ "$stage" == experiments && -z "$system" ]]; then system="${SYSTEM_LIST[*]}"; fi
@@ -103,13 +103,13 @@ run_experiments() {
     llm-r2/venv/bin/pip install -r llm-r2/requirements.txt
   fi
   announce "Experiments: stage the Scala application" experiments
-  sbt -mem "$((JVM_MEMORY_GB * 1024))" stage
+  sbt "-J-Xmx${JVM_MEMORY}" stage
   {
     date -u
     uname -a
     java -version 2>&1
     echo "benchmark=$BENCHMARK query_regex=$QUERY_REGEX"
-    echo "REPEAT_TIMES=$REPEAT_TIMES JVM_MEMORY_GB=$JVM_MEMORY_GB DUCKDB_MEMORY=$DUCKDB_MEMORY REWRITE_MODE=$REWRITE_MODE"
+    echo "REPEAT_TIMES=$REPEAT_TIMES JVM_MEMORY=$JVM_MEMORY DUCKDB_MEMORY=$DUCKDB_MEMORY REWRITE_MODE=$REWRITE_MODE"
     if ! revision=$(git rev-parse HEAD 2>/dev/null); then
       revision=unavailable
     fi
@@ -149,7 +149,7 @@ run_experiments() {
         fi
         (cd llm-r2 && venv/bin/python -u "$script" "$benchmark" "$QUERY_REGEX")
       fi
-      java -Xms512m "-Xmx${JVM_MEMORY_GB}g" -cp 'target/universal/stage/lib/*' "experiments.runner.$runner" "${args[@]}"
+      java -Xms512m "-Xmx${JVM_MEMORY}" -cp 'target/universal/stage/lib/*' "experiments.runner.$runner" "${args[@]}"
       echo "Completed: $system / $benchmark"
     done
   done

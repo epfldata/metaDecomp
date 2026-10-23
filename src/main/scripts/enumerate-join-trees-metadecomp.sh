@@ -23,7 +23,7 @@ sbt clean stage
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 RESULTS_DIR=${RESULTS_DIR:-$PROJECT_ROOT/experiment-results}
-JVM_MEMORY_GB=${JVM_MEMORY_GB:-40}
+JVM_MEMORY=${JVM_MEMORY:-40g}
 mkdir -p "$RESULTS_DIR"
 QUERY_REGEX="^(${2:-.*})$"
 BENCHMARKS=(dsb job-original musicbrainz job-large)
@@ -67,7 +67,7 @@ for BENCHMARK in "${BENCHMARKS[@]}"; do
     for ((i=1; i<=REPEAT_TIMES; i++)); do
       echo "Run $i for $query_name..."
       # Run the Scala program with a timeout
-      "$TIMEOUT_COMMAND" "$TIMEOUT_SECONDS"s "$PROJECT_ROOT/target/universal/stage/bin/join-tree-enumeration-runner" "-J-Xms512m" "-J-Xmx${JVM_MEMORY_GB}g" "$SQL_FILE" > "$tmp_file" 2>&1 &
+      "$TIMEOUT_COMMAND" "$TIMEOUT_SECONDS"s "$PROJECT_ROOT/target/universal/stage/bin/join-tree-enumeration-runner" "-J-Xms512m" "-J-Xmx${JVM_MEMORY}" "$SQL_FILE" > "$tmp_file" 2>&1 &
       TIMEOUT_PID=$!
       wait "$TIMEOUT_PID"
       exit_code=$?
