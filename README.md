@@ -8,15 +8,16 @@ Full technical report available at [technical-report.pdf](technical-report.pdf) 
 
 ## Prerequisites
 
-* Oracle GraalVM 17.0.12, providing the Java Virtual Machine (JVM) used to run the Java/Scala code
 * Scala 3.3.1 with sbt 1.6.2
+* Oracle GraalVM 17.0.12 （the Java Virtual Machine (JVM) used to run the Java/Scala code）
 * For [DPconv](https://github.com/utndatasystems/DPconv/tree/dc56bdc52c452bf86b3ac5c224b0176148c38757), [DuckDB](https://github.com/duckdb/duckdb/tree/7c039464e452ddc3330e2691d3fa6d305521d09b), and [Yannakakis+](https://github.com/ChampionNan/DuckDBYanPlus/tree/38d165ee6dac9db621616121b09bb591fdd67065): CMake 4.0.3, GNU Make 3.81, clang 20.1.3
 * For join tree enumeration with traditional GYO algorithms (implemented by [SparkSQL+](https://github.com/hkustDB/SparkSQLPlus/tree/f22188bba4e971da6defb97c983e06e18e66fd7a)): Maven 3.8.6
 * For LearnedRewrite, LLM-R2, and reproducing the figures: Python 3.10.1
 * For enumeration: curl, jq, and GNU timeout (`brew install coreutils` on macOS supplies `gtimeout`)
 * For paper compilation: latexmk and TeX Live with plain generic, science, publishers, LaTeX extra, and extra fonts packages
 
-Please execute all the following commands from the root directory of the repository. **The experiment results reported in the paper were measured on macOS.** The commands and scripts were written on macOS Tahoe 26.0.1 with zsh 5.9 / GNU bash 3.2.57(1). On other operating systems, adapt the commands and scripts as needed or use the supplied Docker image.
+> [!important]
+> Please execute all the following commands from the root directory of the repository. **The experiment results reported in the paper were measured on macOS.** The commands and scripts were written on macOS Tahoe 26.0.1 with zsh 5.9 / GNU bash 3.2.57(1). On other operating systems, adapt the commands and scripts as needed or use the supplied Docker image.
 
 ## Setting up Docker (Optional)
 
@@ -52,7 +53,10 @@ docker compose run --rm artifact
 
 The script sets up data and systems, runs experiments, organizes CSVs, generates figures and tables, and compiles `main-full.pdf`. It prints progress and copyable commands to resume individual system/benchmark runs. Results are stored in `experiment-results/runs/<timestamp>/`, including `pipeline.log`, CSVs, `figures/`, `tables/`, and `paper/main-full.pdf`.
 
-Note that, for LLM-R2 and LearnedRewrite, by default, `REWRITE_MODE=saved` uses the existing SQL and optimization timings in `llm-r2`, and measures execution times anew. To regenerate both rewrites and optimization timings, use `REWRITE_MODE=fresh`. Before running, set your OpenAI API key in the same shell. Note that this makes API calls to ChatGPT and may incur costs. Make sure you have enough quota and are aware of the costs before running the script. Our experience is that one run costs approximately 3 USD.
+Note that, for LLM-R2 and LearnedRewrite, by default, `REWRITE_MODE=saved` uses the existing SQL and optimization timings that we obtained with `llm-r2`, and measures execution times anew. To regenerate both rewrites and optimization timings (by actually calling an LLM again), use `REWRITE_MODE=fresh`. Before running, set your OpenAI API key in the same shell.
+
+> [!caution]
+> Note that this makes API calls to ChatGPT and may incur costs. Make sure you have enough quota and are aware of the costs before running the script. Our experience is that one run costs approximately 3 USD.
 
 ```bash
 export OPENAI_API_KEY="your-api-key"
