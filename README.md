@@ -88,7 +88,13 @@ If you need to run only a subset of experiments instead of all (e.g., for prelim
 REPEAT_TIMES=1 bash reproduce.sh experiments job-original '01[ab][.]sql'
 ```
 
-Use the variable `SYSTEMS` to select systems, for example `SYSTEMS=metadecomp`. Figures require results for all four benchmarks to be present. In Docker, use `docker compose run --rm artifact` in place of `bash reproduce.sh`. Set `RESULTS_DIR` to a container path such as `/workspace/experiment-results/<subfolder-name>`.
+Use the variable `SYSTEMS` to select systems, for example `SYSTEMS=metadecomp`. To select multiple systems, put their names in one quoted, space-separated value:
+
+```bash
+SYSTEMS="metadecomp duckdb yanplus" bash reproduce.sh experiments
+```
+
+Figures require results for all four benchmarks to be present. In Docker, use `docker compose run --rm artifact` in place of `bash reproduce.sh`. Set `RESULTS_DIR` to a container path such as `/workspace/experiment-results/<subfolder-name>`.
 
 ## Manual workflow
 
