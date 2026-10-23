@@ -20,14 +20,17 @@ object DPconvRunner extends BaseRunner {
 
 	def main(args: Array[String]): Unit = {
 		val runUnionDP = args.contains("UnionDP")
-		val runnerArgs = args.filterNot(_ == "UnionDP")
+		val misestimated = args.contains("misestimated")
+		val runnerArgs = args.filterNot(arg => arg == "UnionDP" || arg == "misestimated")
+		val cardinalitiesDir = if misestimated then "cardinalities/misestimated" else "cardinalities"
+		val variant = if misestimated then "misestimated" else "opt"
 
 		for (benchmark <- if runnerArgs.size >= 1 then List(runnerArgs(0)) else benchmarks) {
 			connect(benchmark)
 
 			implicit val benchmarkPath: String = s"$benchmarksPath/$benchmark"
 
-			val resultsCsvPath = Paths.get(resultsDir, s"${if runUnionDP then "uniondp" else "dpconv"}-opt-$benchmark-$getTimestamp.csv")
+			val resultsCsvPath = Paths.get(resultsDir, s"${if runUnionDP then "uniondp" else "dpconv"}-$variant-$benchmark-$getTimestamp.csv")
 
 			Files.write(
 				resultsCsvPath,
@@ -37,7 +40,7 @@ object DPconvRunner extends BaseRunner {
 
 			sqlFilesInBenchmark(benchmark).filter(f => if runnerArgs.size >= 2 then f.getName.matches(runnerArgs(1)) else true).foreach(sqlFile => {
 				val queryName = sqlFile.getName.stripSuffix(".sql")
-				val queryCsvPath = s"$benchmarkPath/cardinalities/$queryName.csv"
+				val queryCsvPath = s"$benchmarkPath/$cardinalitiesDir/$queryName.csv"
 
 				if (Files.exists(Paths.get(queryCsvPath))) {
 					System.gc()

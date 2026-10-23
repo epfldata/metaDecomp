@@ -32,7 +32,7 @@ printf 'Results: %s\n' "$RESULTS_DIR"
 
 # Each system/benchmark is a restartable unit. Reuse RESULTS_DIR to keep other
 # units; rerunning a unit writes a new CSV and replaces its normalized copy.
-SYSTEM_LIST=(${SYSTEMS:-metadecomp dpconv duckdb uniondp yanplus llm-r2 learned-rewrite enum-metadecomp enum-sparksqlplus})
+SYSTEM_LIST=(${SYSTEMS:-metadecomp dpconv duckdb uniondp yanplus llm-r2 learned-rewrite enum-metadecomp enum-sparksqlplus metadecomp-misestimated dpconv-misestimated uniondp-misestimated})
 BENCHMARK_LIST=(dsb job-original job-large musicbrainz)
 if [[ -n "$BENCHMARK" ]]; then BENCHMARK_LIST=("$BENCHMARK"); fi
 
@@ -75,9 +75,14 @@ run_setup() {
 run_experiments() {
   # Print the full plan first: later commands remain available in pipeline.log
   # even when a long-running unit is interrupted.
+  total=0
   echo 'Experiment plan (each command restarts one complete system/benchmark):'
   for system in "${SYSTEM_LIST[@]}"; do
     for benchmark in "${BENCHMARK_LIST[@]}"; do
+      if [[ "$system" == *-misestimated && "$benchmark" != dsb && "$benchmark" != job-original ]]; then
+        continue
+      fi
+      total=$((total + 1))
       printf '  %s / %s: ' "$system" "$benchmark"
       resume_command experiments "$system" "$benchmark"; echo
     done
@@ -119,14 +124,16 @@ run_experiments() {
     done
   } >> "$RESULTS_DIR/environment.txt"
   unit=0
-  total=$((${#SYSTEM_LIST[@]} * ${#BENCHMARK_LIST[@]}))
   for system in "${SYSTEM_LIST[@]}"; do
     for benchmark in "${BENCHMARK_LIST[@]}"; do
+      if [[ "$system" == *-misestimated && "$benchmark" != dsb && "$benchmark" != job-original ]]; then
+        continue
+      fi
       unit=$((unit + 1))
       announce "Experiment $unit/$total: $system / $benchmark (query regex: $QUERY_REGEX)" experiments "$system" "$benchmark"
       case "$system" in
-        metadecomp) runner=MetaDecompRunner ;;
-        dpconv|uniondp) runner=DPconvRunner ;;
+        metadecomp|metadecomp-misestimated) runner=MetaDecompRunner ;;
+        dpconv|uniondp|dpconv-misestimated|uniondp-misestimated) runner=DPconvRunner ;;
         duckdb) runner=DuckDBRunner ;;
         yanplus) runner=DuckDBYanPlusRunner ;;
         llm-r2) runner=LLMR2Runner ;;
@@ -138,7 +145,8 @@ run_experiments() {
         *) echo "Unknown system: $system" >&2; exit 1 ;;
       esac
       args=("$benchmark" "$QUERY_REGEX")
-      if [[ "$system" == uniondp ]]; then args=(UnionDP "${args[@]}"); fi
+      if [[ "$system" == uniondp || "$system" == uniondp-misestimated ]]; then args=(UnionDP "${args[@]}"); fi
+      if [[ "$system" == *-misestimated ]]; then args=(misestimated "${args[@]}"); fi
       # Fresh mode regenerates the selected SQL and optimization timings first.
       # Saved mode reads the CSVs in the downloaded LLM-R2 directory.
       if [[ "$REWRITE_MODE" == fresh && ( "$system" == llm-r2 || "$system" == learned-rewrite ) ]]; then
@@ -157,7 +165,7 @@ run_experiments() {
   python3 src/main/python/organize-results.py
 }
 
-# Normalize CSV filenames and generate every paper figure. Manual: bash reproduce.sh figures
+# Normalize CSV filenames and generate every paper figure and both evaluation tables. Manual: bash reproduce.sh figures
 run_figures() {
   announce "Figures: organize CSV results" figures
   python3 src/main/python/organize-results.py
@@ -165,6 +173,10 @@ run_figures() {
     announce "Figures: $plot" figures
     "$PYTHON" "src/main/python/plot-$plot.py"
   done
+  announce "Figures: query evaluation summary table" figures
+  "$PYTHON" src/main/python/generate_summary_table.py
+  announce "Figures: exact vs misestimated cardinalities table" figures
+  "$PYTHON" src/main/python/generate_misestimation_table.py
 }
 
 # Copy paper sources, install the generated figures, and compile. Manual: bash reproduce.sh paper
@@ -179,6 +191,11 @@ import os, re, shutil
 from pathlib import Path
 results = Path(os.environ['RESULTS_DIR'])
 paper = results / 'paper'
+for name in ('tab-results.tex', 'tab-misestimation.tex'):
+    table = results / 'tables' / name
+    if not table.is_file():
+        raise FileNotFoundError(f'Missing reproduced table: {table}; run the figures stage first')
+    shutil.copy2(table, paper / 'figs/exp' / name)
 for source in (paper / '6_experiments.tex', paper / 'app_exp.tex'):
     for name in re.findall(r'\\includegraphics(?:\[[^]]*\])?\{figs/exp/([^}]+)\}', source.read_text()):
         figure = results / 'figures' / name
